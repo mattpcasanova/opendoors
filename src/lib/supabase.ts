@@ -5,4 +5,8 @@ import { Database } from '../types/database';
 const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey); 
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    detectSessionInUrl: false,
+  },
+}); 

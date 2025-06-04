@@ -44,45 +44,9 @@ npm install
    - Copy `.env.example` to `.env`
    - Add your Supabase credentials:
      ```
-     SUPABASE_URL=your_supabase_project_url
-     SUPABASE_ANON_KEY=your_supabase_anon_key
+     EXPO_PUBLIC_SUPABASE_URL=your_supabase_project_url
+     EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
      ```
 
 4. Start the development server:
-```bash
-npm start
 ```
-
-## Project Structure
-
-```
-src/
-├── components/           # Reusable UI components
-│   ├── ui/              # Basic UI elements
-│   ├── game/            # Game-specific components
-│   └── common/          # Shared components
-├── screens/             # Screen components
-│   ├── auth/           # Authentication screens
-│   ├── game/           # Game-related screens
-│   ├── profile/        # User profile screens
-│   └── rewards/        # Prize/rewards screens
-├── navigation/          # Navigation configuration
-├── services/           # API calls and external services
-├── hooks/              # Custom React hooks
-├── utils/              # Utility functions
-├── types/              # TypeScript type definitions
-├── constants/          # App constants and configuration
-└── assets/             # Images, fonts, etc.
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

@@ -11,7 +11,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   splash: {
     image: './assets/splash.png',
     resizeMode: 'contain',
-    backgroundColor: '#ffffff'
+    backgroundColor: '#009688'
   },
   assetBundlePatterns: [
     '**/*'
@@ -26,7 +26,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   android: {
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
-      backgroundColor: '#ffffff'
+      backgroundColor: '#009688'
     },
     package: 'com.opendoors.app'
   },
@@ -34,8 +34,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     favicon: './assets/favicon.png'
   },
   extra: {
-    supabaseUrl: process.env.SUPABASE_URL,
-    supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
+    supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
+    supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
     eas: {
       projectId: "526a3bad-24d4-45b4-a6c0-2df2b26b3c83"
     }
