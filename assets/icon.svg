@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Door frame -->
+  <rect x="112" y="112" width="800" height="800" rx="40" fill="#009688"/>
+  <!-- Door -->
+  <rect x="212" y="212" width="600" height="700" rx="20" fill="#00796B"/>
+  <!-- Door handle -->
+  <circle cx="700" cy="512" r="40" fill="#E0F2F1"/>
+</svg> 
