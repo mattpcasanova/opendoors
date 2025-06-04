@@ -1,21 +1,16 @@
+import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { Text, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import AppNavigator from './src/navigation/AppNavigator';
+
+// Import NativeWind styles
+import './global.css';
 
 export default function App() {
   return (
-    <View style={{ 
-      flex: 1, 
-      backgroundColor: '#009688', 
-      justifyContent: 'center', 
-      alignItems: 'center' 
-    }}>
-      <Text style={{ 
-        color: 'white', 
-        fontSize: 24, 
-        fontWeight: 'bold' 
-      }}>
-        OpenDoors App Working! 🚪
-      </Text>
-    </View>
+    <SafeAreaProvider>
+      <AppNavigator />
+      <StatusBar style="auto" />
+    </SafeAreaProvider>
   );
 }

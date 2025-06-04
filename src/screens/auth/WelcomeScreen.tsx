@@ -1,76 +1,43 @@
+import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '../../hooks/useNavigation';
+import { NavigationProp } from '../../navigation/types';
 
 export default function WelcomeScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
 
   return (
-    <SafeAreaView className="flex-1">
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
       <LinearGradient
         colors={['#009688', '#00796B']}
-        className="flex-1 justify-center items-center px-8"
+        style={{ flex: 1, padding: 24 }}
       >
-        {/* Status Bar Mock */}
-        <View className="absolute top-12 left-6 right-6 flex-row justify-between">
-          <Text className="text-white text-sm font-semibold">9:41</Text>
-          <Text className="text-white text-sm font-semibold">100%</Text>
-        </View>
-
-        {/* App Logo */}
-        <View className="w-24 h-24 bg-white bg-opacity-20 rounded-3xl items-center justify-center mb-8">
-          <Text className="text-4xl">🚪</Text>
-        </View>
-
-        <Text className="text-white text-4xl font-bold mb-4 text-center">OpenDoors</Text>
-        <Text className="text-teal-100 text-xl mb-2 text-center">Win amazing rewards</Text>
-        <Text className="text-teal-200 text-lg mb-12 text-center">
-          Play games, earn prizes from your favorite stores
-        </Text>
-
-        {/* Features */}
-        <View className="space-y-4 mb-12 w-full max-w-sm">
-          <View className="flex-row items-center">
-            <View className="w-8 h-8 bg-white bg-opacity-20 rounded-full items-center justify-center mr-4">
-              <Text className="text-lg">🎯</Text>
-            </View>
-            <Text className="text-teal-100">Play games at local businesses</Text>
-          </View>
-          <View className="flex-row items-center">
-            <View className="w-8 h-8 bg-white bg-opacity-20 rounded-full items-center justify-center mr-4">
-              <Text className="text-lg">🎁</Text>
-            </View>
-            <Text className="text-teal-100">Win real rewards and discounts</Text>
-          </View>
-          <View className="flex-row items-center">
-            <View className="w-8 h-8 bg-white bg-opacity-20 rounded-full items-center justify-center mr-4">
-              <Text className="text-lg">📍</Text>
-            </View>
-            <Text className="text-teal-100">Discover games near you</Text>
-          </View>
-        </View>
-
-        {/* Buttons */}
-        <View className="w-full space-y-4">
-          <TouchableOpacity
-            className="bg-white py-4 rounded-xl"
-            onPress={() => navigation.navigate('Signup')}
-          >
-            <Text className="text-teal-600 text-center text-lg font-semibold">Get Started</Text>
-          </TouchableOpacity>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ fontSize: 32, fontWeight: 'bold', color: 'white', marginBottom: 16 }}>
+            Welcome to OpenDoors
+          </Text>
+          <Text style={{ fontSize: 18, color: '#B2DFDB', textAlign: 'center', marginBottom: 32 }}>
+            Play games to win real prizes!
+          </Text>
           
           <TouchableOpacity
-            className="border-2 border-white py-4 rounded-xl"
-            onPress={() => navigation.navigate('Login')}
+            style={{
+              backgroundColor: 'white',
+              paddingVertical: 16,
+              paddingHorizontal: 32,
+              borderRadius: 12,
+              marginBottom: 16,
+              width: '100%'
+            }}
+            onPress={() => navigation.navigate('home')}
           >
-            <Text className="text-white text-center text-lg font-semibold">I already have an account</Text>
+            <Text style={{ color: '#009688', fontSize: 18, fontWeight: '600', textAlign: 'center' }}>
+              Get Started
+            </Text>
           </TouchableOpacity>
         </View>
-
-        {/* Home Indicator */}
-        <View className="absolute bottom-2 w-20 h-1 bg-white bg-opacity-30 rounded-full" />
       </LinearGradient>
     </SafeAreaView>
   );

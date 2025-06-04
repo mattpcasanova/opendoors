@@ -1,111 +1,53 @@
-import { ArrowLeft, Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
-import React, { useState } from 'react';
-import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import React from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '../../hooks/useNavigation';
-import { supabase } from '../../lib/supabase';
+import { NavigationProp } from '../../navigation/types';
 
 export default function LoginScreen() {
-  const navigation = useNavigation();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
-    }
-
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      Alert.alert('Error', error.message);
-    }
-    setLoading(false);
-  };
+  const navigation = useNavigation<NavigationProp>();
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      {/* Header */}
-      <View className="bg-white px-6 py-4 border-b border-gray-100">
-        <View className="flex-row items-center">
-          <TouchableOpacity 
-            onPress={() => navigation.goBack()} 
-            className="mr-4"
-          >
-            <ArrowLeft size={24} color="#666" />
-          </TouchableOpacity>
-          <View>
-            <Text className="text-2xl font-bold text-gray-800">Welcome back</Text>
-            <Text className="text-gray-600 mt-1">Sign in to your account</Text>
-          </View>
-        </View>
-      </View>
-
-      <View className="flex-1 px-6 py-8">
-        {/* Email */}
-        <View className="mb-6">
-          <Text className="text-sm font-medium text-gray-700 mb-2">Email address</Text>
-          <View className="bg-white border border-gray-200 rounded-xl px-4 py-4 flex-row items-center">
-            <Mail size={20} color="#999" className="mr-3" />
-            <TextInput
-              className="flex-1 text-base"
-              placeholder="Enter your email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
-        </View>
-
-        {/* Password */}
-        <View className="mb-6">
-          <Text className="text-sm font-medium text-gray-700 mb-2">Password</Text>
-          <View className="bg-white border border-gray-200 rounded-xl px-4 py-4 flex-row items-center">
-            <Lock size={20} color="#999" className="mr-3" />
-            <TextInput
-              className="flex-1 text-base"
-              placeholder="Enter your password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-            />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              {showPassword ? (
-                <EyeOff size={20} color="#999" />
-              ) : (
-                <Eye size={20} color="#999" />
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Sign In Button */}
-        <TouchableOpacity
-          className="bg-teal-600 py-4 rounded-xl mb-4"
-          onPress={handleLogin}
-          disabled={loading}
-        >
-          <Text className="text-white text-center text-lg font-semibold">
-            {loading ? 'Signing In...' : 'Sign In'}
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
+      <LinearGradient
+        colors={['#009688', '#00796B']}
+        style={{ flex: 1, padding: 24 }}
+      >
+        <View style={{ flex: 1, justifyContent: 'center' }}>
+          <Text style={{ fontSize: 32, fontWeight: 'bold', color: 'white', marginBottom: 32, textAlign: 'center' }}>
+            Welcome Back
           </Text>
-        </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={{
+              backgroundColor: 'white',
+              paddingVertical: 16,
+              borderRadius: 12,
+              marginBottom: 16
+            }}
+            onPress={() => navigation.navigate('home')}
+          >
+            <Text style={{ color: '#009688', fontSize: 18, fontWeight: '600', textAlign: 'center' }}>
+              Login (Coming Soon)
+            </Text>
+          </TouchableOpacity>
 
-        {/* Sign Up Link */}
-        <View className="flex-row justify-center">
-          <Text className="text-gray-600">Don't have an account? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-            <Text className="text-teal-600 font-semibold">Sign up</Text>
+          <TouchableOpacity
+            style={{
+              borderWidth: 2,
+              borderColor: 'white',
+              paddingVertical: 16,
+              borderRadius: 12
+            }}
+            onPress={() => navigation.navigate('welcome')}
+          >
+            <Text style={{ color: 'white', fontSize: 18, fontWeight: '600', textAlign: 'center' }}>
+              ← Back to Welcome
+            </Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </LinearGradient>
     </SafeAreaView>
   );
 } 

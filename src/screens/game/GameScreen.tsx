@@ -1,25 +1,62 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '../../hooks/useNavigation';
+import MontyHallGame from '../../components/game/MontyHallGame';
+import { Screen } from '../../navigation/AppNavigator';
 
-export default function GameScreen() {
-  const navigation = useNavigation();
+interface Props {
+  onNavigate: (screen: Screen) => void;
+}
 
+export default function GameScreen({ onNavigate }: Props) {
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <View className="flex-1 justify-center items-center px-6">
-        <Text className="text-2xl font-bold text-gray-800 mb-4">🎮 Game Screen</Text>
-        <Text className="text-gray-600 mb-6 text-center">
-          Monty Hall game will go here!
-        </Text>
-        <TouchableOpacity
-          className="bg-teal-600 px-6 py-3 rounded-xl"
-          onPress={() => navigation.goBack()}
-        >
-          <Text className="text-white font-semibold">Go Back</Text>
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
+      <LinearGradient
+        colors={['#F8F9FA', '#E8F5F4']}
+        style={{ flex: 1 }}
+      >
+        <View style={{
+          backgroundColor: 'white',
+          borderRadius: 20,
+          margin: 20,
+          padding: 30,
+          shadowColor: '#009688',
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: 0.1,
+          shadowRadius: 30,
+          flex: 1,
+        }}>
+          {/* Header */}
+          <Text style={{
+            fontSize: 28,
+            fontWeight: 'bold',
+            color: '#009688',
+            textAlign: 'center',
+            marginBottom: 8
+          }}>
+            Chick-fil-A: Free Sandwich
+          </Text>
+          
+          {/* Monty Hall Game Component */}
+          <MontyHallGame />
+          
+          {/* Back Button */}
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#009688',
+              paddingVertical: 12,
+              borderRadius: 12,
+              marginTop: 20
+            }}
+            onPress={() => onNavigate('home')}
+          >
+            <Text style={{ color: 'white', textAlign: 'center', fontSize: 16, fontWeight: '600' }}>
+              ← Back to Games
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
     </SafeAreaView>
   );
 }
