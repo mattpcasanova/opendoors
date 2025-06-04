@@ -2,11 +2,11 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { AuthStackParamList } from '../types/navigation';
 
-// Import your existing auth screens
-import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
-import LoginScreen from '../screens/auth/LoginScreen';
-import SignupScreen from '../screens/auth/SignupScreen';
-import WelcomeScreen from '../screens/auth/WelcomeScreen';
+// Import your auth screens
+import LoginScreen from '../screens/LoginScreen';
+import WelcomeScreen from '../screens/WelcomeScreen';
+// import SignupScreen from '../screens/auth/SignupScreen';
+// import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 
@@ -17,7 +17,6 @@ export default function AuthNavigator() {
         headerShown: false,
         animation: 'slide_from_right',
         gestureEnabled: true,
-        gestureDirection: 'horizontal',
       }}
     >
       <AuthStack.Screen 
@@ -31,14 +30,9 @@ export default function AuthNavigator() {
         name="Login" 
         component={LoginScreen}
       />
-      <AuthStack.Screen 
-        name="Signup" 
-        component={SignupScreen}
-      />
-      <AuthStack.Screen 
-        name="ForgotPassword" 
-        component={ForgotPasswordScreen}
-      />
+      {/* Add these when you create the screens */}
+      {/* <AuthStack.Screen name="Signup" component={SignupScreen} /> */}
+      {/* <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} /> */}
     </AuthStack.Navigator>
   );
-} 
+}

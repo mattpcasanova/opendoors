@@ -2,13 +2,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Screen } from '../navigation/AppNavigator';
+import { useAuthNavigation } from '../hooks/useNavigation';
 
-interface Props {
-  onNavigate: (screen: Screen) => void;
-}
+export default function WelcomeScreen() {
+  const navigation = useAuthNavigation();
 
-export default function WelcomeScreen({ onNavigate }: Props) {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <LinearGradient
@@ -83,7 +81,11 @@ export default function WelcomeScreen({ onNavigate }: Props) {
               borderRadius: 12,
               marginBottom: 16
             }}
-            onPress={() => onNavigate('home')}
+            onPress={() => {
+              // For now, simulate login by navigating to main app
+              // Later this will be proper signup flow
+              console.log('Get Started - will implement signup flow');
+            }}
           >
             <Text style={{ 
               color: '#009688', 
@@ -102,7 +104,7 @@ export default function WelcomeScreen({ onNavigate }: Props) {
               paddingVertical: 16,
               borderRadius: 12
             }}
-            onPress={() => onNavigate('login')}
+            onPress={() => navigation.navigate('Login')}
           >
             <Text style={{ 
               color: 'white', 

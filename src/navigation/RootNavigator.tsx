@@ -1,8 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Session } from '@supabase/supabase-js';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
-import { supabase } from '../lib/supabase';
 import { RootStackParamList } from '../types/navigation';
 
 // Navigators
@@ -10,56 +8,60 @@ import AuthNavigator from './AuthNavigator';
 import MainTabNavigator from './MainTabNavigator';
 
 // Game Screens
-import GameResultScreen from '../screens/game/GameResultScreen';
 import GameScreen from '../screens/game/GameScreen';
 
-// Prize/Reward Screens
-import PrizeDetailsScreen from '../screens/rewards/PrizeDetailsScreen';
-import RedemptionScreen from '../screens/rewards/RedemptionScreen';
-
-// Profile/Settings Screens
-import EditProfileScreen from '../screens/profile/EditProfileScreen';
-import NotificationsScreen from '../screens/profile/NotificationsScreen';
-import PrivacyPolicyScreen from '../screens/profile/PrivacyPolicyScreen';
-import SupportScreen from '../screens/profile/SupportScreen';
-import TermsOfServiceScreen from '../screens/profile/TermsOfServiceScreen';
-
-// Premium Screens
-import PaymentMethodScreen from '../screens/premium/PaymentMethodScreen';
-import SubscriptionScreen from '../screens/premium/SubscriptionScreen';
+// TODO: Add these when you create the screens
+// import PrizeDetailsScreen from '../screens/rewards/PrizeDetailsScreen';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
-  const [session, setSession] = useState<Session | null>(null);
+  // For now, we'll use simple state to simulate auth
+  // Later this will connect to Supabase auth
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Simulate checking auth state
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+    // Simulate auth check delay
+    const timer = setTimeout(() => {
       setIsLoading(false);
-    });
+      // For now, start unauthenticated
+      setIsAuthenticated(false);
+    }, 1000);
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setIsLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => clearTimeout(timer);
   }, []);
 
   // Loading screen
   if (isLoading) {
     return (
-      <View className="flex-1 justify-center items-center bg-teal-600">
-        <ActivityIndicator size="large" color="white" />
-        <View className="w-24 h-24 bg-white bg-opacity-20 rounded-3xl flex items-center justify-center mb-8 mt-8">
-          <Text className="text-4xl">🚪</Text>
+      <View style={{ 
+        flex: 1, 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        backgroundColor: '#009688' 
+      }}>
+        <View style={{
+          width: 96,
+          height: 96,
+          backgroundColor: 'rgba(255,255,255,0.2)',
+          borderRadius: 24,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: 20
+        }}>
+          <Text style={{ fontSize: 48 }}>🚪</Text>
         </View>
+        <ActivityIndicator size="large" color="white" />
+        <Text style={{
+          color: 'white',
+          fontSize: 18,
+          marginTop: 16,
+          fontWeight: '600'
+        }}>
+          Loading OpenDoors...
+        </Text>
       </View>
     );
   }
@@ -72,11 +74,11 @@ export default function RootNavigator() {
         gestureEnabled: true,
       }}
     >
-      {session ? (
+      {isAuthenticated ? (
         // Authenticated screens
         <>
           <RootStack.Screen 
-            name="MainTabs" 
+            name="MainStack" 
             component={MainTabNavigator}
             options={{
               animation: 'fade',
@@ -92,69 +94,14 @@ export default function RootNavigator() {
               presentation: 'modal',
             }}
           />
-          <RootStack.Screen 
-            name="GameResult" 
-            component={GameResultScreen}
-            options={{
-              animation: 'fade',
-              gestureEnabled: false, // Prevent dismissal
-            }}
-          />
           
-          {/* Prize/Rewards Flow */}
-          <RootStack.Screen 
-            name="PrizeDetails" 
-            component={PrizeDetailsScreen}
-          />
-          <RootStack.Screen 
-            name="RedemptionScreen" 
-            component={RedemptionScreen}
-            options={{
-              presentation: 'modal',
-              animation: 'slide_from_bottom',
-            }}
-          />
-          
-          {/* Profile/Settings Flow */}
-          <RootStack.Screen 
-            name="EditProfile" 
-            component={EditProfileScreen}
-          />
-          <RootStack.Screen 
-            name="Notifications" 
-            component={NotificationsScreen}
-          />
-          <RootStack.Screen 
-            name="Support" 
-            component={SupportScreen}
-          />
-          <RootStack.Screen 
-            name="PrivacyPolicy" 
-            component={PrivacyPolicyScreen}
-          />
-          <RootStack.Screen 
-            name="TermsOfService" 
-            component={TermsOfServiceScreen}
-          />
-          
-          {/* Premium Flow */}
-          <RootStack.Screen 
-            name="Subscription" 
-            component={SubscriptionScreen}
-            options={{
-              presentation: 'modal',
-              animation: 'slide_from_bottom',
-            }}
-          />
-          <RootStack.Screen 
-            name="PaymentMethod" 
-            component={PaymentMethodScreen}
-          />
+          {/* Add these when you create the screens */}
+          {/* <RootStack.Screen name="PrizeDetails" component={PrizeDetailsScreen} /> */}
         </>
       ) : (
         // Unauthenticated screens
         <RootStack.Screen 
-          name="Auth" 
+          name="AuthStack" 
           component={AuthNavigator}
           options={{
             animation: 'fade',
@@ -163,4 +110,4 @@ export default function RootNavigator() {
       )}
     </RootStack.Navigator>
   );
-} 
+}

@@ -1,15 +1,21 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import GameCard from '../../components/game/GameCard';
-import { Screen } from '../../navigation/AppNavigator';
+import { useNavigation } from '../../hooks/useNavigation';
 
-interface Props {
-  onNavigate: (screen: Screen) => void;
-}
+export default function HomeScreen() {
+  const navigation = useNavigation();
 
-export default function HomeScreen({ onNavigate }: Props) {
+  const handleGamePress = () => {
+    navigation.navigate('GameScreen', {
+      prizeId: 'chick-fil-a-1',
+      prizeName: 'Free Chicken Sandwich',
+      sponsorName: 'Chick-fil-A'
+    });
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
       <LinearGradient
@@ -38,22 +44,18 @@ export default function HomeScreen({ onNavigate }: Props) {
           icon="🐔"
           title="Chick-fil-A"
           description="Free sandwich or milkshake"
-          onPress={() => onNavigate('game')}
+          onPress={handleGamePress}
         />
 
-        <TouchableOpacity
-          style={{
-            backgroundColor: '#009688',
-            paddingVertical: 12,
-            borderRadius: 12,
-            marginTop: 20
-          }}
-          onPress={() => onNavigate('welcome')}
-        >
-          <Text style={{ color: 'white', textAlign: 'center', fontSize: 16, fontWeight: '600' }}>
-            ← Back to Welcome
+        {/* Demo button to show tab navigation */}
+        <View style={{ marginTop: 20, padding: 16, backgroundColor: '#E8F5F4', borderRadius: 12 }}>
+          <Text style={{ fontSize: 14, color: '#00796B', textAlign: 'center', marginBottom: 8 }}>
+            🎉 React Navigation is working!
           </Text>
-        </TouchableOpacity>
+          <Text style={{ fontSize: 12, color: '#00796B', textAlign: 'center' }}>
+            Try the tabs below and game navigation above
+          </Text>
+        </View>
       </View>
     </SafeAreaView>
   );

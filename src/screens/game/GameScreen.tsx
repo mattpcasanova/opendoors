@@ -1,15 +1,20 @@
+import { RouteProp, useRoute } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MontyHallGame from '../../components/game/MontyHallGame';
-import { Screen } from '../../navigation/AppNavigator';
+import { useNavigation } from '../../hooks/useNavigation';
+import { RootStackParamList } from '../../types/navigation';
 
-interface Props {
-  onNavigate: (screen: Screen) => void;
-}
+type GameScreenRouteProp = RouteProp<RootStackParamList, 'GameScreen'>;
 
-export default function GameScreen({ onNavigate }: Props) {
+export default function GameScreen() {
+  const navigation = useNavigation();
+  const route = useRoute<GameScreenRouteProp>();
+  
+  const { prizeName = 'Free Sandwich', sponsorName = 'Chick-fil-A' } = route.params || {};
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
       <LinearGradient
@@ -35,7 +40,7 @@ export default function GameScreen({ onNavigate }: Props) {
             textAlign: 'center',
             marginBottom: 8
           }}>
-            Chick-fil-A: Free Sandwich
+            {sponsorName}: {prizeName}
           </Text>
           
           {/* Monty Hall Game Component */}
@@ -49,7 +54,7 @@ export default function GameScreen({ onNavigate }: Props) {
               borderRadius: 12,
               marginTop: 20
             }}
-            onPress={() => onNavigate('home')}
+            onPress={() => navigation.goBack()}
           >
             <Text style={{ color: 'white', textAlign: 'center', fontSize: 16, fontWeight: '600' }}>
               ← Back to Games
