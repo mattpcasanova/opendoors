@@ -4,14 +4,14 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
@@ -80,7 +80,16 @@ export default function SignupScreen() {
     if (error) {
       Alert.alert('Error', error.message);
     } else {
-      Alert.alert('Success', 'Account created! Please check your email to verify your account.');
+      Alert.alert(
+        'Success',
+        'Account created! Please check your email to verify your account.',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.navigate('Welcome')
+          }
+        ]
+      );
     }
     setLoading(false);
   };

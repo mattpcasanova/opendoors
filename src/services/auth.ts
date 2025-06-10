@@ -27,7 +27,6 @@ class AuthService {
             last_name: lastName,
             phone: phone || null,
           },
-          // Add email redirect for confirmation
           emailRedirectTo: 'opendoors://auth/callback',
         }
       });
@@ -46,7 +45,10 @@ class AuthService {
 
         if (profileError) {
           console.error('Error creating profile:', profileError);
-          // Don't throw here - user is created, profile can be created later
+          // If it's a duplicate key error, we can ignore it as the profile exists
+          if (profileError.code !== '23505') {
+            throw profileError;
+          }
         }
       }
 
@@ -85,6 +87,18 @@ class AuthService {
       });
 
       if (error) throw error;
+
+      // Get user profile after successful sign in
+      if (data.user) {
+        const { data: profile, error: profileError } = await this.getUserProfile(data.user.id);
+        if (profileError) {
+          console.error('Error fetching user profile:', profileError);
+          // Don't throw here - we still want to sign in even if profile fetch fails
+        }
+        // Add profile to the response
+        return { data: { ...data, profile }, error: null };
+      }
+
       return { data, error: null };
     } catch (error: any) {
       console.error('Sign in error:', error);
