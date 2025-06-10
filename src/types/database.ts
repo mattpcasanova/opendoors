@@ -96,47 +96,71 @@ export interface Database {
       }
       user_profiles: {
         Row: {
-          id: string
-          first_name: string | null
-          last_name: string | null
-          phone: string | null
-          date_of_birth: string | null
-          location_city: string | null
-          location_state: string | null
-          location_zip: string | null
-          avatar_url: string | null
-          notification_preferences: Json
-          created_at: string
-          updated_at: string
-        }
+          id: string;
+          email: string | null;
+          first_name: string | null;
+          last_name: string | null;
+          phone: string | null;
+          date_of_birth: string | null;
+          location_city: string | null;
+          location_state: string | null;
+          location_zip: string | null;
+          avatar_url: string | null;
+          notification_preferences: Json | null;
+          status: 'pending_confirmation' | 'active' | 'suspended';
+          total_games: number;
+          total_wins: number;
+          daily_plays_remaining: number;
+          last_free_play_date: string | null;
+          subscription_status: 'free' | 'premium';
+          subscription_expires_at: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
         Insert: {
-          id: string
-          first_name?: string | null
-          last_name?: string | null
-          phone?: string | null
-          date_of_birth?: string | null
-          location_city?: string | null
-          location_state?: string | null
-          location_zip?: string | null
-          avatar_url?: string | null
-          notification_preferences?: Json
-          created_at?: string
-          updated_at?: string
-        }
+          id: string;
+          email?: string | null;
+          first_name?: string | null;
+          last_name?: string | null;
+          phone?: string | null;
+          date_of_birth?: string | null;
+          location_city?: string | null;
+          location_state?: string | null;
+          location_zip?: string | null;
+          avatar_url?: string | null;
+          notification_preferences?: Json | null;
+          status?: 'pending_confirmation' | 'active' | 'suspended';
+          total_games?: number;
+          total_wins?: number;
+          daily_plays_remaining?: number;
+          last_free_play_date?: string | null;
+          subscription_status?: 'free' | 'premium';
+          subscription_expires_at?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
         Update: {
-          id?: string
-          first_name?: string | null
-          last_name?: string | null
-          phone?: string | null
-          date_of_birth?: string | null
-          location_city?: string | null
-          location_state?: string | null
-          location_zip?: string | null
-          avatar_url?: string | null
-          notification_preferences?: Json
-          created_at?: string
-          updated_at?: string
-        }
+          id?: string;
+          email?: string | null;
+          first_name?: string | null;
+          last_name?: string | null;
+          phone?: string | null;
+          date_of_birth?: string | null;
+          location_city?: string | null;
+          location_state?: string | null;
+          location_zip?: string | null;
+          avatar_url?: string | null;
+          notification_preferences?: Json | null;
+          status?: 'pending_confirmation' | 'active' | 'suspended';
+          total_games?: number;
+          total_wins?: number;
+          daily_plays_remaining?: number;
+          last_free_play_date?: string | null;
+          subscription_status?: 'free' | 'premium';
+          subscription_expires_at?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
       }
       games: {
         Row: {
@@ -184,44 +208,32 @@ export interface Database {
       }
       user_prizes: {
         Row: {
-          id: string
-          user_id: string
-          game_id: string
-          prize_id: string
-          redemption_code: string | null
-          redemption_status: 'pending' | 'redeemed' | 'expired' | 'cancelled'
-          redeemed_at: string | null
-          expires_at: string | null
-          fulfillment_notes: string | null
-          created_at: string
-          updated_at: string
-        }
+          id: string;
+          user_id: string;
+          prize_type: string;
+          prize_value: string;
+          status: string;
+          redeemed_at: string | null;
+          created_at: string | null;
+        };
         Insert: {
-          id?: string
-          user_id: string
-          game_id: string
-          prize_id: string
-          redemption_code?: string | null
-          redemption_status?: 'pending' | 'redeemed' | 'expired' | 'cancelled'
-          redeemed_at?: string | null
-          expires_at?: string | null
-          fulfillment_notes?: string | null
-          created_at?: string
-          updated_at?: string
-        }
+          id?: string;
+          user_id: string;
+          prize_type: string;
+          prize_value: string;
+          status: string;
+          redeemed_at?: string | null;
+          created_at?: string | null;
+        };
         Update: {
-          id?: string
-          user_id?: string
-          game_id?: string
-          prize_id?: string
-          redemption_code?: string | null
-          redemption_status?: 'pending' | 'redeemed' | 'expired' | 'cancelled'
-          redeemed_at?: string | null
-          expires_at?: string | null
-          fulfillment_notes?: string | null
-          created_at?: string
-          updated_at?: string
-        }
+          id?: string;
+          user_id?: string;
+          prize_type?: string;
+          prize_value?: string;
+          status?: string;
+          redeemed_at?: string | null;
+          created_at?: string | null;
+        };
       }
       daily_plays: {
         Row: {
@@ -257,50 +269,38 @@ export interface Database {
       }
       user_stats: {
         Row: {
-          user_id: string
-          total_games: number
-          games_won: number
-          games_switched: number
-          switch_wins: number
-          stay_wins: number
-          total_prize_value: number
-          current_streak: number
-          longest_streak: number
-          favorite_sponsor_id: string | null
-          last_game_at: string | null
-          created_at: string
-          updated_at: string
-        }
+          id: string;
+          user_id: string;
+          total_games: number;
+          total_wins: number;
+          total_switches: number;
+          current_streak: number;
+          best_streak: number;
+          created_at: string | null;
+          updated_at: string | null;
+        };
         Insert: {
-          user_id: string
-          total_games?: number
-          games_won?: number
-          games_switched?: number
-          switch_wins?: number
-          stay_wins?: number
-          total_prize_value?: number
-          current_streak?: number
-          longest_streak?: number
-          favorite_sponsor_id?: string | null
-          last_game_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
+          id?: string;
+          user_id: string;
+          total_games?: number;
+          total_wins?: number;
+          total_switches?: number;
+          current_streak?: number;
+          best_streak?: number;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
         Update: {
-          user_id?: string
-          total_games?: number
-          games_won?: number
-          games_switched?: number
-          switch_wins?: number
-          stay_wins?: number
-          total_prize_value?: number
-          current_streak?: number
-          longest_streak?: number
-          favorite_sponsor_id?: string | null
-          last_game_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
+          id?: string;
+          user_id?: string;
+          total_games?: number;
+          total_wins?: number;
+          total_switches?: number;
+          current_streak?: number;
+          best_streak?: number;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
       }
       subscriptions: {
         Row: {
@@ -343,6 +343,38 @@ export interface Database {
           updated_at?: string
         }
       }
+      user_game_stats: {
+        Row: {
+          id: string;
+          user_id: string;
+          game_date: string;
+          initial_door: number;
+          switched: boolean;
+          won: boolean;
+          prize_type: string | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          game_date: string;
+          initial_door: number;
+          switched: boolean;
+          won: boolean;
+          prize_type?: string | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          game_date?: string;
+          initial_door?: number;
+          switched?: boolean;
+          won?: boolean;
+          prize_type?: string | null;
+          created_at?: string | null;
+        };
+      };
     }
     Views: {
       user_game_stats: {
@@ -402,5 +434,11 @@ export interface Database {
         }
       }
     }
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      [_ in never]: never;
+    };
   }
 } 

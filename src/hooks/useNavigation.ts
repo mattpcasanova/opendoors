@@ -1,6 +1,7 @@
-import { useNavigation as useRNNavigation } from '@react-navigation/native';
-import { AuthNavigationProp, MainTabNavigationProp, RootNavigationProp } from '../types/navigation';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { AuthStackParamList } from '../navigation/types';
 
-export const useNavigation = () => useRNNavigation<RootNavigationProp>();
-export const useAuthNavigation = () => useRNNavigation<AuthNavigationProp>();
-export const useMainNavigation = () => useRNNavigation<MainTabNavigationProp>();
+export function useAuthNavigation() {
+  return useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+}

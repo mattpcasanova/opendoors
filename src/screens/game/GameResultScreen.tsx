@@ -15,7 +15,7 @@ export default function GameResultScreen() {
         </Text>
         <TouchableOpacity
           className="bg-teal-600 px-6 py-3 rounded-xl"
-          onPress={() => navigation.navigate('MainTabs')}
+          onPress={() => navigation.navigate('MainStack')}
         >
           <Text className="text-white font-semibold">Back to Home</Text>
         </TouchableOpacity>
