@@ -1,5 +1,5 @@
 import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { supabase } from './supabase/client';
 
 export interface SignUpData {
   email: string;
@@ -18,43 +18,56 @@ class AuthService {
   // Sign up new user
   async signUp({ email, password, firstName, lastName, phone }: SignUpData) {
     try {
+      const cleanEmail = String(email).trim().toLowerCase();
+      const cleanPassword = String(password);
+      const cleanFirstName = String(firstName).trim();
+      const cleanLastName = String(lastName).trim();
+      const cleanPhone = phone ? String(phone).trim() : null;
+
+      console.log('Starting signup process for:', { 
+        email: cleanEmail, 
+        firstName: cleanFirstName, 
+        lastName: cleanLastName 
+      });
+
       const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
+        email: cleanEmail,
+        password: cleanPassword,
         options: {
           data: {
-            first_name: firstName,
-            last_name: lastName,
-            phone: phone || null,
+            first_name: cleanFirstName,
+            last_name: cleanLastName,
+            phone: cleanPhone,
           },
           emailRedirectTo: 'opendoors://auth/callback',
         }
       });
 
-      if (error) throw error;
-
-      // Create user profile using secure function
-      if (data.user) {
-        const { error: profileError } = await supabase.rpc('create_user_profile', {
-          user_id: data.user.id,
-          user_email: email,
-          first_name: firstName,
-          last_name: lastName,
-          phone: phone || null,
-        });
-
-        if (profileError) {
-          console.error('Error creating profile:', profileError);
-          // If it's a duplicate key error, we can ignore it as the profile exists
-          if (profileError.code !== '23505') {
-            throw profileError;
-          }
-        }
+      if (error) {
+        console.error('Auth signup error:', error);
+        throw error;
       }
 
+      if (!data.user) {
+        console.error('No user data returned from signup');
+        throw new Error('No user data returned from signup');
+      }
+
+      console.log('Auth user created successfully:', { 
+        email: data.user.email, 
+        userId: data.user.id 
+      });
+
+      // Profile will be created automatically by trigger
       return { data, error: null };
+      
     } catch (error: any) {
-      console.error('Sign up error:', error);
+      console.error('Sign up error:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
       return { data: null, error };
     }
   }
@@ -78,30 +91,33 @@ class AuthService {
     }
   }
 
-  // Sign in existing user
+  // Sign in user
   async signIn({ email, password }: SignInData) {
     try {
+      // Defensive parameter checking and cleaning
+      if (!email || !password) {
+        throw new Error('Email and password are required');
+      }
+      
+      const cleanEmail = String(email || '').trim().toLowerCase();
+      const cleanPassword = String(password || '');
+      
+      if (!cleanEmail || !cleanPassword) {
+        throw new Error('Valid email and password are required');
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: cleanEmail,
+        password: cleanPassword,
       });
 
-      if (error) throw error;
-
-      // Get user profile after successful sign in
-      if (data.user) {
-        const { data: profile, error: profileError } = await this.getUserProfile(data.user.id);
-        if (profileError) {
-          console.error('Error fetching user profile:', profileError);
-          // Don't throw here - we still want to sign in even if profile fetch fails
-        }
-        // Add profile to the response
-        return { data: { ...data, profile }, error: null };
+      if (error) {
+        throw error;
       }
 
       return { data, error: null };
+      
     } catch (error: any) {
-      console.error('Sign in error:', error);
       return { data: null, error };
     }
   }

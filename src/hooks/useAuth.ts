@@ -29,20 +29,39 @@ export function useAuth() {
 
   const signIn = async (email: string, password: string): Promise<AuthResult> => {
     try {
-      const { data, error } = await authService.signIn({ email, password });
-      
-      if (error) {
-        return { error };
+      if (email === undefined || email === null) {
+        return { error: { message: 'Email is required' } };
       }
       
-      if (data?.user) {
-        setUser(data.user);
+      if (password === undefined || password === null) {
+        return { error: { message: 'Password is required' } };
       }
       
-      return { error: null, user: data?.user || undefined };
+      const cleanEmail = String(email).trim().toLowerCase();
+      const cleanPassword = String(password);
+
+      if (!cleanEmail || !cleanPassword) {
+        return { error: { message: 'Email and password cannot be empty' } };
+      }
+
+      const result = await authService.signIn({ 
+        email: cleanEmail, 
+        password: cleanPassword 
+      });
+      
+      if (result.error) {
+        return { error: result.error };
+      }
+      
+      if (result.data?.user) {
+        setUser(result.data.user);
+      }
+      
+      return { error: null, user: result.data?.user };
+      
     } catch (error) {
       return {
-        error: error instanceof Error ? error.message : 'An error occurred during sign in'
+        error: error instanceof Error ? error : { message: 'An unexpected error occurred during sign in' }
       };
     }
   };
@@ -121,16 +140,39 @@ export function useAuthProvider() {
 
   const signIn = async (email: string, password: string): Promise<AuthResult> => {
     try {
-      const { data, error } = await authService.signIn({ email, password });
-      
-      if (error) {
-        return { error };
+      if (email === undefined || email === null) {
+        return { error: { message: 'Email is required' } };
       }
       
-      return { error: null, user: data?.user || undefined };
+      if (password === undefined || password === null) {
+        return { error: { message: 'Password is required' } };
+      }
+      
+      const cleanEmail = String(email).trim().toLowerCase();
+      const cleanPassword = String(password);
+
+      if (!cleanEmail || !cleanPassword) {
+        return { error: { message: 'Email and password cannot be empty' } };
+      }
+
+      const result = await authService.signIn({ 
+        email: cleanEmail, 
+        password: cleanPassword 
+      });
+      
+      if (result.error) {
+        return { error: result.error };
+      }
+      
+      if (result.data?.user) {
+        setUser(result.data.user);
+      }
+      
+      return { error: null, user: result.data?.user };
+      
     } catch (error) {
       return {
-        error: error instanceof Error ? error.message : 'An error occurred during sign in'
+        error: error instanceof Error ? error : { message: 'An unexpected error occurred during sign in' }
       };
     }
   };

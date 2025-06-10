@@ -1,22 +1,4 @@
-export type RootStackParamList = {
-  // Auth Flow
-  AuthStack: undefined;
-  
-  // Main App Flow  
-  MainStack: undefined;
-  
-  // Game Flow
-  GameScreen: {
-    prizeId?: string;
-    prizeName?: string;
-    sponsorName?: string;
-  };
-  
-  // Modal Screens
-  PrizeDetails: {
-    prizeId: string;
-  };
-};
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 export type AuthStackParamList = {
   Welcome: undefined;
@@ -25,20 +7,23 @@ export type AuthStackParamList = {
   ForgotPassword: undefined;
 };
 
-export type MainTabParamList = {
+export type MainStackParamList = {
   Home: undefined;
+  Game: { gameType: string; gameTitle: string };
   Rewards: undefined;
   History: undefined;
   Profile: undefined;
 };
 
-// Navigation prop types
-import { NavigationProp, RouteProp } from '@react-navigation/native';
+export type RootStackParamList = {
+  AuthStack: undefined;
+  MainStack: undefined;
+};
 
-export type RootNavigationProp = NavigationProp<RootStackParamList>;
-export type AuthNavigationProp = NavigationProp<AuthStackParamList>;
-export type MainTabNavigationProp = NavigationProp<MainTabParamList>;
+export type AuthNavigationProp = NativeStackNavigationProp<AuthStackParamList>;
+export type MainNavigationProp = NativeStackNavigationProp<MainStackParamList>;
+export type NavigationProp = NativeStackNavigationProp<AuthStackParamList>;
 
-// Route prop types
+// Game Flow
 export type GameScreenRouteProp = RouteProp<RootStackParamList, 'GameScreen'>;
 export type PrizeDetailsRouteProp = RouteProp<RootStackParamList, 'PrizeDetails'>;

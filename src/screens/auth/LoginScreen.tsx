@@ -4,14 +4,14 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
@@ -30,18 +30,66 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!formData.email || !formData.password) {
+    // Defensive extraction from form data
+    const emailValue = formData?.email;
+    const passwordValue = formData?.password;
+    
+    if (emailValue === undefined || emailValue === null || emailValue === '') {
+      Alert.alert('Error', 'Please enter your email address');
+      return;
+    }
+    
+    if (passwordValue === undefined || passwordValue === null || passwordValue === '') {
+      Alert.alert('Error', 'Please enter your password');
+      return;
+    }
+
+    const email = String(emailValue).trim();
+    const password = String(passwordValue);
+
+    if (!email || !password) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
-    setLoading(true);
-    const { error } = await signIn(formData.email.trim(), formData.password);
-
-    if (error) {
-      Alert.alert('Error', error.message);
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
     }
+
+    setLoading(true);
+    
+    try {
+      const result = await signIn(email, password);
+
+      if (result.error) {
+        let errorMessage = 'An error occurred during sign in';
+        
+        if (result.error.message) {
+          errorMessage = result.error.message;
+        } else if (typeof result.error === 'string') {
+          errorMessage = result.error;
+        }
+        
+        Alert.alert('Error', errorMessage);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+    }
+    
     setLoading(false);
+  };
+
+  const updateEmail = (text: string | undefined) => {
+    const safeText = String(text || '');
+    setFormData(prev => ({ ...prev, email: safeText }));
+  };
+
+  const updatePassword = (text: string | undefined) => {
+    const safeText = String(text || '');
+    setFormData(prev => ({ ...prev, password: safeText }));
   };
 
   return (
@@ -118,7 +166,7 @@ export default function LoginScreen() {
                       placeholder="Enter your email"
                       placeholderTextColor="#9CA3AF"
                       value={formData.email}
-                      onChangeText={(text) => setFormData({ ...formData, email: text })}
+                      onChangeText={updateEmail}
                       keyboardType="email-address"
                       autoCapitalize="none"
                       autoComplete="email"
@@ -139,7 +187,7 @@ export default function LoginScreen() {
                       placeholder="Enter your password"
                       placeholderTextColor="#9CA3AF"
                       value={formData.password}
-                      onChangeText={(text) => setFormData({ ...formData, password: text })}
+                      onChangeText={updatePassword}
                       secureTextEntry={!showPassword}
                       autoComplete="current-password"
                       returnKeyType="done"

@@ -1,7 +1,10 @@
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { AuthStackParamList } from '../navigation/types';
+import { useNavigation as useReactNavigation } from '@react-navigation/native';
+import { AuthNavigationProp, MainNavigationProp } from '../types/navigation';
 
 export function useAuthNavigation() {
-  return useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+  return useReactNavigation<AuthNavigationProp>();
+}
+
+export function useMainNavigation() {
+  return useReactNavigation<MainNavigationProp>();
 }
