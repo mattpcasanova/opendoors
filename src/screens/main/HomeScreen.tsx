@@ -10,9 +10,10 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import GameCard from '../../components/game/GameCard';
+import GameCard, { SpecialGameCard } from '../../components/game/GameCard';
 import { useLocation } from '../../hooks/useLocation';
 import { gamesService, Prize } from '../../services/gameLogic/games';
+import GameScreen from '../game/GameScreen';
 
 interface NavItemProps {
   icon: string;
@@ -77,7 +78,7 @@ const DailyGameButton: React.FC<DailyGameButtonProps> = ({ hasPlayedToday, onPre
       }}
     >
       <Ionicons name="gift" size={20} color="white" />
-      <Text className="text-white text-base font-bold ml-2">🎮 Play Your Free Daily Game!</Text>
+      <Text className="text-white text-base font-bold ml-2">Play Your Free Daily Game!</Text>
     </TouchableOpacity>
   );
 };
@@ -146,6 +147,9 @@ export default function HomeScreen() {
   const [gamesUntilBonus, setGamesUntilBonus] = useState(5);
   const [hasPlayedDailyGame, setHasPlayedDailyGame] = useState(false);
   const [lastPlayDate, setLastPlayDate] = useState<string | null>(null);
+  const [hasPlayedAnyGameToday, setHasPlayedAnyGameToday] = useState(false);
+  const [showGameScreen, setShowGameScreen] = useState(false);
+  const [currentGame, setCurrentGame] = useState<Prize | null>(null);
 
   useEffect(() => {
     const fetchGames = async () => {
@@ -214,26 +218,55 @@ export default function HomeScreen() {
   }, [searchText, regularGames]);
 
   const playGame = (prize: Prize) => {
-    Alert.alert('Game Selected', `Opening ${prize.name} game...`);
-    
-    // Decrement bonus progress when any game is played
-    if (gamesUntilBonus > 0) {
-      setGamesUntilBonus(prev => prev - 1);
-    }
+    // Set the current game and navigate to game screen
+    setCurrentGame(prize);
+    setShowGameScreen(true);
   };
 
   const playDailyGame = () => {
-    Alert.alert('Daily Game', 'Opening your free daily game!');
-    
-    // Mark daily game as played
-    setHasPlayedDailyGame(true);
+    // Navigate to game screen instead of showing alert
+    setShowGameScreen(true);
+  };
+
+  const handleGameComplete = (won: boolean, switched: boolean) => {
+    // Mark that a game has been played today
+    setHasPlayedAnyGameToday(true);
     setLastPlayDate(new Date().toDateString());
     
-    // Also count towards bonus progress
+    // Count towards bonus progress
     if (gamesUntilBonus > 0) {
       setGamesUntilBonus(prev => prev - 1);
     }
+
+    // Show result alert with game-specific message
+    const gameName = currentGame?.name || 'Daily Free Prize';
+    const message = won ? 
+      `Congratulations! You won the ${gameName}!` : 
+      'Better luck next time! You can play again tomorrow.';
+    
+    Alert.alert('Game Complete', message);
+    
+    // Go back to home screen and clear current game
+    setShowGameScreen(false);
+    setCurrentGame(null);
   };
+
+  const handleBackFromGame = () => {
+    setShowGameScreen(false);
+    setCurrentGame(null);
+  };
+
+  // If showing game screen, render that instead
+  if (showGameScreen && currentGame) {
+    return (
+      <GameScreen
+        prizeName={currentGame.name}
+        prizeDescription={currentGame.description}
+        onGameComplete={handleGameComplete}
+        onBack={handleBackFromGame}
+      />
+    );
+  }
 
   const claimBonusDoor = () => {
     Alert.alert(
@@ -320,9 +353,9 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Daily Free Game Button */}
+        {/* Daily Free Game Button - Updated */}
         <DailyGameButton 
-          hasPlayedToday={hasPlayedDailyGame}
+          hasPlayedToday={hasPlayedAnyGameToday}
           onPress={playDailyGame}
         />
 
@@ -332,70 +365,48 @@ export default function HomeScreen() {
           onClaimBonus={claimBonusDoor}
         />
 
-        {/* Today's Special - FIXED STYLING */}
-        <Text className="text-gray-900 text-xl font-semibold mb-4">Today's special</Text>
-        <TouchableOpacity
-          className="mb-8 rounded-2xl overflow-hidden"
-          onPress={() => playGame({
-            id: 'target-gift-card',
-            name: 'Target Gift Card',
-            description: 'Win a $25 gift card',
-            value: 25,
-            prize_type: 'gift_card',
-            doors: 3,
-            created_at: new Date().toISOString()
-          })}
-          activeOpacity={0.9}
-          style={{
-            shadowColor: '#FF9800',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.25,
-            shadowRadius: 8,
-            elevation: 6,
-          }}
-        >
-          <LinearGradient
-            colors={['#FF9800', '#F57C00']}
-            style={{ padding: 24 }}
-          >
-            {/* Decorative element */}
-            <View 
-              className="absolute -top-1/2 -right-5 opacity-20"
-              style={{ 
-                backgroundColor: 'rgba(255,255,255,0.3)', 
-                width: 100, 
-                height: '200%',
-                transform: [{ rotate: '15deg' }]
-              }}
+        {/* Today's Special */}
+        {featuredGame && (
+          <>
+            <Text className="text-gray-900 text-xl font-semibold mb-4">Today's special</Text>
+            <SpecialGameCard
+              prize={featuredGame}
+              userLocation={location}
+              onPress={() => playGame(featuredGame)}
             />
-            
-            <View className="flex-row justify-between items-start">
-              <View className="flex-1">
-                <Text className="text-white text-2xl font-bold mb-2">Target Gift Card</Text>
-                <Text className="text-white text-base mb-1 opacity-95">Win a $25 gift card</Text>
-                <Text className="text-orange-100 text-sm mb-4">Limited time • Ends at midnight</Text>
-                
-                <TouchableOpacity
-                  className="bg-white self-start px-4 py-2 rounded-2xl"
-                  activeOpacity={0.8}
-                  onPress={() => playGame({
-                    id: 'target-gift-card',
-                    name: 'Target Gift Card',
-                    description: 'Win a $25 gift card',
-                    value: 25,
-                    prize_type: 'gift_card',
-                    doors: 3,
-                    created_at: new Date().toISOString()
-                  })}
-                >
-                  <Text className="text-orange-500 text-sm font-semibold">Play now</Text>
-                </TouchableOpacity>
-              </View>
-              
-              <Text className="text-4xl opacity-90">🎯</Text>
-            </View>
-          </LinearGradient>
-        </TouchableOpacity>
+          </>
+        )}
+
+        {/* If no featured game from database, show fallback */}
+        {!featuredGame && (
+          <>
+            <Text className="text-gray-900 text-xl font-semibold mb-4">Today's special</Text>
+            <SpecialGameCard
+              prize={{
+                id: 'target-gift-card',
+                name: 'Target Gift Card',
+                description: 'Win a $25 gift card',
+                value: 25,
+                prize_type: 'gift_card',
+                doors: 3,
+                created_at: new Date().toISOString(),
+                location_name: 'Target',
+                address: 'Online',
+                stock_quantity: 10
+              }}
+              userLocation={location}
+              onPress={() => playGame({
+                id: 'target-gift-card',
+                name: 'Target Gift Card',
+                description: 'Win a $25 gift card',
+                value: 25,
+                prize_type: 'gift_card',
+                doors: 3,
+                created_at: new Date().toISOString()
+              })}
+            />
+          </>
+        )}
 
         {/* Available Games */}
         <Text className="text-gray-900 text-xl font-semibold mb-4">Available games</Text>
@@ -409,12 +420,14 @@ export default function HomeScreen() {
           />
         ))}
 
-        {/* Debug Info - Remove in production */}
+        {/* Debug Info - Update to show new state */}
         <View className="mt-8 p-4 bg-gray-100 rounded-xl">
           <Text className="text-gray-700 text-sm font-semibold mb-2">Debug Info:</Text>
           <Text className="text-gray-600 text-xs">Games until bonus: {gamesUntilBonus}</Text>
-          <Text className="text-gray-600 text-xs">Daily game played: {hasPlayedDailyGame ? 'Yes' : 'No'}</Text>
+          <Text className="text-gray-600 text-xs">Any game played today: {hasPlayedAnyGameToday ? 'Yes' : 'No'}</Text>
           <Text className="text-gray-600 text-xs">Last play date: {lastPlayDate || 'Never'}</Text>
+          <Text className="text-gray-600 text-xs">Current game: {currentGame?.name || 'None'}</Text>
+          <Text className="text-gray-600 text-xs">Show game screen: {showGameScreen ? 'Yes' : 'No'}</Text>
         </View>
       </ScrollView>
 

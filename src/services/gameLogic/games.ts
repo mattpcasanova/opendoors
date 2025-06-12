@@ -13,6 +13,7 @@ export interface Prize {
   doors: number;
   stock_quantity?: number;
   expires_at?: string;
+  is_special?: boolean;
   created_at: string;
 }
 
@@ -50,27 +51,46 @@ class GamesService {
     }
   }
 
-  // Get featured/special game (highest value or marked as featured)
+  // Get featured/special game (marked as special OR highest value)
   async getFeaturedGame() {
     try {
       console.log('⭐ Fetching featured game...');
       
-      const { data, error } = await supabase
+      // First try to get games marked as special
+      const { data: specialGames, error: specialError } = await supabase
+        .from('active_games')
+        .select('*')
+        .eq('is_special', true)
+        .order('value', { ascending: false })
+        .limit(1);
+
+      if (specialError) throw specialError;
+
+      // If we have a special game, use it
+      if (specialGames && specialGames.length > 0) {
+        const featuredGame = specialGames[0];
+        console.log('⭐ Found special game:', featuredGame.name);
+        return { data: featuredGame, error: null };
+      }
+
+      // Otherwise, fall back to highest value game
+      const { data: highestValueGames, error: valueError } = await supabase
         .from('active_games')
         .select('*')
         .order('value', { ascending: false })
         .limit(1);
 
-      // Return the first item or null if no results
-      const featuredGame = data && data.length > 0 ? data[0] : null;
+      if (valueError) throw valueError;
+
+      const featuredGame = highestValueGames && highestValueGames.length > 0 ? highestValueGames[0] : null;
       
       console.log('⭐ Featured game result:', { 
         featuredGame: featuredGame?.name, 
         value: featuredGame?.value,
-        error 
+        isSpecial: featuredGame?.is_special,
+        error: null
       });
 
-      if (error) throw error;
       return { data: featuredGame, error: null };
     } catch (error: any) {
       console.error('❌ Error fetching featured game:', error);
@@ -78,43 +98,49 @@ class GamesService {
     }
   }
 
-  // Get regular games (excluding featured) - FIXED VERSION
+  // Get regular games (excluding featured/special games)
   async getRegularGames() {
     try {
       console.log('📋 Fetching regular games...');
       
-      // Get all active games first
+      // Get all active games that are NOT marked as special
       const { data: allGames, error: allGamesError } = await supabase
         .from('active_games')
         .select('*')
+        .eq('is_special', false)
         .order('created_at', { ascending: false });
 
       if (allGamesError) throw allGamesError;
       
-      console.log('📋 All games fetched:', allGames?.length);
+      console.log('📋 Regular games fetched (non-special):', allGames?.length);
 
       if (!allGames || allGames.length === 0) {
-        return { data: [], error: null };
+        // If no non-special games, get all games and exclude the featured one
+        const { data: allAnyGames, error: anyGamesError } = await supabase
+          .from('active_games')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (anyGamesError) throw anyGamesError;
+
+        if (!allAnyGames || allAnyGames.length <= 1) {
+          return { data: [], error: null };
+        }
+
+        // Exclude the highest value game (which would be featured)
+        const sortedByValue = [...allAnyGames].sort((a, b) => (b.value || 0) - (a.value || 0));
+        const regularGames = allAnyGames.filter(game => game.id !== sortedByValue[0].id);
+        
+        console.log('📋 Using fallback regular games:', regularGames.length);
+        return { data: regularGames, error: null };
       }
 
-      // If we have 4 or fewer games, show all as regular games (no featured)
-      if (allGames.length <= 4) {
-        console.log('📋 Showing all games as regular (4 or fewer total)');
-        return { data: allGames, error: null };
-      }
-
-      // If we have more than 4 games, exclude the highest value one as featured
-      const sortedByValue = [...allGames].sort((a, b) => (b.value || 0) - (a.value || 0));
-      const featuredGame = sortedByValue[0];
-      const regularGames = allGames.filter(game => game.id !== featuredGame.id);
-      
       console.log('📋 Regular games result:', { 
         total: allGames.length,
-        featured: featuredGame.name,
-        regular: regularGames.length 
+        games: allGames.map(g => g.name)
       });
 
-      return { data: regularGames, error: null };
+      return { data: allGames, error: null };
     } catch (error: any) {
       console.error('❌ Error fetching regular games:', error);
       return { data: null, error };

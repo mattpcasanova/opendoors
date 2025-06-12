@@ -14,6 +14,12 @@ interface Props {
   userLocation?: Coordinates | null;
 }
 
+interface SpecialGameCardProps {
+  prize: Prize;
+  onPress: () => void;
+  userLocation?: Coordinates | null;
+}
+
 // Helper function to get icon and background color based on prize
 const getIconForPrize = (prizeType: string, name: string) => {
   const lowerName = name.toLowerCase();
@@ -54,7 +60,7 @@ const calculateDistance = (userLocation: Coordinates | null, address: string | u
 
 export default function GameCard({ prize, onPress, userLocation }: Props) {
   const { icon, bg } = getIconForPrize(prize.prize_type, prize.name);
-  const distance = calculateDistance(userLocation, prize.address);
+  const distance = calculateDistance(userLocation || null, prize.address);
 
   return (
     <TouchableOpacity
@@ -167,6 +173,171 @@ export default function GameCard({ prize, onPress, userLocation }: Props) {
           }}>
             {prize.doors} door{prize.doors !== 1 ? 's' : ''}
           </Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+// Special/Featured Game Card with distance and doors info
+export function SpecialGameCard({ prize, onPress, userLocation }: SpecialGameCardProps) {
+  const distance = calculateDistance(userLocation || null, prize.address);
+  
+  const getIconForPrize = (name: string) => {
+    const lowerName = name.toLowerCase();
+    if (lowerName.includes('target')) return '🎯';
+    if (lowerName.includes('gift')) return '🎁';
+    if (lowerName.includes('movie')) return '🎬';
+    if (lowerName.includes('starbucks')) return '☕';
+    if (lowerName.includes('chick')) return '🐔';
+    return '⭐';
+  };
+
+  const formatValue = (value: number) => {
+    return value >= 1 ? `${Math.floor(value)}` : `${value.toFixed(2)}`;
+  };
+
+  return (
+    <TouchableOpacity
+      style={{
+        marginBottom: 32,
+        borderRadius: 16,
+        overflow: 'hidden',
+        shadowColor: '#FF9800',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
+        elevation: 6,
+      }}
+      onPress={onPress}
+      activeOpacity={0.9}
+    >
+      {/* Gradient Background */}
+      <View style={{
+        backgroundColor: '#FF9800',
+        padding: 24,
+        position: 'relative',
+      }}>
+        {/* Decorative element */}
+        <View style={{
+          position: 'absolute',
+          top: '-50%',
+          right: -20,
+          width: 100,
+          height: '200%',
+          backgroundColor: 'rgba(255,255,255,0.2)',
+          transform: [{ rotate: '15deg' }],
+          opacity: 0.3,
+        }} />
+        
+        <View style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          marginBottom: 16,
+        }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{
+              color: 'white',
+              fontSize: 24,
+              fontWeight: '700',
+              marginBottom: 8,
+            }}>
+              {prize.location_name || prize.name}
+            </Text>
+            <Text style={{
+              color: 'white',
+              fontSize: 16,
+              marginBottom: 4,
+              opacity: 0.95,
+            }}>
+              {prize.description} • {formatValue(prize.value || 0)} value
+            </Text>
+            <Text style={{
+              color: '#FFE0B2',
+              fontSize: 14,
+              marginBottom: 16,
+            }}>
+              Limited time • {prize.stock_quantity} available
+            </Text>
+            
+            <TouchableOpacity
+              style={{
+                backgroundColor: 'white',
+                alignSelf: 'flex-start',
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                borderRadius: 16,
+              }}
+              activeOpacity={0.8}
+              onPress={onPress}
+            >
+              <Text style={{
+                color: '#FF9800',
+                fontSize: 14,
+                fontWeight: '600',
+              }}>
+                Play now
+              </Text>
+            </TouchableOpacity>
+          </View>
+          
+          <Text style={{ fontSize: 40, opacity: 0.9 }}>
+            {getIconForPrize(prize.name)}
+          </Text>
+        </View>
+
+        {/* Bottom Info Row for Special Card */}
+        <View style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingTop: 12,
+          borderTopWidth: 1,
+          borderTopColor: 'rgba(255,255,255,0.2)',
+        }}>
+          {/* Distance */}
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={{ fontSize: 14, color: 'white', marginRight: 6, opacity: 0.8 }}>📍</Text>
+            <Text style={{ 
+              fontSize: 14, 
+              color: 'white', 
+              fontWeight: '500',
+              opacity: 0.9,
+            }}>
+              {distance}
+            </Text>
+          </View>
+          
+          {/* Doors */}
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={{ fontSize: 14, color: 'white', marginRight: 6, opacity: 0.8 }}>🚪</Text>
+            <Text style={{ 
+              fontSize: 14, 
+              color: 'white', 
+              fontWeight: '500',
+              opacity: 0.9,
+            }}>
+              {prize.doors} door{prize.doors !== 1 ? 's' : ''}
+            </Text>
+          </View>
+
+          {/* Special Badge */}
+          <View style={{
+            backgroundColor: 'rgba(255,255,255,0.2)',
+            paddingHorizontal: 8,
+            paddingVertical: 4,
+            borderRadius: 12,
+          }}>
+            <Text style={{
+              color: 'white',
+              fontSize: 12,
+              fontWeight: '600',
+              opacity: 0.9,
+            }}>
+              ⭐ SPECIAL
+            </Text>
+          </View>
         </View>
       </View>
     </TouchableOpacity>
