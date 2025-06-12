@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   ScrollView,
@@ -10,48 +10,9 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-interface GameCardProps {
-  title: string;
-  description: string;
-  icon: string;
-  iconBg: string;
-  onPress: () => void;
-}
-
-const GameCard: React.FC<GameCardProps> = ({ title, description, icon, iconBg, onPress }) => (
-  <TouchableOpacity
-    className="bg-white rounded-2xl p-4 flex-row items-center mb-3 shadow-sm"
-    onPress={onPress}
-    activeOpacity={0.8}
-    style={{
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.08,
-      shadowRadius: 4,
-      elevation: 2,
-    }}
-  >
-    <View 
-      className="w-12 h-12 rounded-full items-center justify-center mr-4"
-      style={{ backgroundColor: iconBg }}
-    >
-      <Text className="text-2xl">{icon}</Text>
-    </View>
-    
-    <View className="flex-1">
-      <Text className="text-gray-900 text-base font-semibold mb-1">{title}</Text>
-      <Text className="text-gray-600 text-sm">{description}</Text>
-    </View>
-    
-    <TouchableOpacity
-      className="bg-teal-600 px-4 py-2 rounded-xl"
-      activeOpacity={0.8}
-    >
-      <Text className="text-white text-xs font-bold">PLAY</Text>
-    </TouchableOpacity>
-  </TouchableOpacity>
-);
+import GameCard from '../../components/game/GameCard';
+import { useLocation } from '../../hooks/useLocation';
+import { gamesService, Prize } from '../../services/gameLogic/games';
 
 interface NavItemProps {
   icon: string;
@@ -77,12 +38,217 @@ const NavItem: React.FC<NavItemProps> = ({ icon, label, active = false, onPress 
   </TouchableOpacity>
 );
 
+interface DailyGameButtonProps {
+  hasPlayedToday: boolean;
+  onPress: () => void;
+}
+
+const DailyGameButton: React.FC<DailyGameButtonProps> = ({ hasPlayedToday, onPress }) => {
+  if (hasPlayedToday) {
+    return (
+      <TouchableOpacity
+        className="bg-gray-400 py-4 px-6 rounded-2xl mb-6 flex-row items-center justify-center"
+        disabled={true}
+        style={{
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 3,
+        }}
+      >
+        <Ionicons name="checkmark-circle" size={20} color="white" />
+        <Text className="text-white text-base font-bold ml-2">Played Today - Come Back Tomorrow!</Text>
+      </TouchableOpacity>
+    );
+  }
+
+  return (
+    <TouchableOpacity
+      className="bg-green-500 py-4 px-6 rounded-2xl mb-6 flex-row items-center justify-center"
+      onPress={onPress}
+      activeOpacity={0.8}
+      style={{
+        shadowColor: '#22C55E',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
+        elevation: 6,
+      }}
+    >
+      <Ionicons name="gift" size={20} color="white" />
+      <Text className="text-white text-base font-bold ml-2">🎮 Play Your Free Daily Game!</Text>
+    </TouchableOpacity>
+  );
+};
+
+interface ProgressSectionProps {
+  gamesUntilBonus: number;
+  onClaimBonus: () => void;
+}
+
+const ProgressSection: React.FC<ProgressSectionProps> = ({ gamesUntilBonus, onClaimBonus }) => {
+  const totalGames = 5;
+  const progressPercentage = ((totalGames - gamesUntilBonus) / totalGames) * 100;
+  const isComplete = gamesUntilBonus === 0;
+
+  if (isComplete) {
+    return (
+      <View className="mb-8">
+        <TouchableOpacity
+          className="bg-green-500 py-4 px-6 rounded-2xl flex-row items-center justify-center"
+          onPress={onClaimBonus}
+          activeOpacity={0.8}
+          style={{
+            shadowColor: '#22C55E',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.25,
+            shadowRadius: 8,
+            elevation: 6,
+          }}
+        >
+          <Ionicons name="trophy" size={24} color="white" />
+          <Text className="text-white text-lg font-bold ml-3">🎉 Claim Your Free Bonus Door!</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  return (
+    <View className="mb-8">
+      <Text className="text-gray-900 text-base font-medium mb-3">
+        {gamesUntilBonus} more games for bonus door
+      </Text>
+      <View className="bg-gray-200 h-2 rounded-full">
+        <View 
+          className="h-full rounded-full"
+          style={{ 
+            width: `${progressPercentage}%`, 
+            backgroundColor: '#FF9800'
+          }}
+        />
+      </View>
+    </View>
+  );
+};
+
 export default function HomeScreen() {
   const [searchText, setSearchText] = useState('');
   const [activeTab, setActiveTab] = useState('Home');
+  const { location } = useLocation();
+  const [filteredGames, setFilteredGames] = useState<Prize[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [featuredGame, setFeaturedGame] = useState<Prize | null>(null);
+  const [regularGames, setRegularGames] = useState<Prize[]>([]);
+  
+  // Game state - in a real app, this would come from user profile/database
+  const [gamesUntilBonus, setGamesUntilBonus] = useState(5);
+  const [hasPlayedDailyGame, setHasPlayedDailyGame] = useState(false);
+  const [lastPlayDate, setLastPlayDate] = useState<string | null>(null);
 
-  const playGame = (gameType: string) => {
-    Alert.alert('Game Selected', `Opening ${gameType} game...`);
+  useEffect(() => {
+    const fetchGames = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        console.log('🏠 Starting to fetch games...');
+        
+        // First, let's see all active games
+        const allGamesResult = await gamesService.getActiveGames();
+        console.log('🏠 All active games:', allGamesResult);
+        
+        const [featuredResult, regularResult] = await Promise.all([
+          gamesService.getFeaturedGame(),
+          gamesService.getRegularGames()
+        ]);
+
+        console.log('🏠 Featured game result:', featuredResult);
+        console.log('🏠 Regular games result:', regularResult);
+
+        if (featuredResult.error) {
+          console.error('❌ Error fetching featured game:', featuredResult.error);
+        } else {
+          console.log('✅ Featured game set:', featuredResult.data?.name);
+          setFeaturedGame(featuredResult.data);
+        }
+
+        if (regularResult.error) {
+          console.error('❌ Error fetching regular games:', regularResult.error);
+        } else {
+          console.log('✅ Regular games set:', regularResult.data?.length, 'games');
+          console.log('✅ Regular games list:', regularResult.data?.map(g => g.name));
+          setRegularGames(regularResult.data || []);
+        }
+
+      } catch (err) {
+        console.error('❌ Error fetching games:', err);
+        setError('Failed to load games. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGames();
+  }, []);
+
+  // Check if it's a new day and reset daily game
+  useEffect(() => {
+    const today = new Date().toDateString();
+    if (lastPlayDate !== today) {
+      setHasPlayedDailyGame(false);
+    }
+  }, [lastPlayDate]);
+
+  // Add this effect to filter games based on search text
+  useEffect(() => {
+    if (!regularGames) return;
+    
+    const filtered = regularGames.filter(game => 
+      game.name.toLowerCase().includes(searchText.toLowerCase()) ||
+      game.description.toLowerCase().includes(searchText.toLowerCase())
+    );
+    
+    setFilteredGames(filtered);
+  }, [searchText, regularGames]);
+
+  const playGame = (prize: Prize) => {
+    Alert.alert('Game Selected', `Opening ${prize.name} game...`);
+    
+    // Decrement bonus progress when any game is played
+    if (gamesUntilBonus > 0) {
+      setGamesUntilBonus(prev => prev - 1);
+    }
+  };
+
+  const playDailyGame = () => {
+    Alert.alert('Daily Game', 'Opening your free daily game!');
+    
+    // Mark daily game as played
+    setHasPlayedDailyGame(true);
+    setLastPlayDate(new Date().toDateString());
+    
+    // Also count towards bonus progress
+    if (gamesUntilBonus > 0) {
+      setGamesUntilBonus(prev => prev - 1);
+    }
+  };
+
+  const claimBonusDoor = () => {
+    Alert.alert(
+      'Bonus Door! 🎉', 
+      'Congratulations! You\'ve earned a bonus door. Opening now...',
+      [
+        {
+          text: 'Claim Prize!',
+          onPress: () => {
+            // Reset the progress
+            setGamesUntilBonus(5);
+          }
+        }
+      ]
+    );
   };
 
   const navigateTo = (page: string) => {
@@ -154,23 +320,31 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Progress Section */}
-        <View className="mb-8">
-          <Text className="text-gray-900 text-base font-medium mb-3">
-            2 more games for bonus door
-          </Text>
-          <View className="bg-gray-200 h-1 rounded-full">
-            <View className="bg-gradient-to-r from-orange-500 to-orange-600 h-full rounded-full"
-              style={{ width: '66.7%', backgroundColor: '#FF9800' }}
-            />
-          </View>
-        </View>
+        {/* Daily Free Game Button */}
+        <DailyGameButton 
+          hasPlayedToday={hasPlayedDailyGame}
+          onPress={playDailyGame}
+        />
 
-        {/* Today's Special */}
+        {/* Progress Section */}
+        <ProgressSection 
+          gamesUntilBonus={gamesUntilBonus}
+          onClaimBonus={claimBonusDoor}
+        />
+
+        {/* Today's Special - FIXED STYLING */}
         <Text className="text-gray-900 text-xl font-semibold mb-4">Today's special</Text>
         <TouchableOpacity
-          className="mb-8 rounded-2xl p-6 overflow-hidden"
-          onPress={() => playGame('Target Gift Card')}
+          className="mb-8 rounded-2xl overflow-hidden"
+          onPress={() => playGame({
+            id: 'target-gift-card',
+            name: 'Target Gift Card',
+            description: 'Win a $25 gift card',
+            value: 25,
+            prize_type: 'gift_card',
+            doors: 3,
+            created_at: new Date().toISOString()
+          })}
           activeOpacity={0.9}
           style={{
             shadowColor: '#FF9800',
@@ -182,67 +356,66 @@ export default function HomeScreen() {
         >
           <LinearGradient
             colors={['#FF9800', '#F57C00']}
-            className="absolute inset-0"
-          />
-          
-          {/* Decorative element */}
-          <View 
-            className="absolute -top-1/2 -right-5 w-25 h-full opacity-10 transform rotate-12"
-            style={{ backgroundColor: 'rgba(255,255,255,0.1)', width: 100, height: '200%' }}
-          />
-          
-          <View className="flex-row justify-between items-start">
-            <View className="flex-1">
-              <Text className="text-white text-2xl font-bold mb-2">Target Gift Card</Text>
-              <Text className="text-white text-base mb-1">Win a $25 gift card</Text>
-              <Text className="text-orange-100 text-sm mb-4">Limited time • Ends at midnight</Text>
-              
-              <TouchableOpacity
-                className="bg-white self-start px-4 py-2 rounded-2xl"
-                activeOpacity={0.8}
-              >
-                <Text className="text-orange-500 text-sm font-semibold">Play now</Text>
-              </TouchableOpacity>
-            </View>
+            style={{ padding: 24 }}
+          >
+            {/* Decorative element */}
+            <View 
+              className="absolute -top-1/2 -right-5 opacity-20"
+              style={{ 
+                backgroundColor: 'rgba(255,255,255,0.3)', 
+                width: 100, 
+                height: '200%',
+                transform: [{ rotate: '15deg' }]
+              }}
+            />
             
-            <Text className="text-4xl opacity-80">🎯</Text>
-          </View>
+            <View className="flex-row justify-between items-start">
+              <View className="flex-1">
+                <Text className="text-white text-2xl font-bold mb-2">Target Gift Card</Text>
+                <Text className="text-white text-base mb-1 opacity-95">Win a $25 gift card</Text>
+                <Text className="text-orange-100 text-sm mb-4">Limited time • Ends at midnight</Text>
+                
+                <TouchableOpacity
+                  className="bg-white self-start px-4 py-2 rounded-2xl"
+                  activeOpacity={0.8}
+                  onPress={() => playGame({
+                    id: 'target-gift-card',
+                    name: 'Target Gift Card',
+                    description: 'Win a $25 gift card',
+                    value: 25,
+                    prize_type: 'gift_card',
+                    doors: 3,
+                    created_at: new Date().toISOString()
+                  })}
+                >
+                  <Text className="text-orange-500 text-sm font-semibold">Play now</Text>
+                </TouchableOpacity>
+              </View>
+              
+              <Text className="text-4xl opacity-90">🎯</Text>
+            </View>
+          </LinearGradient>
         </TouchableOpacity>
 
         {/* Available Games */}
         <Text className="text-gray-900 text-xl font-semibold mb-4">Available games</Text>
         
-        <GameCard
-          title="Chick-fil-A"
-          description="Free sandwich or milkshake"
-          icon="🐔"
-          iconBg="#FFF3E0"
-          onPress={() => playGame('Chick-fil-A')}
-        />
-        
-        <GameCard
-          title="Silver Shores Market"
-          description="Free fruit cup or veggie basket"
-          icon="🌽"
-          iconBg="#F1F8E9"
-          onPress={() => playGame('Silver Shores Market')}
-        />
-        
-        <GameCard
-          title="Starbucks"
-          description="Free drink upgrade"
-          icon="☕"
-          iconBg="#E8F5E8"
-          onPress={() => playGame('Starbucks')}
-        />
-        
-        <GameCard
-          title="McDonald's"
-          description="Free medium fries"
-          icon="🍟"
-          iconBg="#FFF8E1"
-          onPress={() => playGame('McDonald\'s')}
-        />
+        {filteredGames.map((prize) => (
+          <GameCard
+            key={prize.id}
+            prize={prize}
+            userLocation={location}
+            onPress={() => playGame(prize)}
+          />
+        ))}
+
+        {/* Debug Info - Remove in production */}
+        <View className="mt-8 p-4 bg-gray-100 rounded-xl">
+          <Text className="text-gray-700 text-sm font-semibold mb-2">Debug Info:</Text>
+          <Text className="text-gray-600 text-xs">Games until bonus: {gamesUntilBonus}</Text>
+          <Text className="text-gray-600 text-xs">Daily game played: {hasPlayedDailyGame ? 'Yes' : 'No'}</Text>
+          <Text className="text-gray-600 text-xs">Last play date: {lastPlayDate || 'Never'}</Text>
+        </View>
       </ScrollView>
 
       {/* Bottom Navigation */}

@@ -13,7 +13,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.opendoors.app",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSLocationWhenInUseUsageDescription": "Open Doors needs your location to show you nearby prizes and games.",
+        "NSLocationAlwaysUsageDescription": "Open Doors needs your location to show you nearby prizes and games."
       }
     },
     "android": {
@@ -21,7 +23,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"]
     },
     "web": {
       "bundler": "metro",
@@ -39,7 +42,13 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Open Doors to use your location to show you nearby prizes and games."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
