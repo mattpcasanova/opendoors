@@ -1,3 +1,4 @@
+import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 export type AuthStackParamList = {
@@ -22,8 +23,7 @@ export type RootStackParamList = {
 
 export type AuthNavigationProp = NativeStackNavigationProp<AuthStackParamList>;
 export type MainNavigationProp = NativeStackNavigationProp<MainStackParamList>;
-export type NavigationProp = NativeStackNavigationProp<AuthStackParamList>;
+export type RootNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 // Game Flow
-export type GameScreenRouteProp = RouteProp<RootStackParamList, 'GameScreen'>;
-export type PrizeDetailsRouteProp = RouteProp<RootStackParamList, 'PrizeDetails'>;
+export type GameScreenRouteProp = RouteProp<MainStackParamList, 'Game'>;

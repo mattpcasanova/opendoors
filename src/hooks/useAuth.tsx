@@ -1,13 +1,12 @@
 import { Session, User } from '@supabase/supabase-js';
-import { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { authService } from '../services/auth';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { authService, SignUpData } from '../services/auth';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (data: { email: string; password: string; firstName: string; lastName: string; phone?: string }) => Promise<{ error: any; user?: User }>;
+  signUp: (data: SignUpData) => Promise<{ error: any; user?: User }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
@@ -21,21 +20,31 @@ interface AuthResult {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export function useAuthProvider() {
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    authService.getCurrentSession().then((session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = authService.onAuthStateChange((session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -44,7 +53,8 @@ export function useAuthProvider() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (data: { email: string; password: string; firstName: string; lastName: string; phone?: string }): Promise<AuthResult> => {
+  const signUp = async (data: SignUpData): Promise<AuthResult> => {
+    setLoading(true);
     try {
       const cleanData = {
         email: String(data.email || '').trim().toLowerCase(),
@@ -54,7 +64,7 @@ export function useAuthProvider() {
         phone: data.phone ? String(data.phone).trim() : undefined,
       };
 
-      console.log('useAuthProvider signUp called:', { 
+      console.log('AuthProvider signUp called:', { 
         email: cleanData.email, 
         firstName: cleanData.firstName, 
         lastName: cleanData.lastName 
@@ -63,12 +73,15 @@ export function useAuthProvider() {
       const result = await authService.signUp(cleanData);
       
       if (result.error) {
+        setLoading(false);
         return { error: result.error };
       }
       
+      setLoading(false);
       return { error: null, user: result.data?.user || undefined };
     } catch (error) {
-      console.error('useAuthProvider signUp catch block:', error);
+      console.error('AuthProvider signUp catch block:', error);
+      setLoading(false);
       return { 
         error: error instanceof Error ? error : { message: 'An unexpected error occurred during sign up' }
       };
@@ -77,16 +90,27 @@ export function useAuthProvider() {
 
   const signIn = async (email: string, password: string): Promise<AuthResult> => {
     try {
-      const cleanEmail = String(email || '').trim().toLowerCase();
-      const cleanPassword = String(password || '');
-
-      console.log('useAuthProvider signIn called');
+      if (email === undefined || email === null) {
+        return { error: { message: 'Email is required' } };
+      }
       
+      if (password === undefined || password === null) {
+        return { error: { message: 'Password is required' } };
+      }
+      
+      const cleanEmail = String(email).trim().toLowerCase();
+      const cleanPassword = String(password);
+
       if (!cleanEmail || !cleanPassword) {
-        return { error: { message: 'Email and password are required' } };
+        return { error: { message: 'Email and password cannot be empty' } };
       }
 
-      const result = await authService.signIn(cleanEmail, cleanPassword);
+      console.log('AuthProvider signIn called');
+      
+      const result = await authService.signIn({ 
+        email: cleanEmail, 
+        password: cleanPassword 
+      });
       
       if (result.error) {
         return { error: result.error };
@@ -94,8 +118,9 @@ export function useAuthProvider() {
       
       // Don't manually set state here - let the auth state change handler do it
       return { error: null, user: result.data?.user };
+      
     } catch (error) {
-      console.error('useAuthProvider signIn error:', error);
+      console.error('AuthProvider signIn error:', error);
       return {
         error: error instanceof Error ? error : { message: 'An unexpected error occurred during sign in' }
       };
@@ -112,11 +137,17 @@ export function useAuthProvider() {
   };
 
   const resendConfirmation = async (email: string) => {
-    const { error } = await authService.resendConfirmation(email);
-    return { error };
+    try {
+      const { error } = await authService.resendConfirmation(email);
+      return { error };
+    } catch (error) {
+      return { 
+        error: error instanceof Error ? error.message : 'An error occurred while resending confirmation'
+      };
+    }
   };
 
-  return {
+  const value: AuthContextType = {
     user,
     session,
     loading,
@@ -126,12 +157,11 @@ export function useAuthProvider() {
     resetPassword,
     resendConfirmation,
   };
-}
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-} 
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+

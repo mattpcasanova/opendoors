@@ -4,14 +4,14 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
@@ -77,92 +77,169 @@ export default function LoginScreen() {
       }
     } catch (error) {
       Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
-  const updateEmail = (text: string | undefined) => {
-    const safeText = String(text || '');
-    setFormData(prev => ({ ...prev, email: safeText }));
+  const updateEmail = (text: string) => {
+    setFormData(prev => ({ ...prev, email: text }));
   };
 
-  const updatePassword = (text: string | undefined) => {
-    const safeText = String(text || '');
-    setFormData(prev => ({ ...prev, password: safeText }));
+  const updatePassword = (text: string) => {
+    setFormData(prev => ({ ...prev, password: text }));
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-teal-600">
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#009688' }}>
       <LinearGradient
         colors={['#009688', '#00796B']}
-        className="flex-1"
+        style={{ flex: 1 }}
       >
         <KeyboardAvoidingView 
-          className="flex-1" 
+          style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
           <ScrollView 
-            className="flex-1"
+            style={{ flex: 1 }}
             contentContainerStyle={{ flexGrow: 1 }}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             bounces={true}
           >
             {/* Header Section */}
-            <View className="px-6 pt-5 pb-10">
+            <View style={{ paddingHorizontal: 24, paddingTop: 20, paddingBottom: 40 }}>
               {/* Back Button */}
               <TouchableOpacity 
                 onPress={() => navigation.goBack()} 
-                className="mb-8 self-start p-3 -ml-3 rounded-full bg-white/10"
-                activeOpacity={0.7}
                 style={{
+                  marginBottom: 32,
+                  alignSelf: 'flex-start',
+                  padding: 12,
+                  marginLeft: -12,
+                  borderRadius: 9999,
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 2 },
                   shadowOpacity: 0.1,
                   shadowRadius: 4,
                   elevation: 3,
                 }}
+                activeOpacity={0.7}
               >
                 <Ionicons name="arrow-back" size={24} color="white" />
               </TouchableOpacity>
 
               {/* Header Content */}
-              <View className="items-center mb-5">
+              <View style={{ alignItems: 'center', marginBottom: 20 }}>
                 {/* App Logo */}
-                <View className="w-24 h-24 bg-white/20 rounded-3xl items-center justify-center mb-8 shadow-lg">
-                  <Text className="text-5xl">🚪</Text>
+                <View style={{
+                  width: 96,
+                  height: 96,
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  borderRadius: 24,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 32,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 8,
+                  elevation: 4,
+                }}>
+                  <Text style={{ fontSize: 48 }}>🚪</Text>
                 </View>
 
-                <Text className="text-white text-4xl font-black text-center mb-3 tracking-tight">
+                <Text style={{
+                  color: 'white',
+                  fontSize: 36,
+                  fontWeight: '900',
+                  textAlign: 'center',
+                  marginBottom: 12,
+                  letterSpacing: -0.5,
+                }}>
                   Welcome back!
                 </Text>
                 
-                <Text className="text-teal-50 text-xl text-center font-medium opacity-90">
+                <Text style={{
+                  color: '#E0F2F1',
+                  fontSize: 20,
+                  textAlign: 'center',
+                  fontWeight: '500',
+                  opacity: 0.9,
+                }}>
                   Sign in to continue winning
                 </Text>
               </View>
             </View>
 
             {/* Login Form Container */}
-            <View className="flex-1 px-6">
-              <View className="bg-white rounded-t-3xl px-8 pt-12 pb-10 flex-1 min-h-[500px] shadow-2xl">
+            <View style={{ flex: 1, paddingHorizontal: 24 }}>
+              <View style={{
+                backgroundColor: 'white',
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+                paddingHorizontal: 32,
+                paddingTop: 48,
+                paddingBottom: 40,
+                flex: 1,
+                minHeight: 500,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: -4 },
+                shadowOpacity: 0.1,
+                shadowRadius: 16,
+                elevation: 8,
+              }}>
                 
                 {/* Form Title */}
-                <Text className="text-3xl font-black text-gray-900 text-center mb-10 tracking-tight">
+                <Text style={{
+                  fontSize: 30,
+                  fontWeight: '900',
+                  color: '#111827',
+                  textAlign: 'center',
+                  marginBottom: 40,
+                  letterSpacing: -0.5,
+                }}>
                   Sign In
                 </Text>
 
                 {/* Email Input */}
-                <View className="mb-7">
-                  <Text className="text-sm font-bold text-gray-900 mb-3 tracking-wide uppercase">
+                <View style={{ marginBottom: 28 }}>
+                  <Text style={{
+                    fontSize: 14,
+                    fontWeight: '700',
+                    color: '#111827',
+                    marginBottom: 12,
+                    letterSpacing: 0.5,
+                    textTransform: 'uppercase',
+                  }}>
                     Email Address
                   </Text>
-                  <View className="bg-gray-50 border-2 border-gray-100 rounded-2xl flex-row items-center px-5 shadow-sm">
-                    <MaterialIcons name="email" size={22} color="#009688" className="mr-4" />
+                  <View style={{
+                    backgroundColor: '#F9FAFB',
+                    borderWidth: 2,
+                    borderColor: '#F3F4F6',
+                    borderRadius: 16,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingHorizontal: 20,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 2,
+                    elevation: 1,
+                  }}>
+                    <MaterialIcons name="email" size={22} color="#009688" style={{ marginRight: 16 }} />
                     <TextInput
-                      className="flex-1 py-5 text-base text-gray-900 ml-4 font-medium"
+                      style={{
+                        flex: 1,
+                        paddingVertical: 20,
+                        fontSize: 16,
+                        color: '#111827',
+                        marginLeft: 16,
+                        fontWeight: '500',
+                      }}
                       placeholder="Enter your email"
                       placeholderTextColor="#9CA3AF"
                       value={formData.email}
@@ -176,14 +253,41 @@ export default function LoginScreen() {
                 </View>
 
                 {/* Password Input */}
-                <View className="mb-5">
-                  <Text className="text-sm font-bold text-gray-900 mb-3 tracking-wide uppercase">
+                <View style={{ marginBottom: 20 }}>
+                  <Text style={{
+                    fontSize: 14,
+                    fontWeight: '700',
+                    color: '#111827',
+                    marginBottom: 12,
+                    letterSpacing: 0.5,
+                    textTransform: 'uppercase',
+                  }}>
                     Password
                   </Text>
-                  <View className="bg-gray-50 border-2 border-gray-100 rounded-2xl flex-row items-center px-5 shadow-sm">
-                    <MaterialIcons name="lock" size={22} color="#009688" className="mr-4" />
+                  <View style={{
+                    backgroundColor: '#F9FAFB',
+                    borderWidth: 2,
+                    borderColor: '#F3F4F6',
+                    borderRadius: 16,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingHorizontal: 20,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 2,
+                    elevation: 1,
+                  }}>
+                    <MaterialIcons name="lock" size={22} color="#009688" style={{ marginRight: 16 }} />
                     <TextInput
-                      className="flex-1 py-5 text-base text-gray-900 ml-4 font-medium"
+                      style={{
+                        flex: 1,
+                        paddingVertical: 20,
+                        fontSize: 16,
+                        color: '#111827',
+                        marginLeft: 16,
+                        fontWeight: '500',
+                      }}
                       placeholder="Enter your password"
                       placeholderTextColor="#9CA3AF"
                       value={formData.password}
@@ -195,7 +299,10 @@ export default function LoginScreen() {
                     />
                     <TouchableOpacity 
                       onPress={() => setShowPassword(!showPassword)}
-                      className="p-2 rounded-full"
+                      style={{
+                        padding: 8,
+                        borderRadius: 9999,
+                      }}
                       activeOpacity={0.7}
                     >
                       <Ionicons 
@@ -209,103 +316,147 @@ export default function LoginScreen() {
 
                 {/* Forgot Password */}
                 <TouchableOpacity 
-                  className="self-end mb-10 py-2 px-1"
+                  style={{
+                    alignSelf: 'flex-end',
+                    marginBottom: 40,
+                    paddingVertical: 8,
+                    paddingHorizontal: 4,
+                  }}
                   activeOpacity={0.7}
                 >
-                  <Text className="text-teal-600 text-sm font-bold tracking-wide">
+                  <Text style={{
+                    color: '#009688',
+                    fontSize: 14,
+                    fontWeight: '700',
+                    letterSpacing: 0.5,
+                  }}>
                     Forgot password?
                   </Text>
                 </TouchableOpacity>
 
                 {/* Sign In Button */}
                 <TouchableOpacity
-                  className={`mb-8 bg-teal-600 py-6 rounded-2xl shadow-lg ${loading ? 'opacity-70' : 'opacity-100'}`}
-                  onPress={handleLogin}
-                  disabled={loading}
-                  activeOpacity={0.85}
                   style={{
+                    marginBottom: 32,
+                    backgroundColor: '#009688',
+                    paddingVertical: 24,
+                    borderRadius: 16,
                     shadowColor: '#009688',
                     shadowOffset: { width: 0, height: 4 },
                     shadowOpacity: 0.25,
                     shadowRadius: 8,
                     elevation: 6,
+                    opacity: loading ? 0.7 : 1,
                   }}
+                  onPress={handleLogin}
+                  disabled={loading}
+                  activeOpacity={0.85}
                 >
-                  <Text className="text-white text-center text-lg font-black tracking-wide">
+                  <Text style={{
+                    color: 'white',
+                    textAlign: 'center',
+                    fontSize: 18,
+                    fontWeight: '900',
+                    letterSpacing: 0.5,
+                  }}>
                     {loading ? 'SIGNING IN...' : 'SIGN IN'}
                   </Text>
                 </TouchableOpacity>
 
                 {/* Divider */}
-                <View className="flex-row items-center mb-8">
-                  <View className="flex-1 h-0.5 bg-gray-200" />
-                  <Text className="mx-6 text-gray-400 text-sm font-semibold tracking-wider uppercase">
+                <View style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  marginBottom: 32,
+                }}>
+                  <View style={{ flex: 1, height: 1, backgroundColor: '#E5E7EB' }} />
+                  <Text style={{
+                    marginHorizontal: 24,
+                    color: '#9CA3AF',
+                    fontSize: 14,
+                    fontWeight: '600',
+                    letterSpacing: 1,
+                    textTransform: 'uppercase',
+                  }}>
                     or
                   </Text>
-                  <View className="flex-1 h-0.5 bg-gray-200" />
+                  <View style={{ flex: 1, height: 1, backgroundColor: '#E5E7EB' }} />
                 </View>
 
                 {/* Social Login Buttons */}
-                <View className="gap-4 mb-10">
+                <View style={{ gap: 16, marginBottom: 40 }}>
                   {/* Google Sign In */}
-                  <TouchableOpacity 
-                    className="bg-white border-2 border-gray-100 py-5 rounded-2xl flex-row items-center justify-center shadow-sm"
-                    activeOpacity={0.8}
+                  <TouchableOpacity
                     style={{
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.05,
-                      shadowRadius: 6,
-                      elevation: 3,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: 'white',
+                      paddingVertical: 16,
+                      borderRadius: 16,
+                      borderWidth: 2,
+                      borderColor: '#E5E7EB',
                     }}
+                    activeOpacity={0.7}
                   >
-                    <Ionicons name="logo-google" size={20} color="#4285F4" />
-                    <Text className="text-gray-900 text-base font-bold tracking-wide ml-3">
+                    <Text style={{ fontSize: 20 }}>🔍</Text>
+                    <Text style={{
+                      marginLeft: 12,
+                      fontSize: 16,
+                      fontWeight: '600',
+                      color: '#374151',
+                    }}>
                       Continue with Google
                     </Text>
                   </TouchableOpacity>
 
                   {/* Apple Sign In */}
-                  <TouchableOpacity 
-                    className="bg-black py-5 rounded-2xl flex-row items-center justify-center shadow-lg"
-                    activeOpacity={0.8}
+                  <TouchableOpacity
                     style={{
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: 0.2,
-                      shadowRadius: 8,
-                      elevation: 6,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: 'black',
+                      paddingVertical: 16,
+                      borderRadius: 16,
                     }}
+                    activeOpacity={0.7}
                   >
-                    <Ionicons name="logo-apple" size={20} color="white" />
-                    <Text className="text-white text-base font-bold tracking-wide ml-3">
+                    <Text style={{ fontSize: 20 }}>🍎</Text>
+                    <Text style={{
+                      marginLeft: 12,
+                      fontSize: 16,
+                      fontWeight: '600',
+                      color: 'white',
+                    }}>
                       Continue with Apple
                     </Text>
                   </TouchableOpacity>
                 </View>
 
                 {/* Sign Up Link */}
-                <View className="flex-row justify-center items-center py-6 bg-gray-50 rounded-2xl mt-auto border border-gray-100">
-                  <Text className="text-gray-600 text-base font-medium">
+                <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+                  <Text style={{
+                    color: '#6B7280',
+                    fontSize: 16,
+                  }}>
                     Don't have an account?{' '}
                   </Text>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     onPress={() => navigation.navigate('Signup')}
                     activeOpacity={0.7}
-                    className="py-1 px-2 rounded-lg"
                   >
-                    <Text className="text-teal-600 text-base font-black tracking-wide">
+                    <Text style={{
+                      color: '#009688',
+                      fontSize: 16,
+                      fontWeight: '600',
+                    }}>
                       Sign up
                     </Text>
                   </TouchableOpacity>
                 </View>
-
               </View>
             </View>
-
-            {/* Bottom padding for keyboard */}
-            <View className="h-6" />
-
           </ScrollView>
         </KeyboardAvoidingView>
       </LinearGradient>

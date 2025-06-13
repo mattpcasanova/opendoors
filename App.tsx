@@ -3,8 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import AuthProvider from './src/components/AuthProvider';
-import { useAuthProvider } from './src/hooks/useAuth';
+import { AuthProvider, useAuth } from './src/hooks/useAuth';
 import { AuthStackParamList, MainStackParamList, RootStackParamList } from './src/types/navigation';
 
 // Auth Screens
@@ -47,7 +46,7 @@ function MainStackNavigator() {
 }
 
 function RootNavigator() {
-  const { user, loading } = useAuthProvider();
+  const { user, loading } = useAuth();
 
   if (loading) {
     return null; // or <LoadingScreen />

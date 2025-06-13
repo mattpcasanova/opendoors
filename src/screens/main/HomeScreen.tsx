@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import GameCard, { SpecialGameCard } from '../../components/game/GameCard';
+import BottomNavBar from '../../components/main/BottomNavBar';
 import { useLocation } from '../../hooks/useLocation';
 import { gamesService, Prize } from '../../services/gameLogic/games';
 import type { MainStackParamList } from '../../types/navigation';
@@ -318,7 +319,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
       {/* Header */}
       <LinearGradient
         colors={['#009688', '#00796B']}
@@ -455,47 +456,7 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
-      {/* Bottom Navigation */}
-      <View 
-        className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 pb-8"
-        style={{
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.05,
-          shadowRadius: 8,
-          elevation: 8,
-        }}
-      >
-        <View className="flex-row justify-around items-center">
-          <NavItem
-            icon="home"
-            label="Home"
-            active={activeTab === 'Home'}
-            onPress={() => navigateTo('Home')}
-          />
-          
-          <NavItem
-            icon="star"
-            label="Rewards"
-            active={activeTab === 'Rewards'}
-            onPress={() => navigateTo('Rewards')}
-          />
-          
-          <NavItem
-            icon="time"
-            label="History"
-            active={activeTab === 'History'}
-            onPress={() => navigateTo('History')}
-          />
-          
-          <NavItem
-            icon="person"
-            label="Profile"
-            active={activeTab === 'Profile'}
-            onPress={() => navigateTo('Profile')}
-          />
-        </View>
-      </View>
+      <BottomNavBar initialTab="Home" />
     </SafeAreaView>
   );
 }

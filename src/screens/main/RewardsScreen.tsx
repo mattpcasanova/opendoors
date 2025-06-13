@@ -1,5 +1,7 @@
 // src/screens/main/RewardsScreen.tsx
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
@@ -10,7 +12,11 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import BottomNavBar from '../../components/main/BottomNavBar';
 import RewardCard, { Reward } from '../../components/main/RewardCard';
+import type { MainStackParamList } from '../../types/navigation';
+
+type MainStackNavigationProp = NativeStackNavigationProp<MainStackParamList>;
 
 // Mock data - in a real app this would come from your database
 const mockRewards: Reward[] = [
@@ -333,6 +339,7 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
 }
 
 export default function RewardsScreen() {
+  const navigation = useNavigation<MainStackNavigationProp>();
   const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
   const [rewards, setRewards] = useState<Reward[]>(mockRewards);
 
@@ -367,11 +374,14 @@ export default function RewardsScreen() {
   // Show detail screen if a reward is selected
   if (selectedReward) {
     return (
-      <RewardDetailScreen
-        reward={selectedReward}
-        onBack={handleBackFromDetail}
-        onMarkClaimed={handleMarkClaimed}
-      />
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
+        <RewardDetailScreen
+          reward={selectedReward}
+          onBack={handleBackFromDetail}
+          onMarkClaimed={handleMarkClaimed}
+        />
+        <BottomNavBar initialTab="Rewards" />
+      </SafeAreaView>
     );
   }
 
@@ -395,16 +405,6 @@ export default function RewardsScreen() {
               Your earned rewards
             </Text>
           </View>
-          <TouchableOpacity style={{
-            width: 40,
-            height: 40,
-            backgroundColor: '#B2DFDB',
-            borderRadius: 20,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            <Ionicons name="person" size={20} color="#00796B" />
-          </TouchableOpacity>
         </View>
       </LinearGradient>
 
@@ -497,6 +497,8 @@ export default function RewardsScreen() {
           ))}
         </View>
       </ScrollView>
+
+      <BottomNavBar initialTab="Rewards" />
     </SafeAreaView>
   );
 }

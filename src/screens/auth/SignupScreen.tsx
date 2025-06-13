@@ -1,17 +1,17 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
@@ -33,148 +33,272 @@ export default function SignupScreen() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const validateForm = () => {
-    if (!formData.firstName.trim()) {
-      Alert.alert('Error', 'First name is required');
-      return false;
-    }
-    if (!formData.lastName.trim()) {
-      Alert.alert('Error', 'Last name is required');
-      return false;
-    }
-    if (!formData.email.trim()) {
-      Alert.alert('Error', 'Email is required');
-      return false;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
-      return false;
-    }
-    if (!formData.password) {
-      Alert.alert('Error', 'Password is required');
-      return false;
-    }
-    if (formData.password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters long');
-      return false;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
-      return false;
-    }
-    return true;
-  };
-
   const handleSignup = async () => {
-    if (!validateForm()) return;
+    // Defensive extraction from form data
+    const firstNameValue = formData?.firstName;
+    const lastNameValue = formData?.lastName;
+    const emailValue = formData?.email;
+    const passwordValue = formData?.password;
+    const confirmPasswordValue = formData?.confirmPassword;
+    
+    if (firstNameValue === undefined || firstNameValue === null || firstNameValue === '') {
+      Alert.alert('Error', 'Please enter your first name');
+      return;
+    }
+    
+    if (lastNameValue === undefined || lastNameValue === null || lastNameValue === '') {
+      Alert.alert('Error', 'Please enter your last name');
+      return;
+    }
+    
+    if (emailValue === undefined || emailValue === null || emailValue === '') {
+      Alert.alert('Error', 'Please enter your email address');
+      return;
+    }
+    
+    if (passwordValue === undefined || passwordValue === null || passwordValue === '') {
+      Alert.alert('Error', 'Please enter your password');
+      return;
+    }
+
+    if (confirmPasswordValue === undefined || confirmPasswordValue === null || confirmPasswordValue === '') {
+      Alert.alert('Error', 'Please confirm your password');
+      return;
+    }
+
+    const firstName = String(firstNameValue).trim();
+    const lastName = String(lastNameValue).trim();
+    const email = String(emailValue).trim();
+    const password = String(passwordValue);
+    const confirmPassword = String(confirmPasswordValue);
+
+    if (!firstName || !lastName || !email || !password || !confirmPassword) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+
+    // Password validation
+    if (password.length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters long');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
 
     setLoading(true);
-    const { error } = await signUp({
-      email: formData.email.trim(),
-      password: formData.password,
-      firstName: formData.firstName.trim(),
-      lastName: formData.lastName.trim(),
-    });
+    
+    try {
+      const result = await signUp({
+        firstName,
+        lastName,
+        email,
+        password,
+      });
 
-    if (error) {
-      Alert.alert('Error', error.message);
-    } else {
-      Alert.alert(
-        'Success',
-        'Account created! Please check your email to verify your account.',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.navigate('Welcome')
-          }
-        ]
-      );
+      if (result.error) {
+        let errorMessage = 'An error occurred during sign up';
+        
+        if (result.error.message) {
+          errorMessage = result.error.message;
+        } else if (typeof result.error === 'string') {
+          errorMessage = result.error;
+        }
+        
+        Alert.alert('Error', errorMessage);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  const updateField = (field: keyof typeof formData, value: string) => {
-    setFormData({ ...formData, [field]: value });
+  const updateFirstName = (text: string) => {
+    setFormData(prev => ({ ...prev, firstName: text }));
+  };
+
+  const updateLastName = (text: string) => {
+    setFormData(prev => ({ ...prev, lastName: text }));
+  };
+
+  const updateEmail = (text: string) => {
+    setFormData(prev => ({ ...prev, email: text }));
+  };
+
+  const updatePassword = (text: string) => {
+    setFormData(prev => ({ ...prev, password: text }));
+  };
+
+  const updateConfirmPassword = (text: string) => {
+    setFormData(prev => ({ ...prev, confirmPassword: text }));
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-teal-600">
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#009688' }}>
       <LinearGradient
         colors={['#009688', '#00796B']}
-        className="flex-1"
+        style={{ flex: 1 }}
       >
         <KeyboardAvoidingView 
-          className="flex-1" 
+          style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
           <ScrollView 
-            className="flex-1"
+            style={{ flex: 1 }}
             contentContainerStyle={{ flexGrow: 1 }}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             bounces={true}
           >
             {/* Header Section */}
-            <View className="px-6 pt-5 pb-8">
+            <View style={{ paddingHorizontal: 24, paddingTop: 20, paddingBottom: 40 }}>
               {/* Back Button */}
               <TouchableOpacity 
                 onPress={() => navigation.goBack()} 
-                className="mb-6 self-start p-3 -ml-3 rounded-full bg-white/10"
-                activeOpacity={0.7}
                 style={{
+                  marginBottom: 32,
+                  alignSelf: 'flex-start',
+                  padding: 12,
+                  marginLeft: -12,
+                  borderRadius: 9999,
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 2 },
                   shadowOpacity: 0.1,
                   shadowRadius: 4,
                   elevation: 3,
                 }}
+                activeOpacity={0.7}
               >
                 <Ionicons name="arrow-back" size={24} color="white" />
               </TouchableOpacity>
 
               {/* Header Content */}
-              <View className="items-center mb-4">
+              <View style={{ alignItems: 'center', marginBottom: 20 }}>
                 {/* App Logo */}
-                <View className="w-20 h-20 bg-white/20 rounded-3xl items-center justify-center mb-6 shadow-lg">
-                  <Text className="text-4xl">🚪</Text>
+                <View style={{
+                  width: 96,
+                  height: 96,
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  borderRadius: 24,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 32,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 8,
+                  elevation: 4,
+                }}>
+                  <Text style={{ fontSize: 48 }}>🚪</Text>
                 </View>
 
-                <Text className="text-white text-3xl font-black text-center mb-2 tracking-tight">
-                  Join Open Doors!
+                <Text style={{
+                  color: 'white',
+                  fontSize: 36,
+                  fontWeight: '900',
+                  textAlign: 'center',
+                  marginBottom: 12,
+                  letterSpacing: -0.5,
+                }}>
+                  Join OpenDoors
                 </Text>
                 
-                <Text className="text-teal-50 text-lg text-center font-medium opacity-90">
-                  Create your account to start winning
+                <Text style={{
+                  color: '#E0F2F1',
+                  fontSize: 20,
+                  textAlign: 'center',
+                  fontWeight: '500',
+                  opacity: 0.9,
+                }}>
+                  Create an account to start winning
                 </Text>
               </View>
             </View>
 
             {/* Signup Form Container */}
-            <View className="flex-1 px-6">
-              <View className="bg-white rounded-t-3xl px-8 pt-10 pb-8 flex-1 min-h-[600px] shadow-2xl">
+            <View style={{ flex: 1, paddingHorizontal: 24 }}>
+              <View style={{
+                backgroundColor: 'white',
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+                paddingHorizontal: 32,
+                paddingTop: 48,
+                paddingBottom: 40,
+                flex: 1,
+                minHeight: 500,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: -4 },
+                shadowOpacity: 0.1,
+                shadowRadius: 16,
+                elevation: 8,
+              }}>
                 
                 {/* Form Title */}
-                <Text className="text-2xl font-black text-gray-900 text-center mb-8 tracking-tight">
-                  Create Account
+                <Text style={{
+                  fontSize: 30,
+                  fontWeight: '900',
+                  color: '#111827',
+                  textAlign: 'center',
+                  marginBottom: 40,
+                  letterSpacing: -0.5,
+                }}>
+                  Sign Up
                 </Text>
 
                 {/* Name Fields Row */}
-                <View className="flex-row gap-3 mb-6">
+                <View style={{ flexDirection: 'row', gap: 12, marginBottom: 28 }}>
                   {/* First Name */}
-                  <View className="flex-1">
-                    <Text className="text-xs font-bold text-gray-900 mb-2 tracking-wide uppercase">
+                  <View style={{ flex: 1 }}>
+                    <Text style={{
+                      fontSize: 14,
+                      fontWeight: '700',
+                      color: '#111827',
+                      marginBottom: 12,
+                      letterSpacing: 0.5,
+                      textTransform: 'uppercase',
+                    }}>
                       First Name
                     </Text>
-                    <View className="bg-gray-50 border-2 border-gray-100 rounded-2xl flex-row items-center px-4 shadow-sm">
-                      <Ionicons name="person-outline" size={18} color="#009688" />
+                    <View style={{
+                      backgroundColor: '#F9FAFB',
+                      borderWidth: 2,
+                      borderColor: '#F3F4F6',
+                      borderRadius: 16,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      paddingHorizontal: 20,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.05,
+                      shadowRadius: 2,
+                      elevation: 1,
+                    }}>
+                      <MaterialIcons name="person" size={22} color="#009688" style={{ marginRight: 16 }} />
                       <TextInput
-                        className="flex-1 py-4 text-base text-gray-900 ml-3 font-medium"
+                        style={{
+                          flex: 1,
+                          paddingVertical: 20,
+                          fontSize: 16,
+                          color: '#111827',
+                          marginLeft: 16,
+                          fontWeight: '500',
+                        }}
                         placeholder="First name"
                         placeholderTextColor="#9CA3AF"
                         value={formData.firstName}
-                        onChangeText={(text) => updateField('firstName', text)}
+                        onChangeText={updateFirstName}
                         autoCapitalize="words"
                         returnKeyType="next"
                       />
@@ -182,18 +306,45 @@ export default function SignupScreen() {
                   </View>
 
                   {/* Last Name */}
-                  <View className="flex-1">
-                    <Text className="text-xs font-bold text-gray-900 mb-2 tracking-wide uppercase">
+                  <View style={{ flex: 1 }}>
+                    <Text style={{
+                      fontSize: 14,
+                      fontWeight: '700',
+                      color: '#111827',
+                      marginBottom: 12,
+                      letterSpacing: 0.5,
+                      textTransform: 'uppercase',
+                    }}>
                       Last Name
                     </Text>
-                    <View className="bg-gray-50 border-2 border-gray-100 rounded-2xl flex-row items-center px-4 shadow-sm">
-                      <Ionicons name="person-outline" size={18} color="#009688" />
+                    <View style={{
+                      backgroundColor: '#F9FAFB',
+                      borderWidth: 2,
+                      borderColor: '#F3F4F6',
+                      borderRadius: 16,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      paddingHorizontal: 20,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.05,
+                      shadowRadius: 2,
+                      elevation: 1,
+                    }}>
+                      <MaterialIcons name="person" size={22} color="#009688" style={{ marginRight: 16 }} />
                       <TextInput
-                        className="flex-1 py-4 text-base text-gray-900 ml-3 font-medium"
+                        style={{
+                          flex: 1,
+                          paddingVertical: 20,
+                          fontSize: 16,
+                          color: '#111827',
+                          marginLeft: 16,
+                          fontWeight: '500',
+                        }}
                         placeholder="Last name"
                         placeholderTextColor="#9CA3AF"
                         value={formData.lastName}
-                        onChangeText={(text) => updateField('lastName', text)}
+                        onChangeText={updateLastName}
                         autoCapitalize="words"
                         returnKeyType="next"
                       />
@@ -202,18 +353,45 @@ export default function SignupScreen() {
                 </View>
 
                 {/* Email Input */}
-                <View className="mb-6">
-                  <Text className="text-xs font-bold text-gray-900 mb-2 tracking-wide uppercase">
+                <View style={{ marginBottom: 28 }}>
+                  <Text style={{
+                    fontSize: 14,
+                    fontWeight: '700',
+                    color: '#111827',
+                    marginBottom: 12,
+                    letterSpacing: 0.5,
+                    textTransform: 'uppercase',
+                  }}>
                     Email Address
                   </Text>
-                  <View className="bg-gray-50 border-2 border-gray-100 rounded-2xl flex-row items-center px-5 shadow-sm">
-                    <Ionicons name="mail-outline" size={20} color="#009688" />
+                  <View style={{
+                    backgroundColor: '#F9FAFB',
+                    borderWidth: 2,
+                    borderColor: '#F3F4F6',
+                    borderRadius: 16,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingHorizontal: 20,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 2,
+                    elevation: 1,
+                  }}>
+                    <MaterialIcons name="email" size={22} color="#009688" style={{ marginRight: 16 }} />
                     <TextInput
-                      className="flex-1 py-5 text-base text-gray-900 ml-3 font-medium"
+                      style={{
+                        flex: 1,
+                        paddingVertical: 20,
+                        fontSize: 16,
+                        color: '#111827',
+                        marginLeft: 16,
+                        fontWeight: '500',
+                      }}
                       placeholder="Enter your email"
                       placeholderTextColor="#9CA3AF"
                       value={formData.email}
-                      onChangeText={(text) => updateField('email', text)}
+                      onChangeText={updateEmail}
                       keyboardType="email-address"
                       autoCapitalize="none"
                       autoComplete="email"
@@ -223,49 +401,106 @@ export default function SignupScreen() {
                 </View>
 
                 {/* Password Input */}
-                <View className="mb-6">
-                  <Text className="text-xs font-bold text-gray-900 mb-2 tracking-wide uppercase">
+                <View style={{ marginBottom: 28 }}>
+                  <Text style={{
+                    fontSize: 14,
+                    fontWeight: '700',
+                    color: '#111827',
+                    marginBottom: 12,
+                    letterSpacing: 0.5,
+                    textTransform: 'uppercase',
+                  }}>
                     Password
                   </Text>
-                  <View className="bg-gray-50 border-2 border-gray-100 rounded-2xl flex-row items-center px-5 shadow-sm">
-                    <Ionicons name="lock-closed-outline" size={20} color="#009688" />
+                  <View style={{
+                    backgroundColor: '#F9FAFB',
+                    borderWidth: 2,
+                    borderColor: '#F3F4F6',
+                    borderRadius: 16,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingHorizontal: 20,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 2,
+                    elevation: 1,
+                  }}>
+                    <MaterialIcons name="lock" size={22} color="#009688" style={{ marginRight: 16 }} />
                     <TextInput
-                      className="flex-1 py-5 text-base text-gray-900 ml-3 font-medium"
-                      placeholder="Create a password"
+                      style={{
+                        flex: 1,
+                        paddingVertical: 20,
+                        fontSize: 16,
+                        color: '#111827',
+                        marginLeft: 16,
+                        fontWeight: '500',
+                      }}
+                      placeholder="Enter your password"
                       placeholderTextColor="#9CA3AF"
                       value={formData.password}
-                      onChangeText={(text) => updateField('password', text)}
+                      onChangeText={updatePassword}
                       secureTextEntry={!showPassword}
                       autoComplete="new-password"
                       returnKeyType="next"
                     />
                     <TouchableOpacity 
                       onPress={() => setShowPassword(!showPassword)}
-                      className="p-2 rounded-full"
+                      style={{
+                        padding: 8,
+                        borderRadius: 9999,
+                      }}
                       activeOpacity={0.7}
                     >
                       <Ionicons 
                         name={showPassword ? "eye-off" : "eye"} 
                         size={20} 
-                        color="#6B7280"
+                        color="#6B7280" 
                       />
                     </TouchableOpacity>
                   </View>
                 </View>
 
                 {/* Confirm Password Input */}
-                <View className="mb-8">
-                  <Text className="text-xs font-bold text-gray-900 mb-2 tracking-wide uppercase">
+                <View style={{ marginBottom: 20 }}>
+                  <Text style={{
+                    fontSize: 14,
+                    fontWeight: '700',
+                    color: '#111827',
+                    marginBottom: 12,
+                    letterSpacing: 0.5,
+                    textTransform: 'uppercase',
+                  }}>
                     Confirm Password
                   </Text>
-                  <View className="bg-gray-50 border-2 border-gray-100 rounded-2xl flex-row items-center px-5 shadow-sm">
-                    <Ionicons name="lock-closed-outline" size={20} color="#009688" />
+                  <View style={{
+                    backgroundColor: '#F9FAFB',
+                    borderWidth: 2,
+                    borderColor: '#F3F4F6',
+                    borderRadius: 16,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingHorizontal: 20,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 2,
+                    elevation: 1,
+                  }}>
+                    <MaterialIcons name="lock" size={22} color="#009688" style={{ marginRight: 16 }} />
                     <TextInput
-                      className="flex-1 py-5 text-base text-gray-900 ml-3 font-medium"
+                      style={{
+                        flex: 1,
+                        paddingVertical: 20,
+                        fontSize: 16,
+                        color: '#111827',
+                        marginLeft: 16,
+                        fontWeight: '500',
+                      }}
                       placeholder="Confirm your password"
                       placeholderTextColor="#9CA3AF"
                       value={formData.confirmPassword}
-                      onChangeText={(text) => updateField('confirmPassword', text)}
+                      onChangeText={updateConfirmPassword}
                       secureTextEntry={!showConfirmPassword}
                       autoComplete="new-password"
                       returnKeyType="done"
@@ -273,115 +508,144 @@ export default function SignupScreen() {
                     />
                     <TouchableOpacity 
                       onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="p-2 rounded-full"
+                      style={{
+                        padding: 8,
+                        borderRadius: 9999,
+                      }}
                       activeOpacity={0.7}
                     >
                       <Ionicons 
                         name={showConfirmPassword ? "eye-off" : "eye"} 
                         size={20} 
-                        color="#6B7280"
+                        color="#6B7280" 
                       />
                     </TouchableOpacity>
                   </View>
                 </View>
 
-                {/* Create Account Button */}
+                {/* Sign Up Button */}
                 <TouchableOpacity
-                  className={`mb-6 bg-teal-600 py-6 rounded-2xl shadow-lg ${loading ? 'opacity-70' : 'opacity-100'}`}
-                  onPress={handleSignup}
-                  disabled={loading}
-                  activeOpacity={0.85}
                   style={{
+                    marginBottom: 32,
+                    backgroundColor: '#009688',
+                    paddingVertical: 24,
+                    borderRadius: 16,
                     shadowColor: '#009688',
                     shadowOffset: { width: 0, height: 4 },
                     shadowOpacity: 0.25,
                     shadowRadius: 8,
                     elevation: 6,
+                    opacity: loading ? 0.7 : 1,
                   }}
+                  onPress={handleSignup}
+                  disabled={loading}
+                  activeOpacity={0.85}
                 >
-                  <Text className="text-white text-center text-lg font-black tracking-wide">
-                    {loading ? 'CREATING ACCOUNT...' : 'CREATE ACCOUNT'}
+                  <Text style={{
+                    color: 'white',
+                    textAlign: 'center',
+                    fontSize: 18,
+                    fontWeight: '900',
+                    letterSpacing: 0.5,
+                  }}>
+                    {loading ? 'SIGNING UP...' : 'SIGN UP'}
                   </Text>
                 </TouchableOpacity>
 
                 {/* Divider */}
-                <View className="flex-row items-center mb-6">
-                  <View className="flex-1 h-0.5 bg-gray-200" />
-                  <Text className="mx-6 text-gray-400 text-sm font-semibold tracking-wider uppercase">
+                <View style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  marginBottom: 32,
+                }}>
+                  <View style={{ flex: 1, height: 1, backgroundColor: '#E5E7EB' }} />
+                  <Text style={{
+                    marginHorizontal: 24,
+                    color: '#9CA3AF',
+                    fontSize: 14,
+                    fontWeight: '600',
+                    letterSpacing: 1,
+                    textTransform: 'uppercase',
+                  }}>
                     or
                   </Text>
-                  <View className="flex-1 h-0.5 bg-gray-200" />
+                  <View style={{ flex: 1, height: 1, backgroundColor: '#E5E7EB' }} />
                 </View>
 
-                {/* Social Login Buttons */}
-                <View className="gap-3 mb-8">
+                {/* Social Sign Up Buttons */}
+                <View style={{ gap: 16, marginBottom: 40 }}>
                   {/* Google Sign Up */}
-                  <TouchableOpacity 
-                    className="bg-white border-2 border-gray-100 py-4 rounded-2xl flex-row items-center justify-center shadow-sm"
-                    activeOpacity={0.8}
+                  <TouchableOpacity
                     style={{
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.05,
-                      shadowRadius: 6,
-                      elevation: 3,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: 'white',
+                      paddingVertical: 16,
+                      borderRadius: 16,
+                      borderWidth: 2,
+                      borderColor: '#E5E7EB',
                     }}
+                    activeOpacity={0.7}
                   >
-                    <Ionicons name="logo-google" size={20} color="#4285F4" />
-                    <Text className="text-gray-900 text-base font-bold tracking-wide ml-3">
-                      Sign up with Google
+                    <Text style={{ fontSize: 20 }}>🔍</Text>
+                    <Text style={{
+                      marginLeft: 12,
+                      fontSize: 16,
+                      fontWeight: '600',
+                      color: '#374151',
+                    }}>
+                      Continue with Google
                     </Text>
                   </TouchableOpacity>
 
                   {/* Apple Sign Up */}
-                  <TouchableOpacity 
-                    className="bg-black py-4 rounded-2xl flex-row items-center justify-center shadow-lg"
-                    activeOpacity={0.8}
+                  <TouchableOpacity
                     style={{
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: 0.2,
-                      shadowRadius: 8,
-                      elevation: 6,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: 'black',
+                      paddingVertical: 16,
+                      borderRadius: 16,
                     }}
+                    activeOpacity={0.7}
                   >
-                    <Ionicons name="logo-apple" size={20} color="white" />
-                    <Text className="text-white text-base font-bold tracking-wide ml-3">
-                      Sign up with Apple
+                    <Text style={{ fontSize: 20 }}>🍎</Text>
+                    <Text style={{
+                      marginLeft: 12,
+                      fontSize: 16,
+                      fontWeight: '600',
+                      color: 'white',
+                    }}>
+                      Continue with Apple
                     </Text>
                   </TouchableOpacity>
                 </View>
 
-                {/* Terms */}
-                <Text className="text-xs text-gray-500 text-center mb-6 leading-4">
-                  By creating an account, you agree to our{' '}
-                  <Text className="text-teal-600 font-semibold">Terms of Service</Text>
-                  {' '}and{' '}
-                  <Text className="text-teal-600 font-semibold">Privacy Policy</Text>
-                </Text>
-
-                {/* Login Link */}
-                <View className="flex-row justify-center items-center py-5 bg-gray-50 rounded-2xl mt-auto border border-gray-100">
-                  <Text className="text-gray-600 text-base font-medium">
+                {/* Sign In Link */}
+                <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+                  <Text style={{
+                    color: '#6B7280',
+                    fontSize: 16,
+                  }}>
                     Already have an account?{' '}
                   </Text>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     onPress={() => navigation.navigate('Login')}
                     activeOpacity={0.7}
-                    className="py-1 px-2 rounded-lg"
                   >
-                    <Text className="text-teal-600 text-base font-black tracking-wide">
+                    <Text style={{
+                      color: '#009688',
+                      fontSize: 16,
+                      fontWeight: '600',
+                    }}>
                       Sign in
                     </Text>
                   </TouchableOpacity>
                 </View>
-
               </View>
             </View>
-
-            {/* Bottom padding for keyboard */}
-            <View className="h-6" />
-
           </ScrollView>
         </KeyboardAvoidingView>
       </LinearGradient>
