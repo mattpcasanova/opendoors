@@ -19,6 +19,8 @@ interface GameStats {
 interface Props {
   prizeName?: string;
   prizeDescription?: string;
+  locationName?: string;
+  doorCount?: number;
   onGameComplete?: (won: boolean, switched: boolean) => void;
   onBack?: () => void;
 }
@@ -26,27 +28,52 @@ interface Props {
 type GameStage = 'selection' | 'montyReveal' | 'finalChoice' | 'result';
 
 const { width } = Dimensions.get('window');
-const doorWidth = Math.min((width - 80) / 3, 100);
 
 export default function GameScreen({ 
-  prizeName = "Chick-fil-A Free Sandwich",
-  prizeDescription = "Free Chicken Sandwich",
+  prizeName = "Free Prize",
+  prizeDescription = "Win a prize",
+  locationName = "Game Store",
+  doorCount = 3,
   onGameComplete,
   onBack 
 }: Props) {
+  // Calculate door layout based on door count
+  const getDoorLayout = () => {
+    switch (doorCount) {
+      case 3:
+        return { rows: [3], doorSize: 100 };
+      case 5:
+        return { rows: [3, 2], doorSize: 90 };
+      case 10:
+        return { rows: [5, 5], doorSize: 60 };
+      default:
+        return { rows: [3], doorSize: 100 };
+    }
+  };
+
+  const layout = getDoorLayout();
+  const doorSize = Math.min((width - 40) / Math.max(...layout.rows) - 20, layout.doorSize);
+
+  console.log('🚪 Layout calculated:', layout);
+  console.log('📏 Door size calculated:', doorSize);
+
   // Game state
   const [gameStage, setGameStage] = useState<GameStage>('selection');
   const [selectedDoor, setSelectedDoor] = useState<number | null>(null);
-  const [revealedDoor, setRevealedDoor] = useState<number | null>(null);
-  const [prizeLocation] = useState<number>(() => Math.floor(Math.random() * 3) + 1);
+  const [revealedDoors, setRevealedDoors] = useState<number[]>([]);
+  const [prizeLocation] = useState<number>(() => {
+    const location = Math.floor(Math.random() * doorCount) + 1;
+    console.log('🎁 Prize location set to door:', location, 'out of', doorCount, 'doors');
+    return location;
+  });
   const [switchedChoice, setSwitchedChoice] = useState<boolean>(false);
-  const [doorAnimations] = useState([
-    new Animated.Value(0),
-    new Animated.Value(0),
-    new Animated.Value(0)
-  ]);
-  const doorStates = useRef([false, false, false]);
+  const [doorAnimations] = useState(() => 
+    Array.from({ length: doorCount }, () => new Animated.Value(0))
+  );
   const [gameResult, setGameResult] = useState<{ won: boolean; message: string } | null>(null);
+
+  // Add door states ref
+  const doorStates = useRef<boolean[]>(Array(doorCount).fill(false));
 
   // Statistics (in memory only)
   const [stats, setStats] = useState<GameStats>({
@@ -60,7 +87,11 @@ export default function GameScreen({
       case 'selection':
         return 'Choose a door to start your journey';
       case 'montyReveal':
-        return `You chose Door ${selectedDoor}. Would you like to switch to the other unopened door?`;
+        if (doorCount === 3) {
+          return `You chose Door ${selectedDoor}. Would you like to switch to the other unopened door?`;
+        } else {
+          return `You chose Door ${selectedDoor}. Would you like to switch to one of the other unopened doors?`;
+        }
       case 'finalChoice':
         return `You ${switchedChoice ? 'switched to' : 'stayed with'} Door ${selectedDoor}. Click it to see what you won!`;
       case 'result':
@@ -74,17 +105,26 @@ export default function GameScreen({
     if (gameStage === 'selection') {
       setSelectedDoor(doorNumber);
       
-      // Find a door to reveal (not the selected one and not the prize)
-      let doorToReveal: number;
-      do {
-        doorToReveal = Math.floor(Math.random() * 3) + 1;
-      } while (doorToReveal === doorNumber || doorToReveal === prizeLocation);
+      // For different door counts, reveal different numbers of doors
+      let doorsToReveal: number;
+      if (doorCount === 3) {
+        doorsToReveal = 1; // Traditional Monty Hall: reveal 1 door
+      } else {
+        doorsToReveal = 1; // For 5+ doors: also reveal only 1 door to make it harder
+      }
       
-      setRevealedDoor(doorToReveal);
+      const availableToReveal = Array.from({ length: doorCount }, (_, i) => i + 1)
+        .filter(num => num !== doorNumber && num !== prizeLocation);
       
-      // Animate the door opening
+      const doorsToRevealList = availableToReveal
+        .sort(() => Math.random() - 0.5)
+        .slice(0, doorsToReveal);
+      
+      setRevealedDoors(doorsToRevealList);
+      
+      // Animate the doors opening
       setTimeout(() => {
-        openDoor(doorToReveal);
+        doorsToRevealList.forEach(door => openDoor(door));
         setGameStage('montyReveal');
       }, 1000);
       
@@ -109,13 +149,17 @@ export default function GameScreen({
       setGameResult({ won, message });
       setGameStage('result');
       
-      // Reveal all doors after a delay
+      // Reveal all remaining doors after a delay
       setTimeout(() => {
-        for (let i = 1; i <= 3; i++) {
-          if (i !== doorNumber && i !== revealedDoor) {
+        const allRemainingDoors: number[] = [];
+        for (let i = 1; i <= doorCount; i++) {
+          if (i !== doorNumber && !revealedDoors.includes(i)) {
+            allRemainingDoors.push(i);
             openDoor(i);
           }
         }
+        // Update revealedDoors state to include all doors
+        setRevealedDoors(prev => [...prev, doorNumber, ...allRemainingDoors]);
       }, 500);
       
       // Call completion callback
@@ -139,10 +183,12 @@ export default function GameScreen({
     setSwitchedChoice(shouldSwitch);
     
     if (shouldSwitch) {
-      // Find the remaining unopened door
-      const newChoice = [1, 2, 3].find(num => 
-        num !== selectedDoor && num !== revealedDoor);
-      setSelectedDoor(newChoice!);
+      // Find the remaining unopened door(s) and pick one randomly
+      const remainingDoors = Array.from({ length: doorCount }, (_, i) => i + 1)
+        .filter(num => num !== selectedDoor && !revealedDoors.includes(num));
+      
+      const newChoice = remainingDoors[Math.floor(Math.random() * remainingDoors.length)];
+      setSelectedDoor(newChoice);
     }
     
     setGameStage('finalChoice');
@@ -151,13 +197,13 @@ export default function GameScreen({
   const resetGame = () => {
     setGameStage('selection');
     setSelectedDoor(null);
-    setRevealedDoor(null);
+    setRevealedDoors([]);
     setSwitchedChoice(false);
     setGameResult(null);
     
     // Reset door animations and states
     doorAnimations.forEach(anim => anim.setValue(0));
-    doorStates.current = [false, false, false];
+    doorStates.current = Array(doorCount).fill(false);
   };
 
   const getDoorContent = (doorNumber: number): string => {
@@ -174,7 +220,7 @@ export default function GameScreen({
     if (selectedDoor === doorNumber && gameStage !== 'selection') {
       return '#009688'; // Teal for selected
     }
-    if (revealedDoor === doorNumber) {
+    if (revealedDoors.includes(doorNumber)) {
       return '#666666'; // Gray for revealed
     }
     return '#8D6E63'; // Brown default
@@ -187,7 +233,7 @@ export default function GameScreen({
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#009688" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Monty Hall Game</Text>
+        <Text style={styles.headerTitle}>{locationName}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -201,39 +247,51 @@ export default function GameScreen({
         
         {/* Doors */}
         <View style={styles.doorsContainer}>
-          {[1, 2, 3].map((doorNumber) => (
-            <View key={doorNumber} style={styles.doorContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.doorFrame,
-                  { backgroundColor: getDoorColor(doorNumber) }
-                ]}
-                onPress={() => handleDoorClick(doorNumber)}
-                activeOpacity={0.8}
-              >
-                <Animated.View
-                  style={[
-                    styles.door,
-                    {
-                      transform: [{
-                        rotateY: doorAnimations[doorNumber - 1].interpolate({
-                          inputRange: [0, 1],
-                          outputRange: ['0deg', '-85deg'],
-                        }),
-                      }],
-                    },
-                  ]}
-                >
-                  <View style={styles.doorKnob} />
-                </Animated.View>
-                
-                <View style={styles.doorContent}>
-                  <Text style={styles.doorContentText}>
-                    {getDoorContent(doorNumber)}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-              <Text style={styles.doorLabel}>Door {doorNumber}</Text>
+          {layout.rows.map((doorsInRow, rowIndex) => (
+            <View key={rowIndex} style={styles.doorRow}>
+              {Array.from({ length: doorsInRow }, (_, colIndex) => {
+                const doorNumber = layout.rows.slice(0, rowIndex).reduce((sum, row) => sum + row, 0) + colIndex + 1;
+                return (
+                  <View key={doorNumber} style={styles.doorContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.doorFrame,
+                        { 
+                          backgroundColor: getDoorColor(doorNumber),
+                          width: doorSize,
+                          height: doorSize * 1.5,
+                        }
+                      ]}
+                      onPress={() => handleDoorClick(doorNumber)}
+                      activeOpacity={0.8}
+                    >
+                      <Animated.View
+                        style={[
+                          styles.door,
+                          {
+                            transform: [{
+                              rotateY: doorAnimations[doorNumber - 1].interpolate({
+                                inputRange: [0, 1],
+                                outputRange: ['0deg', '-90deg'],
+                              }),
+                            }],
+                            transformOrigin: 'left',
+                          },
+                        ]}
+                      >
+                        <View style={styles.doorKnob} />
+                      </Animated.View>
+                      
+                      <View style={styles.doorContent}>
+                        <Text style={[styles.doorContentText, { fontSize: doorSize * 0.3 }]}>
+                          {getDoorContent(doorNumber)}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                    <Text style={styles.doorLabel}>Door {doorNumber}</Text>
+                  </View>
+                );
+              })}
             </View>
           ))}
         </View>
@@ -360,18 +418,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   doorsContainer: {
+    alignItems: 'center',
+    marginVertical: 25,
+  },
+  doorRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 20,
-    marginVertical: 30,
-    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 15,
   },
   doorContainer: {
     alignItems: 'center',
   },
   doorFrame: {
-    width: doorWidth,
-    height: doorWidth * 1.5,
     borderRadius: 12,
     position: 'relative',
     justifyContent: 'center',
@@ -391,6 +450,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'flex-end',
     paddingRight: 15,
+    transformOrigin: 'left center',
   },
   doorKnob: {
     width: 12,
@@ -409,7 +469,7 @@ const styles = StyleSheet.create({
     zIndex: -1,
   },
   doorContentText: {
-    fontSize: 36,
+    // fontSize is now set dynamically based on door size
   },
   doorLabel: {
     marginTop: 10,

@@ -218,6 +218,14 @@ export default function HomeScreen() {
   }, [searchText, regularGames]);
 
   const playGame = (prize: Prize) => {
+    // Debug logging - make it very obvious
+    console.log('=====================================');
+    console.log('🎮 PLAYING GAME:', prize.name);
+    console.log('🚪 PRIZE DOORS FROM DATABASE:', prize.doors);
+    console.log('🏪 PRIZE LOCATION:', prize.location_name);
+    console.log('📋 FULL PRIZE OBJECT:', prize);
+    console.log('=====================================');
+    
     // Set the current game and navigate to game screen
     setCurrentGame(prize);
     setShowGameScreen(true);
@@ -253,7 +261,6 @@ export default function HomeScreen() {
 
   const handleBackFromGame = () => {
     setShowGameScreen(false);
-    setCurrentGame(null);
   };
 
   // If showing game screen, render that instead
@@ -262,6 +269,8 @@ export default function HomeScreen() {
       <GameScreen
         prizeName={currentGame.name}
         prizeDescription={currentGame.description}
+        locationName={currentGame.location_name || 'Game Store'}
+        doorCount={currentGame.doors || 3}
         onGameComplete={handleGameComplete}
         onBack={handleBackFromGame}
       />
@@ -427,7 +436,11 @@ export default function HomeScreen() {
           <Text className="text-gray-600 text-xs">Any game played today: {hasPlayedAnyGameToday ? 'Yes' : 'No'}</Text>
           <Text className="text-gray-600 text-xs">Last play date: {lastPlayDate || 'Never'}</Text>
           <Text className="text-gray-600 text-xs">Current game: {currentGame?.name || 'None'}</Text>
+          <Text className="text-gray-600 text-xs">Current game doors: {currentGame?.doors || 'N/A'}</Text>
           <Text className="text-gray-600 text-xs">Show game screen: {showGameScreen ? 'Yes' : 'No'}</Text>
+          {featuredGame && (
+            <Text className="text-gray-600 text-xs">Featured game doors: {featuredGame.doors}</Text>
+          )}
         </View>
       </ScrollView>
 
