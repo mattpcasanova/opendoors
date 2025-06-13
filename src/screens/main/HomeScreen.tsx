@@ -1,4 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import {
@@ -13,7 +15,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import GameCard, { SpecialGameCard } from '../../components/game/GameCard';
 import { useLocation } from '../../hooks/useLocation';
 import { gamesService, Prize } from '../../services/gameLogic/games';
+import type { MainStackParamList } from '../../types/navigation';
 import GameScreen from '../game/GameScreen';
+
+type MainStackNavigationProp = NativeStackNavigationProp<MainStackParamList>;
 
 interface NavItemProps {
   icon: string;
@@ -134,6 +139,7 @@ const ProgressSection: React.FC<ProgressSectionProps> = ({ gamesUntilBonus, onCl
 };
 
 export default function HomeScreen() {
+  const navigation = useNavigation<MainStackNavigationProp>();
   const [searchText, setSearchText] = useState('');
   const [activeTab, setActiveTab] = useState('Home');
   const { location } = useLocation();
@@ -143,13 +149,12 @@ export default function HomeScreen() {
   const [featuredGame, setFeaturedGame] = useState<Prize | null>(null);
   const [regularGames, setRegularGames] = useState<Prize[]>([]);
   
-  // Game state - in a real app, this would come from user profile/database
+  // Game state tracking
   const [gamesUntilBonus, setGamesUntilBonus] = useState(5);
-  const [hasPlayedDailyGame, setHasPlayedDailyGame] = useState(false);
-  const [lastPlayDate, setLastPlayDate] = useState<string | null>(null);
   const [hasPlayedAnyGameToday, setHasPlayedAnyGameToday] = useState(false);
   const [showGameScreen, setShowGameScreen] = useState(false);
   const [currentGame, setCurrentGame] = useState<Prize | null>(null);
+  const [lastPlayDate, setLastPlayDate] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchGames = async () => {
@@ -201,7 +206,7 @@ export default function HomeScreen() {
   useEffect(() => {
     const today = new Date().toDateString();
     if (lastPlayDate !== today) {
-      setHasPlayedDailyGame(false);
+      setHasPlayedAnyGameToday(false);
     }
   }, [lastPlayDate]);
 
@@ -295,7 +300,13 @@ export default function HomeScreen() {
 
   const navigateTo = (page: string) => {
     setActiveTab(page);
-    Alert.alert('Navigation', `Navigating to ${page}...`);
+    if (page === 'Rewards') {
+      navigation.navigate('Rewards');
+    } else if (page === 'History') {
+      navigation.navigate('History');
+    } else if (page === 'Profile') {
+      navigation.navigate('Profile');
+    }
   };
 
   // Get current time greeting
@@ -429,7 +440,7 @@ export default function HomeScreen() {
           />
         ))}
 
-        {/* Debug Info - Update to show new state */}
+        {/* Debug Info - Updated */}
         <View className="mt-8 p-4 bg-gray-100 rounded-xl">
           <Text className="text-gray-700 text-sm font-semibold mb-2">Debug Info:</Text>
           <Text className="text-gray-600 text-xs">Games until bonus: {gamesUntilBonus}</Text>

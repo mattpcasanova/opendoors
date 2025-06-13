@@ -13,7 +13,10 @@ import SignupScreen from './src/screens/auth/SignupScreen';
 import WelcomeScreen from './src/screens/auth/WelcomeScreen';
 
 // Main Screens
+import HistoryScreen from './src/screens/main/HistoryScreen';
 import HomeScreen from './src/screens/main/HomeScreen';
+import ProfileScreen from './src/screens/main/ProfileScreen';
+import RewardsScreen from './src/screens/main/RewardsScreen';
 
 // Import NativeWind styles
 import './global.css';
@@ -36,7 +39,9 @@ function MainStackNavigator() {
   return (
     <MainStack.Navigator screenOptions={{ headerShown: false }}>
       <MainStack.Screen name="Home" component={HomeScreen} />
-      {/* Add other main screens here as you create them */}
+      <MainStack.Screen name="Rewards" component={RewardsScreen} />
+      <MainStack.Screen name="History" component={HistoryScreen} />
+      <MainStack.Screen name="Profile" component={ProfileScreen} />
     </MainStack.Navigator>
   );
 }

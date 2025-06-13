@@ -1,14 +1,14 @@
 import React from 'react';
-import { ScrollView, Text } from 'react-native';
+import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HistoryScreen() {
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <ScrollView className="flex-1 px-6 pt-6">
-        <Text className="text-2xl font-bold text-gray-800 mb-4">Game History</Text>
-        <Text className="text-gray-600">Your game history will appear here.</Text>
-      </ScrollView>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#333' }}>📊 History</Text>
+        <Text style={{ fontSize: 16, color: '#666', marginTop: 8 }}>Coming soon!</Text>
+      </View>
     </SafeAreaView>
   );
 } 
