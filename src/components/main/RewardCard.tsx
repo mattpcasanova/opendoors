@@ -46,6 +46,8 @@ const getBackgroundColor = (bgColor: string): string => {
     'bg-yellow-50': '#FEFCE8',
     'bg-blue-50': '#EFF6FF',
     'bg-purple-50': '#FAF5FF',
+    'bg-pink-50': '#FDF2F8',
+    'bg-brown-50': '#F5F5F5',
   };
   return colorMap[bgColor] || '#F9FAFB';
 };

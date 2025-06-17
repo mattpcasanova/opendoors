@@ -1,9 +1,8 @@
-// src/screens/main/RewardsScreen.tsx
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   ScrollView,
@@ -14,93 +13,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import BottomNavBar from '../../components/main/BottomNavBar';
 import RewardCard, { Reward } from '../../components/main/RewardCard';
+import { useAuth } from '../../hooks/useAuth';
+import { rewardsService } from '../../services/rewardsService';
 import type { MainStackParamList } from '../../types/navigation';
 
 type MainStackNavigationProp = NativeStackNavigationProp<MainStackParamList>;
-
-// Mock data - in a real app this would come from your database
-const mockRewards: Reward[] = [
-  {
-    id: '1',
-    company: 'Target',
-    reward: '$10 off $50 purchase',
-    claimed: false,
-    expirationDate: '2025-06-30',
-    icon: '🎯',
-    bgColor: 'bg-red-50',
-    qrCode: 'TARGET_QR_123456',
-    instructions: [
-      'Show this QR code at checkout',
-      'Minimum purchase of $50 required',
-      'Cannot be combined with other offers',
-      'Valid at all Target locations'
-    ]
-  },
-  {
-    id: '2',
-    company: 'Chick-fil-A',
-    reward: 'Free sandwich',
-    claimed: true,
-    expirationDate: '2025-07-15',
-    icon: '🐔',
-    bgColor: 'bg-orange-50',
-    qrCode: 'CFA_QR_789012',
-    instructions: [
-      'Present QR code to cashier',
-      'Valid for any sandwich on menu',
-      'One per customer per visit',
-      'Valid at participating locations'
-    ]
-  },
-  {
-    id: '3',
-    company: 'Silver Shores Market',
-    reward: 'Free fruit cup',
-    claimed: false,
-    expirationDate: '2025-06-16',
-    icon: '🍓',
-    bgColor: 'bg-green-50',
-    qrCode: 'SSM_QR_345678',
-    instructions: [
-      'Show QR code at deli counter',
-      'Choose any available fruit cup',
-      'Valid during store hours',
-      'Cannot be redeemed for cash'
-    ]
-  },
-  {
-    id: '4',
-    company: 'Starbucks',
-    reward: 'Free drink upgrade',
-    claimed: false,
-    expirationDate: '2025-07-01',
-    icon: '☕',
-    bgColor: 'bg-green-50',
-    qrCode: 'SBUX_QR_901234',
-    instructions: [
-      'Present QR code when ordering',
-      'Upgrade any size to venti',
-      'Valid on all beverages',
-      'Cannot upgrade food items'
-    ]
-  },
-  {
-    id: '5',
-    company: "McDonald's",
-    reward: 'Free medium fries',
-    claimed: true,
-    expirationDate: '2025-07-10',
-    icon: '🍟',
-    bgColor: 'bg-yellow-50',
-    qrCode: 'MCD_QR_567890',
-    instructions: [
-      'Show QR code at counter or drive-thru',
-      'Valid for medium fries only',
-      'No purchase necessary',
-      'Valid at participating locations'
-    ]
-  }
-];
 
 // Helper functions
 const getDaysUntilExpiration = (expirationDate: string): number => {
@@ -172,7 +89,10 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
         </View>
       </LinearGradient>
 
-      <ScrollView style={{ flex: 1, padding: 20 }}>
+      <ScrollView 
+        style={{ flex: 1, padding: 20 }}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      >
         {/* Status Badge */}
         <View style={{ alignItems: 'center', marginBottom: 24 }}>
           <View style={{
@@ -182,9 +102,9 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
             borderRadius: 20,
           }}>
             <Text style={{
-              color: reward.claimed ? '#166534' : '#1E40AF',
               fontSize: 14,
-              fontWeight: '600'
+              fontWeight: '600',
+              color: reward.claimed ? '#166534' : '#1E40AF'
             }}>
               {reward.claimed ? 'Already Claimed' : 'Ready to Claim'}
             </Text>
@@ -195,11 +115,11 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
         <View style={{
           backgroundColor: 'white',
           borderRadius: 16,
-          padding: 32,
+          padding: 24,
           alignItems: 'center',
           marginBottom: 24,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
+          shadowOffset: { width: 0, height: 1 },
           shadowOpacity: 0.08,
           shadowRadius: 8,
           elevation: 3,
@@ -296,52 +216,90 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
             </View>
           ))}
         </View>
+
+        {/* Action Button */}
+        <View style={{
+          backgroundColor: 'white',
+          borderRadius: 12,
+          padding: 20,
+          marginBottom: 100,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.05,
+          shadowRadius: 4,
+          elevation: 2,
+        }}>
+          {!reward.claimed ? (
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#009688',
+                paddingVertical: 16,
+                borderRadius: 12,
+                alignItems: 'center',
+              }}
+              onPress={() => onMarkClaimed(reward.id)}
+              activeOpacity={0.8}
+            >
+              <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
+                Mark as Claimed
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingVertical: 16,
+            }}>
+              <Ionicons name="checkmark-circle" size={24} color="#10B981" style={{ marginRight: 8 }} />
+              <Text style={{ color: '#10B981', fontSize: 16, fontWeight: '600' }}>
+                Already claimed
+              </Text>
+            </View>
+          )}
+        </View>
       </ScrollView>
 
-      {/* Bottom Action */}
-      <View style={{
-        backgroundColor: 'white',
-        padding: 20,
-        borderTopWidth: 1,
-        borderTopColor: '#E5E7EB',
-      }}>
-        {!reward.claimed ? (
-          <TouchableOpacity
-            style={{
-              backgroundColor: '#009688',
-              paddingVertical: 16,
-              borderRadius: 12,
-              alignItems: 'center',
-            }}
-            onPress={() => onMarkClaimed(reward.id)}
-            activeOpacity={0.8}
-          >
-            <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
-              Mark as Claimed
-            </Text>
-          </TouchableOpacity>
-        ) : (
-          <View style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            paddingVertical: 16,
-          }}>
-            <Ionicons name="checkmark-circle" size={24} color="#10B981" style={{ marginRight: 8 }} />
-            <Text style={{ color: '#10B981', fontSize: 16, fontWeight: '600' }}>
-              Already claimed
-            </Text>
-          </View>
-        )}
-      </View>
+      {/* Bottom Navigation Bar */}
+      <BottomNavBar initialTab="Rewards" />
     </SafeAreaView>
   );
 }
 
 export default function RewardsScreen() {
   const navigation = useNavigation<MainStackNavigationProp>();
+  const { user } = useAuth();
   const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
-  const [rewards, setRewards] = useState<Reward[]>(mockRewards);
+  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchRewards();
+  }, [user]);
+
+  const fetchRewards = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const { data, error } = await rewardsService.getUserRewards(user.id);
+      if (error) {
+        console.error('Error fetching rewards:', error);
+        Alert.alert('Error', 'Failed to load rewards. Please try again.');
+        return;
+      }
+      
+      if (data) {
+        console.log('Loaded rewards:', data);
+        setRewards(data);
+      }
+    } catch (err) {
+      console.error('Error in fetchRewards:', err);
+      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Calculate stats
   const stats = {
@@ -357,14 +315,20 @@ export default function RewardsScreen() {
     setSelectedReward(reward);
   };
 
-  const handleMarkClaimed = (rewardId: string) => {
-    setRewards((prev: Reward[]) => prev.map(r => 
-      r.id === rewardId ? { ...r, claimed: true } : r
-    ));
-    setSelectedReward((prev: Reward | null) => 
-      prev?.id === rewardId ? { ...prev, claimed: true } : prev
-    );
-    Alert.alert('Success', 'Reward marked as claimed!');
+  const handleMarkClaimed = async (rewardId: string) => {
+    try {
+      // TODO: Implement claim functionality
+      setRewards((prev: Reward[]) => prev.map(r => 
+        r.id === rewardId ? { ...r, claimed: true } : r
+      ));
+      setSelectedReward((prev: Reward | null) => 
+        prev?.id === rewardId ? { ...prev, claimed: true } : prev
+      );
+      Alert.alert('Success', 'Reward marked as claimed!');
+    } catch (error) {
+      console.error('Error marking reward as claimed:', error);
+      Alert.alert('Error', 'Failed to mark reward as claimed. Please try again.');
+    }
   };
 
   const handleBackFromDetail = () => {
@@ -374,14 +338,11 @@ export default function RewardsScreen() {
   // Show detail screen if a reward is selected
   if (selectedReward) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
-        <RewardDetailScreen
-          reward={selectedReward}
-          onBack={handleBackFromDetail}
-          onMarkClaimed={handleMarkClaimed}
-        />
-        <BottomNavBar initialTab="Rewards" />
-      </SafeAreaView>
+      <RewardDetailScreen
+        reward={selectedReward}
+        onBack={handleBackFromDetail}
+        onMarkClaimed={handleMarkClaimed}
+      />
     );
   }
 
@@ -485,16 +446,22 @@ export default function RewardsScreen() {
             color: '#374151',
             marginBottom: 16,
           }}>
-            Available rewards
+            Your rewards
           </Text>
           
-          {rewards.map((reward) => (
-            <RewardCard
-              key={reward.id}
-              reward={reward}
-              onPress={handleRewardPress}
-            />
-          ))}
+          {loading ? (
+            <Text style={{ textAlign: 'center', color: '#6B7280' }}>Loading rewards...</Text>
+          ) : rewards.length === 0 ? (
+            <Text style={{ textAlign: 'center', color: '#6B7280' }}>No rewards yet. Play games to win prizes!</Text>
+          ) : (
+            rewards.map((reward) => (
+              <RewardCard
+                key={reward.id}
+                reward={reward}
+                onPress={handleRewardPress}
+              />
+            ))
+          )}
         </View>
       </ScrollView>
 

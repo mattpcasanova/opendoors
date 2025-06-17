@@ -14,8 +14,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import GameCard, { SpecialGameCard } from '../../components/game/GameCard';
 import BottomNavBar from '../../components/main/BottomNavBar';
+import { useAuth } from '../../hooks/useAuth';
 import { useLocation } from '../../hooks/useLocation';
+import { supabase } from '../../lib/supabase';
 import { gamesService, Prize } from '../../services/gameLogic/games';
+import { rewardsService } from '../../services/rewardsService';
 import type { MainStackParamList } from '../../types/navigation';
 import GameScreen from '../game/GameScreen';
 
@@ -156,6 +159,7 @@ export default function HomeScreen() {
   const [showGameScreen, setShowGameScreen] = useState(false);
   const [currentGame, setCurrentGame] = useState<Prize | null>(null);
   const [lastPlayDate, setLastPlayDate] = useState<string | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchGames = async () => {
@@ -242,7 +246,7 @@ export default function HomeScreen() {
     setShowGameScreen(true);
   };
 
-  const handleGameComplete = (won: boolean, switched: boolean) => {
+  const handleGameComplete = async (won: boolean, switched: boolean) => {
     // Mark that a game has been played today
     setHasPlayedAnyGameToday(true);
     setLastPlayDate(new Date().toDateString());
@@ -250,6 +254,38 @@ export default function HomeScreen() {
     // Count towards bonus progress
     if (gamesUntilBonus > 0) {
       setGamesUntilBonus(prev => prev - 1);
+    }
+
+    // If the user won, save the reward
+    if (won && currentGame && user) {
+      try {
+        // Debug logging
+        console.log('🔍 Auth Debug:');
+        console.log('User from useAuth:', user);
+        console.log('User ID being sent:', user?.id);
+        
+        // Get Supabase session
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log('Supabase session user:', session?.user?.id);
+
+        const { success, error } = await rewardsService.addUserReward(user.id, currentGame.id);
+        
+        if (!success) {
+          console.error('Failed to save reward:', error);
+          Alert.alert(
+            'Error Saving Reward',
+            'Your prize was won but there was an error saving it. Please contact support.',
+            [{ text: 'OK' }]
+          );
+        }
+      } catch (err) {
+        console.error('Error in handleGameComplete:', err);
+        Alert.alert(
+          'Error',
+          'There was an unexpected error. Please try again.',
+          [{ text: 'OK' }]
+        );
+      }
     }
 
     // Show result alert with game-specific message
@@ -321,29 +357,33 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
       {/* Header */}
-      <LinearGradient
-        colors={['#009688', '#00796B']}
-        className="pb-5"
-      >
-        {/* Status Bar Area */}
-        <View className="flex-row justify-between items-center px-6 pt-3 pb-5">
-          <Text className="text-white text-sm font-semibold">9:41</Text>
-          <Text className="text-white text-sm font-semibold">100%</Text>
+      <LinearGradient colors={['#009688', '#00796B']} style={{ paddingBottom: 20 }}>
+        <View style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 20,
+          paddingTop: 15,
+          paddingBottom: 20,
+        }}>
+          <View style={{ flex: 1 }} />
         </View>
         
-        {/* Greeting Section */}
-        <View className="px-6 pb-2">
-          <Text className="text-white text-3xl font-bold mb-2">{getGreeting()}</Text>
-          <Text className="text-teal-100 text-lg">Ready to open some doors?</Text>
+        <View style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingHorizontal: 20,
+        }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: 'white', fontSize: 24, fontWeight: '700', marginBottom: 4 }}>
+              Welcome back!
+            </Text>
+            <Text style={{ color: '#B2DFDB', fontSize: 16 }}>
+              Ready to explore?
+            </Text>
+          </View>
         </View>
-        
-        {/* Profile Icon */}
-        <TouchableOpacity 
-          className="absolute right-6 top-16 w-10 h-10 bg-teal-100 rounded-full items-center justify-center"
-          activeOpacity={0.8}
-        >
-          <Ionicons name="person" size={20} color="#00796B" />
-        </TouchableOpacity>
       </LinearGradient>
 
       {/* Main Content */}
