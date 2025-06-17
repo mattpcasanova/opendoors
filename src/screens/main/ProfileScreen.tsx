@@ -4,12 +4,17 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
-    Alert,
-    ScrollView,
-    Switch,
-    Text,
-    TouchableOpacity,
-    View
+  Alert,
+  KeyboardAvoidingView,
+  Linking,
+  Modal,
+  Platform,
+  ScrollView,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
@@ -36,6 +41,10 @@ type RootStackParamList = {
 };
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
+
+const formatUserName = (email: string) => {
+  return email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+};
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
@@ -86,6 +95,12 @@ export default function ProfileScreen() {
     { id: 'about', label: 'About Open Doors', icon: 'information-circle', type: 'navigate' },
   ];
 
+  // Add state variables
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showGamePrefsEdit, setShowGamePrefsEdit] = useState(false);
+  const [userName, setUserName] = useState(user?.email ? formatUserName(user.email) : 'User');
+  const [tempUserName, setTempUserName] = useState(userName);
+
   const toggleGamePreference = (id: string) => {
     setGamePreferences(prev => 
       prev.map(pref => 
@@ -103,8 +118,71 @@ export default function ProfileScreen() {
   };
 
   const handleSettingPress = (id: string) => {
-    // Handle navigation to different settings screens
-    Alert.alert('Settings', `Navigate to ${id} settings`);
+    switch (id) {
+      case 'edit-profile':
+        setTempUserName(userName);
+        setShowEditProfile(true);
+        break;
+      case 'account':
+        Alert.alert(
+          'Account Details',
+          `Email: ${user?.email || 'Not available'}\nMember since: ${new Date().toLocaleDateString()}\nTotal games played: 0`,
+          [{ text: 'OK' }]
+        );
+        break;
+      case 'security':
+        Alert.alert(
+          'Security Settings',
+          'Choose a security option:',
+          [
+            { text: 'Change Password', onPress: () => changePassword() },
+            { text: 'Two-Factor Authentication', onPress: () => setup2FA() },
+            { text: 'Cancel', style: 'cancel' }
+          ]
+        );
+        break;
+      case 'payment':
+        Alert.alert(
+          'Payment Methods',
+          'Manage your payment options:',
+          [
+            { text: 'Add Credit Card', onPress: () => addPaymentMethod() },
+            { text: 'View Saved Cards', onPress: () => viewPaymentMethods() },
+            { text: 'Cancel', style: 'cancel' }
+          ]
+        );
+        break;
+      case 'help':
+        Alert.alert(
+          'Help & Support',
+          'How can we help you?',
+          [
+            { text: 'FAQ', onPress: () => openFAQ() },
+            { text: 'Contact Support', onPress: () => contactSupport() },
+            { text: 'Report Issue', onPress: () => reportIssue() },
+            { text: 'Cancel', style: 'cancel' }
+          ]
+        );
+        break;
+      case 'terms':
+        openExternalLink('https://opendoors.com/terms');
+        break;
+      case 'privacy':
+        openExternalLink('https://opendoors.com/privacy');
+        break;
+      case 'about':
+        Alert.alert(
+          'About Open Doors',
+          `Version: 1.0.0\nBuild: 2024.1\n\nOpen Doors is a gamified rewards platform that lets you win real prizes from local businesses through probability-based door games.\n\n© 2024 Open Doors Inc.`,
+          [
+            { text: 'Visit Website', onPress: () => openExternalLink('https://opendoors.com') },
+            { text: 'OK' }
+          ]
+        );
+        break;
+      default:
+        Alert.alert('Settings', `${id} settings coming soon!`);
+    }
   };
 
   const handleSignOut = () => {
@@ -122,8 +200,141 @@ export default function ProfileScreen() {
     );
   };
 
-  const formatUserName = (email: string) => {
-    return email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  // Add helper functions
+  const changePassword = () => {
+    Alert.prompt(
+      'Change Password',
+      'Enter your current password:',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Next', 
+          onPress: (currentPassword) => {
+            if (currentPassword) {
+              Alert.prompt(
+                'New Password',
+                'Enter your new password:',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { 
+                    text: 'Change', 
+                    onPress: (newPassword) => {
+                      if (newPassword && newPassword.length >= 6) {
+                        Alert.alert('Success', 'Password changed successfully!');
+                      } else {
+                        Alert.alert('Error', 'Password must be at least 6 characters long.');
+                      }
+                    }
+                  }
+                ],
+                'secure-text'
+              );
+            }
+          }
+        }
+      ],
+      'secure-text'
+    );
+  };
+
+  const setup2FA = () => {
+    Alert.alert(
+      'Two-Factor Authentication',
+      'Would you like to enable 2FA for extra security?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Enable', 
+          onPress: () => Alert.alert('Success', '2FA setup complete! You will receive a confirmation email.')
+        }
+      ]
+    );
+  };
+
+  const addPaymentMethod = () => {
+    Alert.alert(
+      'Add Payment Method',
+      'Choose payment type:',
+      [
+        { text: 'Credit/Debit Card', onPress: () => Alert.alert('Info', 'Credit card form would open here') },
+        { text: 'PayPal', onPress: () => Alert.alert('Info', 'PayPal integration would open here') },
+        { text: 'Apple Pay', onPress: () => Alert.alert('Info', 'Apple Pay setup would open here') },
+        { text: 'Cancel', style: 'cancel' }
+      ]
+    );
+  };
+
+  const viewPaymentMethods = () => {
+    Alert.alert(
+      'Saved Payment Methods',
+      'No payment methods saved yet.\n\nPayment methods are only required for premium features and bonus games.',
+      [{ text: 'OK' }]
+    );
+  };
+
+  const openFAQ = () => {
+    Alert.alert(
+      'Frequently Asked Questions',
+      '• How do I win prizes?\n  Play door games and use probability to your advantage!\n\n• Are the prizes real?\n  Yes! All prizes are provided by our partner businesses.\n\n• How do I redeem rewards?\n  Show the QR code at the business location.\n\n• Can I play multiple times?\n  You get one free daily game, plus bonus games for staying active!',
+      [{ text: 'OK' }]
+    );
+  };
+
+  const contactSupport = () => {
+    Alert.alert(
+      'Contact Support',
+      'Choose how to reach us:',
+      [
+        { text: 'Email', onPress: () => Linking.openURL('mailto:support@opendoors.com?subject=Support Request') },
+        { text: 'Phone', onPress: () => Linking.openURL('tel:+1234567890') },
+        { text: 'Live Chat', onPress: () => Alert.alert('Info', 'Live chat would open here') },
+        { text: 'Cancel', style: 'cancel' }
+      ]
+    );
+  };
+
+  const reportIssue = () => {
+    Alert.prompt(
+      'Report Issue',
+      'Please describe the issue you encountered:',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Submit', 
+          onPress: (issue) => {
+            if (issue && issue.trim()) {
+              Alert.alert('Thank You', 'Your issue has been reported. We\'ll get back to you within 24 hours.');
+            }
+          }
+        }
+      ],
+      'plain-text',
+      '',
+      'Tell us what happened...'
+    );
+  };
+
+  const openExternalLink = async (url: string) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert('Error', 'Cannot open this link');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to open link');
+    }
+  };
+
+  const saveProfile = () => {
+    setUserName(tempUserName);
+    setShowEditProfile(false);
+    Alert.alert('Success', 'Profile updated successfully!');
+  };
+
+  const handleGamePrefsEdit = () => {
+    setShowGamePrefsEdit(true);
   };
 
   return (
@@ -457,6 +668,144 @@ export default function ProfileScreen() {
           <Text style={{ fontSize: 11, color: '#009688', marginTop: 2 }}>Profile</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Edit Profile Modal */}
+      <Modal
+        visible={showEditProfile}
+        transparent
+        animationType="slide"
+      >
+        <KeyboardAvoidingView 
+          style={{ flex: 1 }} 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <View style={{
+            flex: 1,
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            padding: 20,
+          }}>
+            <View style={{
+              backgroundColor: 'white',
+              borderRadius: 16,
+              padding: 24,
+            }}>
+              <Text style={{ fontSize: 20, fontWeight: '600', marginBottom: 20, textAlign: 'center' }}>
+                Edit Profile
+              </Text>
+              
+              <Text style={{ fontSize: 14, color: '#6B7280', marginBottom: 8 }}>
+                Display Name
+              </Text>
+              <TextInput
+                value={tempUserName}
+                onChangeText={setTempUserName}
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#E5E7EB',
+                  borderRadius: 8,
+                  padding: 12,
+                  fontSize: 16,
+                  marginBottom: 20,
+                }}
+                placeholder="Enter your name"
+              />
+              
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                <TouchableOpacity
+                  style={{
+                    flex: 1,
+                    backgroundColor: '#F3F4F6',
+                    padding: 12,
+                    borderRadius: 8,
+                    alignItems: 'center',
+                  }}
+                  onPress={() => setShowEditProfile(false)}
+                >
+                  <Text style={{ color: '#374151', fontWeight: '600' }}>Cancel</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={{
+                    flex: 1,
+                    backgroundColor: '#009688',
+                    padding: 12,
+                    borderRadius: 8,
+                    alignItems: 'center',
+                  }}
+                  onPress={saveProfile}
+                >
+                  <Text style={{ color: 'white', fontWeight: '600' }}>Save</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Game Preferences Edit Modal */}
+      <Modal
+        visible={showGamePrefsEdit}
+        transparent
+        animationType="slide"
+      >
+        <View style={{
+          flex: 1,
+          justifyContent: 'center',
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          padding: 20,
+        }}>
+          <View style={{
+            backgroundColor: 'white',
+            borderRadius: 16,
+            padding: 24,
+            maxHeight: '80%',
+          }}>
+            <Text style={{ fontSize: 20, fontWeight: '600', marginBottom: 20, textAlign: 'center' }}>
+              Game Preferences
+            </Text>
+            
+            <ScrollView style={{ maxHeight: 300 }}>
+              {gamePreferences.map((preference, index) => (
+                <View key={preference.id} style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingVertical: 12,
+                }}>
+                  <Ionicons 
+                    name={preference.icon as any} 
+                    size={20} 
+                    color="#6B7280" 
+                    style={{ marginRight: 12 }} 
+                  />
+                  <Text style={{ flex: 1, fontSize: 16, color: '#374151' }}>
+                    {preference.label}
+                  </Text>
+                  <Switch
+                    value={preference.enabled}
+                    onValueChange={() => toggleGamePreference(preference.id)}
+                    trackColor={{ false: '#E5E7EB', true: '#009688' }}
+                    thumbColor={preference.enabled ? 'white' : '#F3F4F6'}
+                  />
+                </View>
+              ))}
+            </ScrollView>
+            
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#009688',
+                padding: 12,
+                borderRadius: 8,
+                alignItems: 'center',
+                marginTop: 20,
+              }}
+              onPress={() => setShowGamePrefsEdit(false)}
+            >
+              <Text style={{ color: 'white', fontWeight: '600' }}>Done</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 } 
