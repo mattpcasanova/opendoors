@@ -100,7 +100,6 @@ export default function MainTabNavigator() {
     >
       <MainTab.Screen name="Home" component={HomeScreen} />
       <MainTab.Screen name="Rewards" component={RewardsScreen} />
-      <MainTab.Screen name="History" component={HistoryScreen} />
       <MainTab.Screen name="Profile" component={ProfileScreen} />
     </MainTab.Navigator>
   );

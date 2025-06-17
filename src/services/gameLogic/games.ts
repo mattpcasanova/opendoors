@@ -159,14 +159,17 @@ class GamesService {
     game_duration_seconds?: number;
   }) {
     try {
+      console.log('🎮 recordGame called with:', gameData);
       const { data, error } = await supabase
         .from('games')
         .insert([gameData])
         .select()
         .single();
-
-      if (error) throw error;
-
+      if (error) {
+        console.error('❌ Error inserting into games table:', error);
+        throw error;
+      }
+      console.log('✅ Game inserted:', data);
       // If the user won, create a user_prize record
       if (gameData.won) {
         const { error: prizeError } = await supabase
@@ -180,15 +183,15 @@ class GamesService {
               expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
             },
           ]);
-
         if (prizeError) {
-          console.error('Error creating user prize:', prizeError);
+          console.error('❌ Error creating user prize:', prizeError);
+        } else {
+          console.log('✅ User prize created for game:', data.id);
         }
       }
-
       return { data, error: null };
     } catch (error: any) {
-      console.error('Error recording game:', error);
+      console.error('❌ Error recording game:', error);
       return { data: null, error };
     }
   }

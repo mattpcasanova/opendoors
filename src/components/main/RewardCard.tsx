@@ -13,6 +13,7 @@ export interface Reward {
   bgColor: string;
   qrCode: string;
   instructions: string[];
+  created_at?: string;
 }
 
 interface Props {

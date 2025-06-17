@@ -456,9 +456,9 @@ export default function RewardsScreen() {
           ) : (
             rewards.map((reward) => (
               <RewardCard
-                key={reward.id}
+                key={reward.id + (reward.created_at || '')}
                 reward={reward}
-                onPress={handleRewardPress}
+                onPress={() => handleRewardPress(reward)}
               />
             ))
           )}
