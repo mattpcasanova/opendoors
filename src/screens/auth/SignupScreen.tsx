@@ -4,14 +4,15 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Alert,
+    Image,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
@@ -188,9 +189,9 @@ export default function SignupScreen() {
               <View style={{ alignItems: 'center', marginBottom: 20 }}>
                 {/* App Logo */}
                 <View style={{
-                  width: 96,
-                  height: 96,
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  width: 150,
+                  height: 150,
+                  backgroundColor: 'rgba(255, 255, 255, 0.4)',
                   borderRadius: 24,
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -201,7 +202,7 @@ export default function SignupScreen() {
                   shadowRadius: 8,
                   elevation: 4,
                 }}>
-                  <Text style={{ fontSize: 48 }}>🚪</Text>
+                  <Image source={require('../../../assets/OpenDoorsLogo.png')} style={{ width: 150, height: 150, resizeMode: 'contain' }} />
                 </View>
 
                 <Text style={{

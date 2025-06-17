@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
+  Image,
   ScrollView,
   Text,
   TextInput,
@@ -366,22 +367,24 @@ export default function HomeScreen() {
           paddingTop: 15,
           paddingBottom: 20,
         }}>
-          <View style={{ flex: 1 }} />
-        </View>
-        
-        <View style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          paddingHorizontal: 20,
-        }}>
-          <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'column', justifyContent: 'center', flex: 1 }}>
             <Text style={{ color: 'white', fontSize: 24, fontWeight: '700', marginBottom: 4 }}>
               Welcome back!
             </Text>
             <Text style={{ color: '#B2DFDB', fontSize: 16 }}>
               Ready to explore?
             </Text>
+          </View>
+          <View style={{
+            width: 120,
+            height: 120,
+            backgroundColor: 'rgba(255, 255, 255, 0.15)',
+            borderRadius: 30,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginLeft: 16,
+          }}>
+            <Image source={require('../../../assets/OpenDoorsLogo.png')} style={{ width: 120, height: 120, resizeMode: 'contain' }} />
           </View>
         </View>
       </LinearGradient>

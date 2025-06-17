@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthNavigation } from '../../hooks/useNavigation';
 
@@ -16,7 +16,7 @@ export default function WelcomeScreen() {
         <View style={styles.content}>
           {/* App Logo */}
           <View style={styles.logoContainer}>
-            <Text style={styles.logo}>🚪</Text>
+            <Image source={require('../../../assets/OpenDoorsLogo.png')} style={{ width: 150, height: 150, resizeMode: 'contain' }} />
           </View>
 
           <Text style={styles.title}>Welcome to OpenDoors</Text>
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     width: 120,
     height: 120,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
