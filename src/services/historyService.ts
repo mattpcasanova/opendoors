@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase } from '../services/supabase/client';
 
 export interface GameHistory {
   id: string;
@@ -22,6 +22,16 @@ export interface UserStats {
   gamesPlayed: number;
   rewardsEarned: number;
   rewardsClaimed: number;
+}
+
+export interface GamePlay {
+  id: string;
+  created_at: string;
+  win: boolean;
+  prize: {
+    name: string;
+    location_name: string;
+  };
 }
 
 class HistoryService {
@@ -84,6 +94,63 @@ class HistoryService {
     } catch (error: any) {
       console.error('❌ Error fetching user stats:', error);
       return { data: null, error };
+    }
+  }
+
+  async logGamePlay(rewardId: string, win: boolean) {
+    const { data, error } = await supabase
+      .from('game_plays')
+      .insert([{ reward_id: rewardId, win: win }]);
+
+    if (error) {
+      console.error('Error logging game play:', error);
+    }
+
+    return { data, error };
+  }
+
+  // Get the last 20 games played by the user
+  async getUserGamePlays(userId: string): Promise<{ data: GamePlay[] | null; error: string | null }> {
+    try {
+      console.log('🎮 Fetching game plays for user:', userId);
+      
+      const { data, error } = await supabase
+        .from('game_plays')
+        .select(`
+          id,
+          created_at,
+          win,
+          prizes (
+            name,
+            location_name
+          )
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) {
+        console.error('Error fetching game plays:', error);
+        return { data: null, error: error.message };
+      }
+
+      console.log('�� Game plays fetched:', data?.length, 'games');
+
+      // Transform the data to match our GamePlay interface
+      const gamePlays: GamePlay[] = (data || []).map((gamePlay: any) => ({
+        id: gamePlay.id,
+        created_at: gamePlay.created_at,
+        win: gamePlay.win,
+        prize: {
+          name: gamePlay.prizes?.name || 'Unknown Prize',
+          location_name: gamePlay.prizes?.location_name || 'Unknown Location'
+        }
+      }));
+
+      return { data: gamePlays, error: null };
+    } catch (error: any) {
+      console.error('❌ Error fetching game plays:', error);
+      return { data: null, error: error.message };
     }
   }
 }

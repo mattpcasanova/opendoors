@@ -102,8 +102,7 @@ export default function BottomNavBar({ initialTab = 'Home' }: Props) {
           }}>Rewards</Text>
         </TouchableOpacity>
 
-        {/* Comment out the History tab button for now */}
-        {/* <TouchableOpacity 
+        <TouchableOpacity 
           onPress={() => navigateTo('History')} 
           style={{ 
             alignItems: 'center',
@@ -124,7 +123,7 @@ export default function BottomNavBar({ initialTab = 'Home' }: Props) {
             fontWeight: activeTab === 'History' ? '600' : '500',
             color: activeTab === 'History' ? '#009688' : '#94A3B8'
           }}>History</Text>
-        </TouchableOpacity> */}
+        </TouchableOpacity>
 
         <TouchableOpacity 
           onPress={() => navigateTo('Profile')} 

@@ -1,12 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useRef, useState } from 'react';
 import {
-  Animated,
-  Dimensions,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    Animated,
+    Dimensions,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -314,15 +314,6 @@ export default function GameScreen({
               </TouchableOpacity>
             </>
           )}
-          
-          {gameStage === 'result' && (
-            <TouchableOpacity
-              style={[styles.gameButton, styles.resetButton]}
-              onPress={resetGame}
-            >
-              <Text style={styles.buttonText}>Play Again</Text>
-            </TouchableOpacity>
-          )}
         </View>
         
         {/* Result Message */}
@@ -339,25 +330,6 @@ export default function GameScreen({
             </Text>
           </View>
         )}
-        
-        {/* Statistics */}
-        <View style={styles.statsContainer}>
-          <Text style={styles.statsTitle}>Your Game Statistics</Text>
-          <View style={styles.statsGrid}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{stats.gamesPlayed}</Text>
-              <Text style={styles.statLabel}>Games Played</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{stats.stayWins}</Text>
-              <Text style={styles.statLabel}>Stay Wins</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{stats.switchWins}</Text>
-              <Text style={styles.statLabel}>Switch Wins</Text>
-            </View>
-          </View>
-        </View>
       </View>
     </SafeAreaView>
   );
@@ -497,9 +469,6 @@ const styles = StyleSheet.create({
   stayButton: {
     backgroundColor: '#FF9800',
   },
-  resetButton: {
-    backgroundColor: '#009688',
-  },
   buttonText: {
     color: 'white',
     fontSize: 14,
@@ -525,41 +494,6 @@ const styles = StyleSheet.create({
   resultText: {
     fontSize: 18,
     fontWeight: '600',
-    textAlign: 'center',
-  },
-  statsContainer: {
-    marginTop: 30,
-    padding: 20,
-    backgroundColor: 'white',
-    borderRadius: 16,
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  statsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  statItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statValue: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#009688',
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 4,
     textAlign: 'center',
   },
 });

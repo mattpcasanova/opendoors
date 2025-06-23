@@ -1,6 +1,6 @@
 // src/components/game/GameCard.tsx
 import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { Prize } from '../../services/gameLogic/games';
 
 interface Coordinates {
@@ -39,6 +39,61 @@ const getIconForPrize = (prizeType: string, name: string) => {
   }
 };
 
+// Component to render logo or fallback to emoji
+const CompanyLogo = ({ prize }: { prize: Prize }) => {
+  const { icon } = getIconForPrize(prize.prize_type, prize.name);
+  
+  // Debug log
+  console.log('CompanyLogo:', prize.name, '| logo_url:', prize.logo_url);
+
+  if (prize.logo_url) {
+    return (
+      <View style={{
+        width: 72, // Increased from 48
+        height: 72, // Increased from 48
+        backgroundColor: 'white',
+        borderRadius: 32, // Half of width/height
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 16,
+        overflow: 'hidden',
+        borderWidth: 2,
+        borderColor: '#009688', // Teal border
+      }}>
+        <Image
+          key={prize.logo_url}
+          source={{ uri: prize.logo_url }}
+          style={{
+            width: 70, // Fill almost the entire space (64 - 4 for border)
+            height: 70, // Fill almost the entire space (64 - 4 for border)
+            resizeMode: 'contain',
+          }}
+          onError={e => {
+            console.log('Image failed to load for', prize.name, '| url:', prize.logo_url, '| error:', e.nativeEvent);
+          }}
+        />
+      </View>
+    );
+  }
+  
+  // Fallback to emoji
+  return (
+    <View style={{
+      width: 64, // Increased from 48
+      height: 64, // Increased from 48
+      backgroundColor: 'white',
+      borderRadius: 32, // Half of width/height
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 16,
+      borderWidth: 2,
+      borderColor: '#009688', // Teal border
+    }}>
+      <Text style={{ fontSize: 32 }}>{icon}</Text>
+    </View>
+  );
+};
+
 // Simple distance calculation - replace with real geocoding later
 const calculateDistance = (userLocation: Coordinates | null, address: string | undefined): string => {
   if (!userLocation || !address) {
@@ -59,7 +114,6 @@ const calculateDistance = (userLocation: Coordinates | null, address: string | u
 };
 
 export default function GameCard({ prize, onPress, userLocation }: Props) {
-  const { icon, bg } = getIconForPrize(prize.prize_type, prize.name);
   const distance = calculateDistance(userLocation || null, prize.address);
 
   return (
@@ -86,17 +140,7 @@ export default function GameCard({ prize, onPress, userLocation }: Props) {
         alignItems: 'center',
         marginBottom: 16, // Space for bottom row
       }}>
-        <View style={{
-          width: 48,
-          height: 48,
-          backgroundColor: bg,
-          borderRadius: 24,
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginRight: 16
-        }}>
-          <Text style={{ fontSize: 24 }}>{icon}</Text>
-        </View>
+        <CompanyLogo prize={prize} />
         
         <View style={{ flex: 1 }}>
           <Text style={{ 
@@ -282,9 +326,45 @@ export function SpecialGameCard({ prize, onPress, userLocation }: SpecialGameCar
             </TouchableOpacity>
           </View>
           
-          <Text style={{ fontSize: 40, opacity: 0.9 }}>
-            {getIconForPrize(prize.name)}
-          </Text>
+          {/* Company Logo for Special Card */}
+          {prize.logo_url ? (
+            <View style={{
+              width: 72, // Updated to match new size
+              height: 72, // Updated to match new size
+              backgroundColor: 'white',
+              borderRadius: 36, // Half of width/height
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              borderWidth: 2,
+              borderColor: '#009688', // Teal border to match regular cards
+            }}>
+              <Image
+                source={{ uri: prize.logo_url }}
+                style={{
+                  width: 70, // Fill almost the entire space (72 - 4 for border)
+                  height: 70, // Fill almost the entire space (72 - 4 for border)
+                  resizeMode: 'contain',
+                }}
+                defaultSource={require('../../../assets/OpenDoorsLogo.png')}
+              />
+            </View>
+          ) : (
+            <View style={{
+              width: 72, // Updated to match new size
+              height: 72, // Updated to match new size
+              backgroundColor: 'white',
+              borderRadius: 36, // Half of width/height
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: 2,
+              borderColor: '#009688', // Teal border to match regular cards
+            }}>
+              <Text style={{ fontSize: 32, opacity: 0.9 }}>
+                {getIconForPrize(prize.name)}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Bottom Info Row for Special Card */}

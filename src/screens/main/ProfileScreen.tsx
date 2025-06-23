@@ -4,19 +4,20 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Linking,
-  Modal,
-  Platform,
-  ScrollView,
-  Switch,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Alert,
+    KeyboardAvoidingView,
+    Linking,
+    Modal,
+    Platform,
+    ScrollView,
+    Switch,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import BottomNavBar from '../../components/main/BottomNavBar';
 import { useAuth } from '../../hooks/useAuth';
 
 interface PreferenceItem {
@@ -638,36 +639,7 @@ export default function ProfileScreen() {
           </View>
         </ScrollView>
       </SafeAreaView>
-      {/* Bottom Navigation Bar */}
-      <View style={{
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        alignItems: 'center',
-        backgroundColor: 'white',
-        borderTopWidth: 0.5,
-        borderTopColor: '#E0E0E0',
-        paddingVertical: 12,
-        paddingBottom: 28,
-        height: 88,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 8,
-      }}>
-        <TouchableOpacity style={{ alignItems: 'center' }} onPress={() => navigation.navigate('Home')}>
-          <Ionicons name="home" size={24} color="#666" />
-          <Text style={{ fontSize: 11, color: '#666', marginTop: 2 }}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={{ alignItems: 'center' }} onPress={() => navigation.navigate('Rewards')}>
-          <Ionicons name="gift" size={24} color="#666" />
-          <Text style={{ fontSize: 11, color: '#666', marginTop: 2 }}>Rewards</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={{ alignItems: 'center' }}>
-          <Ionicons name="person" size={24} color="#009688" />
-          <Text style={{ fontSize: 11, color: '#009688', marginTop: 2 }}>Profile</Text>
-        </TouchableOpacity>
-      </View>
+      <BottomNavBar initialTab="Profile" />
 
       {/* Edit Profile Modal */}
       <Modal

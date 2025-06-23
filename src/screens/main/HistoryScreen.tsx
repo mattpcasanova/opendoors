@@ -1,24 +1,24 @@
-import { format } from 'date-fns';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import PastGameCard from '../../components/PastGameCard';
 import BottomNavBar from '../../components/main/BottomNavBar';
 import { useAuth } from '../../hooks/useAuth';
-import { GameHistory, historyService, UserStats } from '../../services/historyService';
+import { GamePlay, historyService, UserStats } from '../../services/historyService';
 
 export default function HistoryScreen() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [gameHistory, setGameHistory] = useState<GameHistory[]>([]);
+  const [gamePlays, setGamePlays] = useState<GamePlay[]>([]);
   const [stats, setStats] = useState<UserStats | null>(null);
 
   useEffect(() => {
@@ -32,15 +32,15 @@ export default function HistoryScreen() {
       setLoading(true);
       setError(null);
       console.log('Fetching history for user:', user?.id);
-      // Fetch both game history and stats in parallel
-      const [historyResult, statsResult] = await Promise.all([
-        historyService.getUserGameHistory(user!.id),
+      // Fetch both game plays and stats in parallel
+      const [gamePlaysResult, statsResult] = await Promise.all([
+        historyService.getUserGamePlays(user!.id),
         historyService.getUserStats(user!.id)
       ]);
-      if (historyResult.error) throw historyResult.error;
+      if (gamePlaysResult.error) throw new Error(gamePlaysResult.error);
       if (statsResult.error) throw statsResult.error;
-      console.log('Fetched gameHistory:', historyResult.data);
-      setGameHistory(historyResult.data || []);
+      console.log('Fetched game plays:', gamePlaysResult.data);
+      setGamePlays(gamePlaysResult.data || []);
       setStats(statsResult.data || null);
     } catch (err: any) {
       console.error('Error fetching history:', err);
@@ -69,40 +69,24 @@ export default function HistoryScreen() {
 
   const renderGameHistory = () => (
     <View style={styles.historyContainer}>
-      <Text style={styles.sectionTitle}>Game History</Text>
-      {gameHistory.map((game) => (
-        <TouchableOpacity
-          key={game.id}
-          style={[
-            styles.gameCard,
-            { backgroundColor: game.won ? '#E8F5E9' : '#FFEBEE' }
-          ]}
-        >
-          <View style={styles.gameHeader}>
-            <Text style={styles.gameDate}>
-              {format(new Date(game.created_at), 'MMM d, yyyy h:mm a')}
-            </Text>
-            <Text style={[
-              styles.gameResult,
-              { color: game.won ? '#2E7D32' : '#C62828' }
-            ]}>
-              {game.won ? 'Won' : 'Lost'}
-            </Text>
-          </View>
-          <Text style={styles.prizeName}>{game.prize.name}</Text>
-          <Text style={styles.locationName}>{game.prize.location_name}</Text>
-          <View style={styles.gameDetails}>
-            <Text style={styles.detailText}>
-              Door {game.chosen_door} → {game.switched ? 'Switched' : 'Stayed'}
-            </Text>
-            {game.game_duration_seconds && (
-              <Text style={styles.detailText}>
-                {game.game_duration_seconds}s
-              </Text>
-            )}
-          </View>
-        </TouchableOpacity>
-      ))}
+      <Text style={styles.sectionTitle}>Recent Games</Text>
+      {gamePlays.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyStateText}>No games played yet</Text>
+          <Text style={styles.emptyStateSubtext}>Start playing games to see your history here!</Text>
+        </View>
+      ) : (
+        gamePlays.map((game) => (
+          <PastGameCard
+            key={game.id}
+            game={game}
+            onPress={() => {
+              // Could add navigation to game details in the future
+              console.log('Game pressed:', game.id);
+            }}
+          />
+        ))
+      )}
     </View>
   );
 
@@ -222,50 +206,20 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     color: '#333',
   },
-  gameCard: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  gameHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
+  },
+  emptyStateText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
     marginBottom: 10,
   },
-  gameDate: {
-    fontSize: 12,
-    color: '#666',
-  },
-  gameResult: {
+  emptyStateSubtext: {
     fontSize: 14,
-    fontWeight: 'bold',
-  },
-  prizeName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  locationName: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 10,
-  },
-  gameDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    paddingTop: 10,
-  },
-  detailText: {
-    fontSize: 12,
     color: '#666',
   },
 }); 
