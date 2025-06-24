@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Image,
@@ -19,8 +19,6 @@ import BottomNavBar from '../../components/main/BottomNavBar';
 import { useAuth } from '../../hooks/useAuth';
 import { useLocation } from '../../hooks/useLocation';
 import { gamesService, Prize } from '../../services/gameLogic/games';
-import { historyService } from '../../services/historyService';
-import { rewardsService } from '../../services/rewardsService';
 import type { MainStackParamList } from '../../types/navigation';
 import GameScreen from '../game/GameScreen';
 
@@ -97,42 +95,40 @@ const DailyGameButton: React.FC<DailyGameButtonProps> = ({ hasPlayedToday, onPre
 interface ProgressSectionProps {
   gamesUntilBonus: number;
   bonusPlaysAvailable: number;
-  onClaimBonus: () => void;
 }
 
-const ProgressSection: React.FC<ProgressSectionProps> = ({ gamesUntilBonus, bonusPlaysAvailable, onClaimBonus }) => {
+const ProgressSection: React.FC<ProgressSectionProps> = ({ 
+  gamesUntilBonus, 
+  bonusPlaysAvailable 
+}) => {
   const totalGames = 5;
-  const progressPercentage = ((totalGames - gamesUntilBonus) / totalGames) * 100;
-  const isComplete = gamesUntilBonus === 0;
+  const progressPercentage = gamesUntilBonus === 5 ? 0 : ((totalGames - gamesUntilBonus) / totalGames) * 100;
   const hasBonusPlay = bonusPlaysAvailable > 0;
 
-  if (isComplete) {
+  // Show static indicator if bonus play is available
+  if (hasBonusPlay) {
     return (
       <View className="mb-8">
-        <TouchableOpacity
-          className={`py-4 px-6 rounded-2xl flex-row items-center justify-center ${
-            hasBonusPlay ? 'bg-green-500' : 'bg-gray-400'
-          }`}
-          onPress={hasBonusPlay ? onClaimBonus : undefined}
-          disabled={!hasBonusPlay}
-          activeOpacity={hasBonusPlay ? 0.8 : 1}
+        <View
+          className="py-4 px-6 rounded-2xl flex-row items-center justify-center bg-green-500"
           style={{
-            shadowColor: hasBonusPlay ? '#22C55E' : '#000',
-            shadowOffset: { width: 0, height: hasBonusPlay ? 4 : 2 },
-            shadowOpacity: hasBonusPlay ? 0.25 : 0.1,
-            shadowRadius: hasBonusPlay ? 8 : 4,
-            elevation: hasBonusPlay ? 6 : 3,
+            shadowColor: '#22C55E',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.25,
+            shadowRadius: 8,
+            elevation: 6,
           }}
         >
-          <Ionicons name="trophy" size={24} color="white" />
+          <Ionicons name="star" size={24} color="white" />
           <Text className="text-white text-lg font-bold ml-3">
-            {hasBonusPlay ? '🎉 Play Bonus Game!' : '🎉 Bonus Play Available!'}
+            Bonus Available! Play any game to use it
           </Text>
-        </TouchableOpacity>
+        </View>
       </View>
     );
   }
 
+  // Always show progress bar if not complete
   return (
     <View className="mb-8">
       <Text className="text-gray-900 text-base font-medium mb-3">
@@ -195,6 +191,8 @@ export default function HomeScreen() {
   const categories = ['Food', 'Drinks', 'Activities', 'Wellness', 'Retail', 'Entertainment', 'Other'];
   const distanceOptions = ['5 mi', '10 mi', '25 mi', '50 mi', 'Any'];
   const sortOptions = ['Closest', 'Suggested', 'Highest Value', 'Most Popular'];
+
+  const currentGameIsBonus = useRef(false);
 
   // Debug log filter/sort state
   useEffect(() => {
@@ -272,15 +270,6 @@ export default function HomeScreen() {
   }, [searchText, regularGames]);
 
   const playGame = (prize: Prize) => {
-    // Debug logging - make it very obvious
-    console.log('=====================================');
-    console.log('🎮 PLAYING GAME:', prize.name);
-    console.log('🚪 PRIZE DOORS FROM DATABASE:', prize.doors);
-    console.log('🏪 PRIZE LOCATION:', prize.location_name);
-    console.log('📋 FULL PRIZE OBJECT:', prize);
-    console.log('=====================================');
-    
-    // Set the current game and navigate to game screen
     setCurrentGame(prize);
     setShowGameScreen(true);
   };
@@ -291,48 +280,30 @@ export default function HomeScreen() {
   };
 
   const handleGameComplete = async (won: boolean, switched: boolean) => {
-    // Hide the game screen
     setShowGameScreen(false);
-
-    console.log(`🎉 Game completed! You ${won ? 'won' : 'lost'}. Switched: ${switched}`);
-
-    if (currentGame) {
-      // Log the game play with the reward ID as a string (UUID)
-      await historyService.logGamePlay(currentGame.id, won);
-    }
-
-    // If the user won, save the prize and show a win message
-    if (won && currentGame) {
-      console.log('🏆 Saving prize to user rewards:', currentGame.name);
-      const { success, error } = await rewardsService.addUserReward(user!.id, currentGame.id);
-
-      if (error || !success) {
-        Alert.alert('Error', 'Could not save your reward. Please contact support.');
-        console.error('Error saving prize:', error);
-      } else {
-        Alert.alert('You Won!', `You've won the ${currentGame.name}! Check your rewards.`);
-        console.log('✅ Prize saved successfully!');
-      }
-    } else if (currentGame) {
-      // If the user lost
-      Alert.alert('So Close!', 'Better luck next time!');
-    }
-
-    // Mark that a game has been played today
     setHasPlayedAnyGameToday(true);
     setLastPlayDate(new Date().toDateString());
+
+    console.log('🎮 Game completed');
+    console.log('🎯 Bonus plays available before:', bonusPlaysAvailable);
     
-    // Decrement games until bonus
-    const newGamesUntilBonus = Math.max(0, gamesUntilBonus - 1);
-    setGamesUntilBonus(newGamesUntilBonus);
-    
-    // Award bonus play if progress is complete
-    if (newGamesUntilBonus === 0) {
-      setBonusPlaysAvailable(prev => prev + 1);
-      Alert.alert('🎉 Bonus Earned!', 'You\'ve earned a bonus play! Use it anytime from the home screen.');
+    // If player has bonus available, consume it and reset progress
+    if (bonusPlaysAvailable > 0) {
+      console.log('✨ Consuming bonus play');
+      setBonusPlaysAvailable(prev => Math.max(0, prev - 1));
+      setGamesUntilBonus(5); // Reset progress bar to 0%
+      Alert.alert('🎉 Bonus Used!', 'Your bonus play has been used! Progress reset.');
+    } else {
+      // Normal game progression
+      const newGamesUntilBonus = Math.max(0, gamesUntilBonus - 1);
+      setGamesUntilBonus(newGamesUntilBonus);
+      
+      if (newGamesUntilBonus === 0) {
+        setBonusPlaysAvailable(prev => prev + 1);
+        Alert.alert('🎉 Bonus Earned!', 'You\'ve earned a bonus! Your next game will reset your progress.');
+      }
     }
     
-    // Reset current game
     setCurrentGame(null);
   };
 
@@ -353,31 +324,6 @@ export default function HomeScreen() {
       />
     );
   }
-
-  const claimBonusDoor = () => {
-    if (bonusPlaysAvailable > 0) {
-      // Use a bonus play to play a special game
-      setBonusPlaysAvailable(prev => prev - 1);
-      
-      // Create a special bonus game
-      const bonusGame: Prize = {
-        id: 'bonus-game',
-        name: 'Bonus Door Game',
-        description: 'Special bonus game with better odds!',
-        value: 50,
-        prize_type: 'bonus',
-        doors: 3,
-        created_at: new Date().toISOString(),
-        location_name: 'Bonus Location',
-        address: 'Special',
-        stock_quantity: 1,
-        is_special: true
-      };
-      
-      setCurrentGame(bonusGame);
-      setShowGameScreen(true);
-    }
-  };
 
   const navigateTo = (page: string) => {
     setActiveTab(page);
@@ -459,7 +405,7 @@ export default function HomeScreen() {
             <Ionicons name="search" size={20} color="#999999" />
             <TextInput
               className="flex-1 ml-3 text-base text-gray-900"
-              placeholder="Search games by name, description, or location..."
+              placeholder="Search games by name or description"
               placeholderTextColor="#999999"
               value={searchText}
               onChangeText={setSearchText}
@@ -491,7 +437,6 @@ export default function HomeScreen() {
         <ProgressSection 
           gamesUntilBonus={gamesUntilBonus}
           bonusPlaysAvailable={bonusPlaysAvailable}
-          onClaimBonus={claimBonusDoor}
         />
 
         {/* Today's Special - Only show when not searching */}
@@ -517,7 +462,7 @@ export default function HomeScreen() {
                 description: 'Win a $25 gift card',
                 value: 25,
                 prize_type: 'gift_card',
-                doors: 3,
+                doors: 5,
                 created_at: new Date().toISOString(),
                 location_name: 'Target',
                 address: 'Online',
@@ -530,7 +475,7 @@ export default function HomeScreen() {
                 description: 'Win a $25 gift card',
                 value: 25,
                 prize_type: 'gift_card',
-                doors: 3,
+                doors: 5,
                 created_at: new Date().toISOString()
               })}
             />

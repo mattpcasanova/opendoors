@@ -3,6 +3,7 @@ import React, { useRef, useState } from 'react';
 import {
     Animated,
     Dimensions,
+    ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -81,6 +82,10 @@ export default function GameScreen({
     stayWins: 0,
     switchWins: 0
   });
+
+  // Add new state for picking switch door
+  const [switchPickMode, setSwitchPickMode] = useState(false);
+  const [availableSwitchDoors, setAvailableSwitchDoors] = useState<number[]>([]);
 
   const getInstructions = (): string => {
     switch (gameStage) {
@@ -181,17 +186,63 @@ export default function GameScreen({
 
   const finalChoice = (shouldSwitch: boolean) => {
     setSwitchedChoice(shouldSwitch);
-    
+
     if (shouldSwitch) {
-      // Find the remaining unopened door(s) and pick one randomly
-      const remainingDoors = Array.from({ length: doorCount }, (_, i) => i + 1)
-        .filter(num => num !== selectedDoor && !revealedDoors.includes(num));
-      
-      const newChoice = remainingDoors[Math.floor(Math.random() * remainingDoors.length)];
-      setSelectedDoor(newChoice);
+      if (doorCount > 3) {
+        // Enter switch pick mode for 5/10 door games
+        const remainingDoors = Array.from({ length: doorCount }, (_, i) => i + 1)
+          .filter(num => num !== selectedDoor && !revealedDoors.includes(num));
+        setAvailableSwitchDoors(remainingDoors);
+        setSwitchPickMode(true);
+        return;
+      } else {
+        // For 3-door, pick the only other door
+        const remainingDoors = Array.from({ length: doorCount }, (_, i) => i + 1)
+          .filter(num => num !== selectedDoor && !revealedDoors.includes(num));
+        const newChoice = remainingDoors[Math.floor(Math.random() * remainingDoors.length)];
+        setSelectedDoor(newChoice);
+      }
     }
-    
+
     setGameStage('finalChoice');
+  };
+
+  const handleSwitchPick = (doorNumber: number) => {
+    setSelectedDoor(doorNumber);
+    setSwitchPickMode(false);
+    // Immediately open the door and show result, just like in 3-door games
+    // Final reveal
+    const won = doorNumber === prizeLocation;
+    openDoor(doorNumber);
+    // Update statistics
+    setStats(prev => ({
+      ...prev,
+      gamesPlayed: prev.gamesPlayed + 1,
+      stayWins: switchedChoice ? prev.stayWins : prev.stayWins + (won ? 1 : 0),
+      switchWins: switchedChoice ? prev.switchWins + (won ? 1 : 0) : prev.switchWins
+    }));
+    // Set result
+    const message = won ?
+      `🎉 Congratulations! You won the ${prizeName}!` :
+      '😔 Sorry! Better luck next time!';
+    setGameResult({ won, message });
+    setGameStage('result');
+    // Reveal all remaining doors after a delay
+    setTimeout(() => {
+      const allRemainingDoors: number[] = [];
+      for (let i = 1; i <= doorCount; i++) {
+        if (i !== doorNumber && !revealedDoors.includes(i)) {
+          allRemainingDoors.push(i);
+          openDoor(i);
+        }
+      }
+      // Update revealedDoors state to include all doors
+      setRevealedDoors(prev => [...prev, doorNumber, ...allRemainingDoors]);
+    }, 500);
+    // Call completion callback
+    setTimeout(() => {
+      onGameComplete?.(won, true);
+    }, 1500);
   };
 
   const resetGame = () => {
@@ -226,6 +277,11 @@ export default function GameScreen({
     return '#8D6E63'; // Brown default
   };
 
+  // Helper to determine if a door is selectable for switching
+  const isSwitchSelectable = (doorNumber: number) => {
+    return switchPickMode && availableSwitchDoors.includes(doorNumber);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -238,6 +294,7 @@ export default function GameScreen({
       </View>
 
       {/* Game Content */}
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
       <View style={styles.gameContainer}>
         <Text style={styles.gameTitle}>{prizeName}</Text>
         
@@ -251,6 +308,7 @@ export default function GameScreen({
             <View key={rowIndex} style={styles.doorRow}>
               {Array.from({ length: doorsInRow }, (_, colIndex) => {
                 const doorNumber = layout.rows.slice(0, rowIndex).reduce((sum, row) => sum + row, 0) + colIndex + 1;
+                const selectable = isSwitchSelectable(doorNumber);
                 return (
                   <View key={doorNumber} style={styles.doorContainer}>
                     <TouchableOpacity
@@ -260,10 +318,18 @@ export default function GameScreen({
                           backgroundColor: getDoorColor(doorNumber),
                           width: doorSize,
                           height: doorSize * 1.5,
+                          borderColor: selectable ? '#009688' : (selectedDoor === doorNumber && gameStage !== 'selection' ? '#009688' : '#00796B'),
+                          borderWidth: selectable ? 4 : 3,
+                          shadowColor: selectable ? '#009688' : '#000',
+                          shadowOpacity: selectable ? 0.4 : 0.2,
                         }
                       ]}
-                      onPress={() => handleDoorClick(doorNumber)}
+                      onPress={() => {
+                        if (switchPickMode && selectable) handleSwitchPick(doorNumber);
+                        else handleDoorClick(doorNumber);
+                      }}
                       activeOpacity={0.8}
+                      disabled={switchPickMode ? !selectable : false}
                     >
                       <Animated.View
                         style={[
@@ -298,21 +364,54 @@ export default function GameScreen({
         
         {/* Buttons */}
         <View style={styles.buttonsContainer}>
-          {gameStage === 'montyReveal' && (
+          {gameStage === 'montyReveal' && !switchPickMode && (
             <>
-              <TouchableOpacity
-                style={[styles.gameButton, styles.switchButton]}
-                onPress={() => finalChoice(true)}
-              >
-                <Text style={styles.buttonText}>Switch Doors</Text>
-              </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.gameButton, styles.stayButton]}
                 onPress={() => finalChoice(false)}
               >
                 <Text style={styles.buttonText}>Stay with Choice</Text>
               </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.gameButton, styles.switchButton]}
+                onPress={() => finalChoice(true)}
+              >
+                <Text style={styles.buttonText}>Switch Doors</Text>
+              </TouchableOpacity>
             </>
+          )}
+          {gameStage === 'montyReveal' && switchPickMode && (
+            <View style={{ width: '100%', alignItems: 'center', flex: 1 }}>
+              <Text style={{ fontSize: 16, color: '#333', marginBottom: 16, fontWeight: '600' }}>
+                Pick a door to switch to:
+              </Text>
+              <ScrollView
+                style={{ maxHeight: 220, width: '100%' }}
+                contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 12 }}
+                showsVerticalScrollIndicator={false}
+              >
+                {availableSwitchDoors.map(doorNum => (
+                  <TouchableOpacity
+                    key={doorNum}
+                    style={{
+                      backgroundColor: '#009688',
+                      borderRadius: 12,
+                      paddingVertical: 18,
+                      paddingHorizontal: 28,
+                      margin: 8,
+                      shadowColor: '#009688',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.18,
+                      shadowRadius: 6,
+                      elevation: 4,
+                    }}
+                    onPress={() => handleSwitchPick(doorNum)}
+                  >
+                    <Text style={{ color: 'white', fontSize: 18, fontWeight: '700' }}>Door {doorNum}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
           )}
         </View>
         
@@ -331,6 +430,7 @@ export default function GameScreen({
           </View>
         )}
       </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -464,10 +564,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   switchButton: {
-    backgroundColor: '#3F51B5',
+    backgroundColor: '#009688',
+    marginLeft: 0,
+    marginRight: 0,
+    shadowColor: '#009688',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    elevation: 4,
   },
   stayButton: {
     backgroundColor: '#FF9800',
+    marginLeft: 0,
+    marginRight: 0,
+    shadowColor: '#FF9800',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    elevation: 4,
   },
   buttonText: {
     color: 'white',
