@@ -1,6 +1,9 @@
 // src/components/game/GameCard.tsx
-import React from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useState } from 'react';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { useAuth } from '../../hooks/useAuth';
+import { favoritesService } from '../../services/favoritesService';
 import { Prize } from '../../services/gameLogic/games';
 
 interface Coordinates {
@@ -115,21 +118,51 @@ const calculateDistance = (userLocation: Coordinates | null, address: string | u
 
 export default function GameCard({ prize, onPress, userLocation }: Props) {
   const distance = calculateDistance(userLocation || null, prize.address);
+  const { user } = useAuth();
+  const [favorited, setFavorited] = useState(false);
+  const [loadingFavorite, setLoadingFavorite] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    async function checkFavorite() {
+      if (user?.id && prize?.id) {
+        const { favorited } = await favoritesService.isFavorited(user.id, prize.id);
+        if (mounted) setFavorited(favorited);
+      }
+    }
+    checkFavorite();
+    return () => { mounted = false; };
+  }, [user?.id, prize?.id]);
+
+  const toggleFavorite = async () => {
+    if (!user?.id) return;
+    setLoadingFavorite(true);
+    if (favorited) {
+      await favoritesService.removeFavorite(user.id, prize.id);
+      setFavorited(false);
+      console.log(`Removed favorite for prize ${prize.id}`);
+    } else {
+      await favoritesService.addFavorite(user.id, prize.id);
+      setFavorited(true);
+      console.log(`Added favorite for prize ${prize.id}`);
+    }
+    setLoadingFavorite(false);
+  };
 
   return (
     <TouchableOpacity
       style={{
         backgroundColor: 'white',
         borderRadius: 16,
-        padding: 20, // Increased padding for more height
-        flexDirection: 'column', // Changed to column to accommodate bottom row
+        padding: 20,
+        flexDirection: 'column',
         marginBottom: 12,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.08,
         shadowRadius: 4,
         elevation: 2,
-        minHeight: 120, // Added minimum height
+        minHeight: 120,
       }}
       onPress={onPress}
       activeOpacity={0.8}
@@ -138,24 +171,38 @@ export default function GameCard({ prize, onPress, userLocation }: Props) {
       <View style={{
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 16, // Space for bottom row
+        marginBottom: 16,
       }}>
         <CompanyLogo prize={prize} />
-        
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, flexDirection: 'column', justifyContent: 'center', marginRight: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+            <Text style={{ 
+              fontSize: 16, 
+              fontWeight: '600', 
+              color: '#333',
+            }}>
+              {prize.location_name || prize.name}
+            </Text>
+            <TouchableOpacity
+              onPress={toggleFavorite}
+              disabled={loadingFavorite}
+              style={{ marginLeft: 8, padding: 2 }}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            >
+              <Ionicons
+                name={favorited ? 'star' : 'star-outline'}
+                size={20}
+                color={favorited ? '#FFD700' : '#B0B0B0'}
+                style={{ marginTop: 1 }}
+              />
+            </TouchableOpacity>
+          </View>
           <Text style={{ 
-            fontSize: 16, 
-            fontWeight: '600', 
-            color: '#333', 
-            marginBottom: 4 
-          }}>
-            {prize.location_name || prize.name}
-          </Text>
-          <Text style={{ 
-            fontSize: 14, 
+            fontSize: 13,
             color: '#666',
-            lineHeight: 20,
-          }} numberOfLines={2}>
+            lineHeight: 18,
+            marginBottom: 6,
+          }} numberOfLines={3}>
             {prize.description}
           </Text>
           {prize.doors !== 3 && (
@@ -169,17 +216,23 @@ export default function GameCard({ prize, onPress, userLocation }: Props) {
             </Text>
           )}
         </View>
-        
         <View style={{
           backgroundColor: '#009688',
-          paddingHorizontal: 16,
-          paddingVertical: 8,
-          borderRadius: 12
+          paddingHorizontal: 28,
+          paddingVertical: 14,
+          borderRadius: 24,
+          shadowColor: '#009688',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.18,
+          shadowRadius: 6,
+          elevation: 4,
         }}>
           <Text style={{ 
-            color: 'white', 
-            fontSize: 12, 
-            fontWeight: '600' 
+            color: 'white',
+            fontSize: 16,
+            fontWeight: '700',
+            letterSpacing: 1,
+            textTransform: 'uppercase',
           }}>
             PLAY
           </Text>
@@ -295,7 +348,7 @@ export function SpecialGameCard({ prize, onPress, userLocation }: SpecialGameCar
               marginBottom: 4,
               opacity: 0.95,
             }}>
-              {prize.description} • {formatValue(prize.value || 0)} value
+              {prize.description}
             </Text>
             <Text style={{
               color: '#FFE0B2',
@@ -309,17 +362,24 @@ export function SpecialGameCard({ prize, onPress, userLocation }: SpecialGameCar
               style={{
                 backgroundColor: 'white',
                 alignSelf: 'flex-start',
-                paddingHorizontal: 16,
-                paddingVertical: 8,
-                borderRadius: 16,
+                paddingHorizontal: 28,
+                paddingVertical: 14,
+                borderRadius: 24,
+                shadowColor: '#FF9800',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.18,
+                shadowRadius: 6,
+                elevation: 4,
               }}
               activeOpacity={0.8}
               onPress={onPress}
             >
               <Text style={{
                 color: '#FF9800',
-                fontSize: 14,
-                fontWeight: '600',
+                fontSize: 16,
+                fontWeight: '700',
+                letterSpacing: 1,
+                textTransform: 'uppercase',
               }}>
                 Play now
               </Text>
