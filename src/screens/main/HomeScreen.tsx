@@ -404,13 +404,20 @@ export default function HomeScreen() {
           <View style={{
             width: 120,
             height: 120,
-            backgroundColor: 'rgba(255, 255, 255, 0.15)',
-            borderRadius: 30,
+            backgroundColor: '#E0F7F4',
+            borderRadius: 60,
             alignItems: 'center',
             justifyContent: 'center',
             marginLeft: 16,
+            borderWidth: 3,
+            borderColor: '#009688',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.18,
+            shadowRadius: 8,
+            elevation: 8,
           }}>
-            <Image source={require('../../../assets/OpenDoorsLogo.png')} style={{ width: 120, height: 120, resizeMode: 'contain' }} />
+            <Image source={require('../../../assets/OpenDoorsLogo.png')} style={{ width: 100, height: 100, resizeMode: 'contain' }} />
           </View>
         </View>
       </LinearGradient>

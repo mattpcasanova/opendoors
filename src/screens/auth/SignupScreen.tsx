@@ -189,18 +189,20 @@ export default function SignupScreen() {
               <View style={{ alignItems: 'center', marginBottom: 20 }}>
                 {/* App Logo */}
                 <View style={{
-                  width: 150,
-                  height: 150,
-                  backgroundColor: 'rgba(255, 255, 255, 0.4)',
-                  borderRadius: 24,
+                  width: 180,
+                  height: 180,
+                  backgroundColor: '#E0F7F4',
+                  borderRadius: 90,
                   alignItems: 'center',
                   justifyContent: 'center',
                   marginBottom: 32,
+                  borderWidth: 3,
+                  borderColor: '#009688',
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.1,
+                  shadowOpacity: 0.18,
                   shadowRadius: 8,
-                  elevation: 4,
+                  elevation: 8,
                 }}>
                   <Image source={require('../../../assets/OpenDoorsLogo.png')} style={{ width: 150, height: 150, resizeMode: 'contain' }} />
                 </View>
