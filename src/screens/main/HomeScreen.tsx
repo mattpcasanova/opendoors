@@ -4,13 +4,14 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    Image,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  Image,
+  ScrollView as RNScrollView,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import GameCard, { SpecialGameCard } from '../../components/game/GameCard';
@@ -183,6 +184,22 @@ export default function HomeScreen() {
   const [lastPlayDate, setLastPlayDate] = useState<string | null>(null);
   const [bonusPlaysAvailable, setBonusPlaysAvailable] = useState(0);
   const { user } = useAuth();
+
+  // Filter/sort state
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [distance, setDistance] = useState('Any');
+  const [sortBy, setSortBy] = useState('Closest');
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
+
+  const categories = ['Food', 'Drinks', 'Activities', 'Wellness', 'Retail', 'Entertainment', 'Other'];
+  const distanceOptions = ['5 mi', '10 mi', '25 mi', '50 mi', 'Any'];
+  const sortOptions = ['Closest', 'Suggested', 'Highest Value', 'Most Popular'];
+
+  // Debug log filter/sort state
+  useEffect(() => {
+    console.log('Filter state:', { selectedCategories, distance, sortBy, showOnlyFavorites });
+  }, [selectedCategories, distance, sortBy, showOnlyFavorites]);
 
   useEffect(() => {
     const fetchGames = async () => {
@@ -520,10 +537,124 @@ export default function HomeScreen() {
           </>
         )}
 
-        {/* Available Games */}
-        <Text className="text-gray-900 text-xl font-semibold mb-4">
-          {searchText ? 'Search Results' : 'Available games'}
-        </Text>
+        {/* Available Games header and Filter button row */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, marginTop: 8 }}>
+          <Text className="text-gray-900 text-xl font-semibold" style={{ marginBottom: 0, textAlign: 'left', flex: 1, paddingLeft: 0, marginLeft: 0 }}>
+            {searchText ? 'Search Results' : 'Available games'}
+          </Text>
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#E0F7F4',
+              paddingHorizontal: 14,
+              paddingVertical: 12,
+              borderRadius: 20,
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginLeft: 12,
+              shadowColor: '#009688',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.08,
+              shadowRadius: 4,
+              elevation: 2,
+              alignSelf: 'flex-end',
+            }}
+            onPress={() => setShowFilters(f => !f)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="filter" size={18} color="#009688" style={{ marginRight: 6 }} />
+            <Text style={{ color: '#009688', fontWeight: '600', fontSize: 15 }}>Filter</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Collapsible Filter/Sort Bar */}
+        {showFilters && (
+          <View style={{ backgroundColor: '#F8F9FA', borderRadius: 18, padding: 12, marginBottom: 18, marginHorizontal: 12, paddingHorizontal: 12 }}>
+            {/* Row 1: Category chips + Favorites toggle */}
+            <RNScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }} contentContainerStyle={{ paddingHorizontal: 12 }}>
+              {categories.map(cat => (
+                <TouchableOpacity
+                  key={cat}
+                  style={{
+                    backgroundColor: selectedCategories.includes(cat) ? '#009688' : '#E0F7F4',
+                    paddingHorizontal: 16,
+                    paddingVertical: 8,
+                    borderRadius: 16,
+                    marginRight: 8,
+                    borderWidth: selectedCategories.includes(cat) ? 2 : 0,
+                    borderColor: '#009688',
+                  }}
+                  onPress={() => setSelectedCategories(selectedCategories.includes(cat)
+                    ? selectedCategories.filter(c => c !== cat)
+                    : [...selectedCategories, cat])}
+                >
+                  <Text style={{ color: selectedCategories.includes(cat) ? 'white' : '#009688', fontWeight: '600' }}>{cat}</Text>
+                </TouchableOpacity>
+              ))}
+              {/* Favorites toggle chip */}
+              <TouchableOpacity
+                style={{
+                  backgroundColor: showOnlyFavorites ? '#009688' : '#E0F7F4',
+                  paddingHorizontal: 14,
+                  paddingVertical: 8,
+                  borderRadius: 16,
+                  marginRight: 0,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  borderWidth: showOnlyFavorites ? 2 : 0,
+                  borderColor: '#009688',
+                }}
+                onPress={() => setShowOnlyFavorites(f => !f)}
+              >
+                <Ionicons name={showOnlyFavorites ? 'star' : 'star-outline'} size={18} color={showOnlyFavorites ? '#FFD700' : '#B0B0B0'} style={{ marginRight: 4 }} />
+                <Text style={{ color: showOnlyFavorites ? 'white' : '#009688', fontWeight: '600' }}>Favorites</Text>
+              </TouchableOpacity>
+            </RNScrollView>
+
+            {/* Row 2: Distance segmented control */}
+            <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 10, paddingHorizontal: 12 }}>
+              {distanceOptions.map(opt => (
+                <TouchableOpacity
+                  key={opt}
+                  style={{
+                    backgroundColor: distance === opt ? '#009688' : '#E0F7F4',
+                    paddingHorizontal: 16,
+                    paddingVertical: 8,
+                    borderRadius: 16,
+                    marginRight: 8,
+                    borderWidth: distance === opt ? 2 : 0,
+                    borderColor: '#009688',
+                  }}
+                  onPress={() => setDistance(opt)}
+                >
+                  <Text style={{ color: distance === opt ? 'white' : '#009688', fontWeight: '600' }}>{opt}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Row 3: Sorting segmented control (horizontal scroll) */}
+            <RNScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 12 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'flex-start' }}>
+                {sortOptions.map(opt => (
+                  <TouchableOpacity
+                    key={opt}
+                    style={{
+                      backgroundColor: sortBy === opt ? '#009688' : '#E0F7F4',
+                      paddingHorizontal: 16,
+                      paddingVertical: 8,
+                      borderRadius: 16,
+                      marginRight: 8,
+                      borderWidth: sortBy === opt ? 2 : 0,
+                      borderColor: '#009688',
+                    }}
+                    onPress={() => setSortBy(opt)}
+                  >
+                    <Text style={{ color: sortBy === opt ? 'white' : '#009688', fontWeight: '600' }}>{opt}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </RNScrollView>
+          </View>
+        )}
         
         {(() => {
           // Sort filteredGames by distance
