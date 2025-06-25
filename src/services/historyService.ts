@@ -31,6 +31,7 @@ export interface GamePlay {
   prize: {
     name: string;
     location_name: string;
+    logo_url?: string;
   };
 }
 
@@ -66,12 +67,11 @@ class HistoryService {
     try {
       console.log('📊 Fetching user stats for:', userId);
       
-      // Get total games played and wins
-      const { data: gameStats, error: gameError } = await supabase
-        .from('user_profiles')
-        .select('total_games, total_wins')
-        .eq('id', userId)
-        .maybeSingle();
+      // Get total games played from game_plays table
+      const { data: gamePlays, error: gameError } = await supabase
+        .from('game_plays')
+        .select('id')
+        .eq('user_id', userId);
 
       if (gameError) throw gameError;
 
@@ -84,7 +84,7 @@ class HistoryService {
       if (rewardError) throw rewardError;
 
       const stats: UserStats = {
-        gamesPlayed: gameStats?.total_games || 0,
+        gamesPlayed: gamePlays?.length || 0,
         rewardsEarned: rewardStats?.length || 0,
         rewardsClaimed: rewardStats?.filter(r => r.redemption_status === 'claimed').length || 0
       };
@@ -122,7 +122,8 @@ class HistoryService {
             description,
             value,
             prize_type,
-            location_name
+            location_name,
+            logo_url
           )
         `)
         .eq('user_id', userId)

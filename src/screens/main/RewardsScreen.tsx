@@ -4,12 +4,13 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import {
-  Alert,
-  Image,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View
+    Alert,
+    Image,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import BottomNavBar from '../../components/main/BottomNavBar';
@@ -281,13 +282,30 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
 export default function RewardsScreen() {
   const navigation = useNavigation<MainStackNavigationProp>();
   const { user } = useAuth();
-  const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
   const [rewards, setRewards] = useState<Reward[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
+  const [searchText, setSearchText] = useState('');
+  const [filteredRewards, setFilteredRewards] = useState<Reward[]>([]);
 
   useEffect(() => {
     fetchRewards();
   }, [user]);
+
+  // Filter rewards based on search text
+  useEffect(() => {
+    if (!rewards) return;
+    
+    const filtered = rewards.filter(reward => {
+      const searchLower = searchText.toLowerCase();
+      const companyMatch = reward.company.toLowerCase().includes(searchLower);
+      const rewardMatch = reward.reward.toLowerCase().includes(searchLower);
+      
+      return companyMatch || rewardMatch;
+    });
+    
+    setFilteredRewards(filtered);
+  }, [searchText, rewards]);
 
   const fetchRewards = async () => {
     if (!user) return;
@@ -384,7 +402,7 @@ export default function RewardsScreen() {
         </View>
       </LinearGradient>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20 }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: 100 }}>
         {/* Stats Cards */}
         <View style={{
           flexDirection: 'row',
@@ -453,6 +471,51 @@ export default function RewardsScreen() {
           </View>
         </View>
 
+        {/* Search Bar */}
+        <View style={{ marginBottom: 24 }}>
+          <View style={{
+            backgroundColor: 'white',
+            borderRadius: 24,
+            paddingHorizontal: 20,
+            paddingVertical: 12,
+            flexDirection: 'row',
+            alignItems: 'center',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.08,
+            shadowRadius: 8,
+            elevation: 3,
+          }}>
+            <Ionicons name="search" size={20} color="#999999" />
+            <TextInput
+              style={{
+                flex: 1,
+                marginLeft: 12,
+                fontSize: 16,
+                color: '#333',
+              }}
+              placeholder="Search rewards by company or reward"
+              placeholderTextColor="#999999"
+              value={searchText}
+              onChangeText={setSearchText}
+            />
+            {searchText.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchText('')}>
+                <Ionicons name="close-circle" size={20} color="#999999" />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* Search Results Info */}
+        {searchText.length > 0 && (
+          <View style={{ marginBottom: 16 }}>
+            <Text style={{ color: '#6B7280', fontSize: 14 }}>
+              Found {filteredRewards.length} reward{filteredRewards.length !== 1 ? 's' : ''} matching "{searchText}"
+            </Text>
+          </View>
+        )}
+
         {/* Rewards List */}
         <View>
           <Text style={{
@@ -461,15 +524,17 @@ export default function RewardsScreen() {
             color: '#374151',
             marginBottom: 16,
           }}>
-            Your rewards
+            {searchText ? 'Search Results' : 'Your rewards'}
           </Text>
           
           {loading ? (
             <Text style={{ textAlign: 'center', color: '#6B7280' }}>Loading rewards...</Text>
-          ) : rewards.length === 0 ? (
-            <Text style={{ textAlign: 'center', color: '#6B7280' }}>No rewards yet. Play games to win prizes!</Text>
+          ) : (searchText ? filteredRewards : rewards).length === 0 ? (
+            <Text style={{ textAlign: 'center', color: '#6B7280' }}>
+              {searchText ? 'No rewards found matching your search.' : 'No rewards yet. Play games to win prizes!'}
+            </Text>
           ) : (
-            rewards.map((reward) => (
+            (searchText ? filteredRewards : rewards).map((reward) => (
               <RewardCard
                 key={reward.id + (reward.created_at || '')}
                 reward={reward}

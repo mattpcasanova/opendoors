@@ -1,12 +1,12 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PastGameCard from '../../components/PastGameCard';
@@ -42,7 +42,10 @@ export default function HistoryScreen() {
       console.log('Fetched game plays:', gamePlaysResult.data);
       const mappedGamePlays = (gamePlaysResult.data || []).map(gp => ({
         ...gp,
-        prize: gp.prizes,
+        prize: {
+          ...gp.prizes,
+          logo_url: gp.prizes?.logo_url,
+        },
       }));
       setGamePlays(mappedGamePlays);
       setStats(statsResult.data || null);
@@ -55,19 +58,24 @@ export default function HistoryScreen() {
   };
 
   const renderStats = () => (
-    <View style={styles.statsContainer}>
-      <View style={styles.statItem}>
-        <Text style={styles.statValue}>{stats?.gamesPlayed || 0}</Text>
-        <Text style={styles.statLabel}>Games Played</Text>
-      </View>
-      <View style={styles.statItem}>
-        <Text style={styles.statValue}>{stats?.rewardsEarned || 0}</Text>
-        <Text style={styles.statLabel}>Rewards Earned</Text>
-      </View>
-      <View style={styles.statItem}>
-        <Text style={styles.statValue}>{stats?.rewardsClaimed || 0}</Text>
-        <Text style={styles.statLabel}>Rewards Claimed</Text>
-      </View>
+    <View style={{
+      backgroundColor: 'white',
+      borderRadius: 12,
+      padding: 20,
+      marginBottom: 20,
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+      elevation: 2,
+    }}>
+      <Text style={{ fontSize: 32, fontWeight: '700', color: '#009688', marginBottom: 8 }}>
+        {stats?.gamesPlayed || 0}
+      </Text>
+      <Text style={{ fontSize: 16, color: '#6B7280', textAlign: 'center' }}>
+        Games Played
+      </Text>
     </View>
   );
 
@@ -180,26 +188,6 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: 'white',
     fontWeight: 'bold',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    padding: 20,
-    backgroundColor: 'white',
-    marginBottom: 10,
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#4c669f',
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 5,
   },
   historyContainer: {
     padding: 20,
