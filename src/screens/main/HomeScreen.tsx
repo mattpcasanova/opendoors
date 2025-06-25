@@ -18,6 +18,7 @@ import GameCard, { SpecialGameCard } from '../../components/game/GameCard';
 import BottomNavBar from '../../components/main/BottomNavBar';
 import { useAuth } from '../../hooks/useAuth';
 import { useLocation } from '../../hooks/useLocation';
+import { supabase } from '../../lib/supabase';
 import { gamesService, Prize } from '../../services/gameLogic/games';
 import type { MainStackParamList } from '../../types/navigation';
 import GameScreen from '../game/GameScreen';
@@ -121,7 +122,7 @@ const ProgressSection: React.FC<ProgressSectionProps> = ({
         >
           <Ionicons name="star" size={24} color="white" />
           <Text className="text-white text-lg font-bold ml-3">
-            Bonus Available! Play any game to use it
+            Bonus Available! Play any game.
           </Text>
         </View>
       </View>
@@ -179,7 +180,7 @@ export default function HomeScreen() {
   const [currentGame, setCurrentGame] = useState<Prize | null>(null);
   const [lastPlayDate, setLastPlayDate] = useState<string | null>(null);
   const [bonusPlaysAvailable, setBonusPlaysAvailable] = useState(0);
-  const { user } = useAuth();
+  const { user, session } = useAuth();
 
   // Filter/sort state
   const [showFilters, setShowFilters] = useState(false);
@@ -280,9 +281,87 @@ export default function HomeScreen() {
   };
 
   const handleGameComplete = async (won: boolean, switched: boolean) => {
+    console.log('🔍 Debug user info:', {
+      user: user?.id,
+      email: user?.email,
+      currentGame: currentGame?.id,
+      authenticated: !!user
+    });
     setShowGameScreen(false);
     setHasPlayedAnyGameToday(true);
     setLastPlayDate(new Date().toDateString());
+
+    // Use session from context
+    if (!session && user) {
+      console.log('🔄 Session missing but user exists, context session is null.');
+      Alert.alert(
+        'Session Expired',
+        'Your session has expired. Please log in again to save your game progress.',
+        [
+          { text: 'Later', style: 'cancel' },
+          {
+            text: 'Log In',
+            onPress: () => {
+              navigation.navigate('Login' as any);
+              return;
+            }
+          }
+        ]
+      );
+      return;
+    }
+
+    // Record the game only if we have a valid session
+    if (user && currentGame && session) {
+      try {
+        // Supabase auth and query debugging
+        try {
+          const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+          console.log('🔍 Supabase auth user:', authUser?.id);
+          console.log('🔍 Local user state:', user?.id);
+          console.log('🔍 Auth error:', authError);
+
+          // Test a simple query to see if auth context works
+          const { data: testData, error: testError } = await supabase
+            .from('game_plays')
+            .select('count')
+            .limit(1);
+          console.log('🔍 Simple query test:', { testData, testError });
+        } catch (err) {
+          console.error('🔍 Auth debug failed:', err);
+        }
+
+        console.log('🎮 Recording game for user:', user.id, 'prize:', currentGame.id);
+        const result = await gamesService.recordGame({
+          user_id: user.id,
+          prize_id: currentGame.id,
+          chosen_door: 1, // You can track actual values if needed
+          winning_door: 1, // You can track actual values if needed  
+          revealed_door: 2, // You can track actual values if needed
+          switched,
+          won,
+          game_duration_seconds: 0, // You can track actual duration if needed
+        });
+
+        if (result.error) {
+          console.error('❌ Failed to record game:', result.error);
+          const errorMsg = typeof result.error === 'object' && result.error !== null && 'message' in result.error
+            ? (result.error as any).message
+            : String(result.error);
+          Alert.alert('Error', 'Failed to record game: ' + errorMsg);
+        } else {
+          console.log('✅ Game and reward recorded successfully');
+          if (won) {
+            Alert.alert('🎉 Congratulations!', `You won: ${currentGame.name}!\nCheck your rewards to claim it.`);
+          }
+        }
+      } catch (err) {
+        console.error('❌ Failed to record game:', err);
+        Alert.alert('Error', 'Failed to record game.');
+      }
+    } else if (!user || !currentGame) {
+      console.error('❌ Missing user or currentGame for recording');
+    }
 
     console.log('🎮 Game completed');
     console.log('🎯 Bonus plays available before:', bonusPlaysAvailable);

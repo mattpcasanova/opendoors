@@ -1,5 +1,5 @@
 // src/services/gameLogic/games.ts
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../supabase/client';
 
 export interface Prize {
   id: string;
@@ -151,48 +151,67 @@ class GamesService {
   async recordGame(gameData: {
     user_id: string;
     prize_id: string;
-    chosen_door: number;
-    winning_door: number;
-    revealed_door: number;
-    switched: boolean;
+    chosen_door?: number;
+    winning_door?: number;
+    revealed_door?: number;
+    switched?: boolean;
     won: boolean;
     game_duration_seconds?: number;
   }) {
     try {
-      console.log('🎮 recordGame called with:', gameData);
-      const { data, error } = await supabase
-        .from('games')
-        .insert([gameData])
+      console.log('🎮 Recording game with data:', gameData);
+      // Insert into game_plays table
+      const { data: gamePlay, error: gameError } = await supabase
+        .from('game_plays')
+        .insert({
+          user_id: gameData.user_id,
+          prize_id: gameData.prize_id,
+          chosen_door: gameData.chosen_door || 1,
+          winning_door: gameData.winning_door || 1,
+          revealed_door: gameData.revealed_door || 2,
+          switched: gameData.switched || false,
+          win: gameData.won,
+          won: gameData.won,
+          game_duration_seconds: gameData.game_duration_seconds || 0,
+          played_at: new Date().toISOString()
+        })
         .select()
         .single();
-      if (error) {
-        console.error('❌ Error inserting into games table:', error);
-        throw error;
+
+      if (gameError) {
+        console.error('❌ Error inserting into game_plays table:', gameError);
+        return { error: gameError, data: null };
       }
-      console.log('✅ Game inserted:', data);
-      // If the user won, create a user_prize record
-      if (gameData.won) {
-        const { error: prizeError } = await supabase
-          .from('user_prizes')
-          .insert([
-            {
-              user_id: gameData.user_id,
-              game_id: data.id,
-              prize_id: gameData.prize_id,
-              redemption_status: 'pending',
-              expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
-            },
-          ]);
-        if (prizeError) {
-          console.error('❌ Error creating user prize:', prizeError);
+
+      console.log('✅ Game recorded successfully:', gamePlay);
+
+      // If user won, insert into user_rewards table
+      if (gameData.won && gameData.prize_id) {
+        console.log('🏆 User won! Creating reward...');
+        const { data: reward, error: rewardError } = await supabase
+          .from('user_rewards')
+          .insert({
+            user_id: gameData.user_id,
+            prize_id: gameData.prize_id,
+            qr_code: `temp_${Date.now()}`,
+            reward_code: `REWARD_${Date.now()}`,
+          })
+          .select()
+          .single();
+
+        if (rewardError) {
+          console.error('❌ Error inserting into user_rewards table:', rewardError);
+          // Don't return error here - game was recorded successfully
         } else {
-          console.log('✅ User prize created for game:', data.id);
+          console.log('✅ Reward recorded successfully:', reward);
         }
       }
-      return { data, error: null };
-    } catch (error: any) {
-      console.error('❌ Error recording game:', error);
-      return { data: null, error };
+
+      return { data: gamePlay, error: null };
+
+    } catch (err) {
+      console.error('❌ Unexpected error recording game:', err);
+      return { error: err, data: null };
     }
   }
 

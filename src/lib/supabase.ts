@@ -1,3 +1,5 @@
+// This file is not used. The real Supabase client is in src/services/supabase/client.ts
+
 import { createClient } from '@supabase/supabase-js';
 import Constants from 'expo-constants';
 import { Database } from '../types/database';

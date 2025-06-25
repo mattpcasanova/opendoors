@@ -1,7 +1,7 @@
 // src/components/RewardCard.tsx
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 
 export interface Reward {
   id: string;
@@ -12,7 +12,9 @@ export interface Reward {
   icon: string;
   bgColor: string;
   qrCode: string;
+  rewardCode: string;
   instructions: string[];
+  logo_url?: string;
   created_at?: string;
 }
 
@@ -82,17 +84,24 @@ export default function RewardCard({ reward, onPress }: Props) {
       onPress={() => onPress(reward)}
       activeOpacity={0.8}
     >
-      {/* Icon */}
+      {/* Icon or Logo */}
       <View style={{
         width: 48,
         height: 48,
-        backgroundColor: getBackgroundColor(reward.bgColor),
+        backgroundColor: reward.logo_url ? 'transparent' : getBackgroundColor(reward.bgColor),
         borderRadius: 24,
         alignItems: 'center',
         justifyContent: 'center',
         marginRight: 16
       }}>
-        <Text style={{ fontSize: 24 }}>{reward.icon}</Text>
+        {reward.logo_url ? (
+          <Image
+            source={{ uri: reward.logo_url }}
+            style={{ width: 52, height: 52, borderRadius: 26, resizeMode: 'contain' }}
+          />
+        ) : (
+          <Text style={{ fontSize: 24 }}>{reward.icon}</Text>
+        )}
       </View>
       
       {/* Content */}

@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
 import { AuthStackParamList } from '../../types/navigation';
 
@@ -30,6 +31,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
+    if (loading) return; // Prevent multiple calls
     // Defensive extraction from form data
     const emailValue = formData?.email;
     const passwordValue = formData?.password;
@@ -63,17 +65,17 @@ export default function LoginScreen() {
     
     try {
       const result = await signIn(email, password);
-
+      console.log('signIn result:', result);
       if (result.error) {
+        console.error('Sign in error:', result.error);
         let errorMessage = 'An error occurred during sign in';
-        
         if (result.error.message) {
           errorMessage = result.error.message;
         } else if (typeof result.error === 'string') {
           errorMessage = result.error;
         }
-        
         Alert.alert('Error', errorMessage);
+        return;
       }
     } catch (error) {
       Alert.alert('Error', 'An unexpected error occurred. Please try again.');

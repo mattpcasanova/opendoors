@@ -110,47 +110,33 @@ class HistoryService {
   }
 
   // Get the last 20 games played by the user
-  async getUserGamePlays(userId: string): Promise<{ data: GamePlay[] | null; error: string | null }> {
+  async getUserGamePlays(userId: string) {
     try {
-      console.log('🎮 Fetching game plays for user:', userId);
-      
       const { data, error } = await supabase
         .from('game_plays')
         .select(`
-          id,
-          created_at,
-          win,
+          *,
           prizes (
+            id,
             name,
+            description,
+            value,
+            prize_type,
             location_name
           )
         `)
         .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(20);
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching game plays:', error);
-        return { data: null, error: error.message };
+        return { error: error.message, data: null };
       }
 
-      console.log('�� Game plays fetched:', data?.length, 'games');
-
-      // Transform the data to match our GamePlay interface
-      const gamePlays: GamePlay[] = (data || []).map((gamePlay: any) => ({
-        id: gamePlay.id,
-        created_at: gamePlay.created_at,
-        win: gamePlay.win,
-        prize: {
-          name: gamePlay.prizes?.name || 'Unknown Prize',
-          location_name: gamePlay.prizes?.location_name || 'Unknown Location'
-        }
-      }));
-
-      return { data: gamePlays, error: null };
-    } catch (error: any) {
-      console.error('❌ Error fetching game plays:', error);
-      return { data: null, error: error.message };
+      return { data, error: null };
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      return { error: 'Failed to fetch game plays', data: null };
     }
   }
 }

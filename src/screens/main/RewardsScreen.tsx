@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
+  Image,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -48,6 +49,10 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
   const daysUntilExpiration = getDaysUntilExpiration(reward.expirationDate);
   const isExpiringSoon = daysUntilExpiration <= 3 && daysUntilExpiration >= 0;
 
+  // Map backend fields to frontend camelCase
+  const qrCodeUrl = reward.qrCode || (reward as any).qr_code;
+  const rewardCodeText = reward.rewardCode || (reward as any).reward_code;
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
       {/* Header */}
@@ -63,20 +68,22 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
           <TouchableOpacity onPress={onBack} style={{ padding: 5 }}>
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
-          <View style={{ flex: 1, alignItems: 'center' }}>
-            <Text style={{ color: 'white', fontSize: 18, fontWeight: '600' }}>
-              {reward.company}
-            </Text>
+          <View style={{ flex: 1, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}>
+            {/* No company name here, only in the row below with logo */}
           </View>
           <View style={{ width: 34 }} />
         </View>
         
         <View style={{
           flexDirection: 'row',
-          justifyContent: 'space-between',
+          justifyContent: 'flex-start',
           alignItems: 'center',
           paddingHorizontal: 20,
         }}>
+          {/* Logo on the left */}
+          {reward.logo_url ? (
+            <Image source={{ uri: reward.logo_url }} style={{ width: 60, height: 60, borderRadius: 30, marginRight: 16, backgroundColor: 'white' }} />
+          ) : null}
           <View style={{ flex: 1 }}>
             <Text style={{ color: 'white', fontSize: 24, fontWeight: '700', marginBottom: 4 }}>
               {reward.company}
@@ -85,7 +92,6 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
               {reward.reward}
             </Text>
           </View>
-          <Text style={{ fontSize: 40 }}>{reward.icon}</Text>
         </View>
       </LinearGradient>
 
@@ -111,7 +117,7 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
           </View>
         </View>
 
-        {/* QR Code */}
+        {/* QR Code and Reward Code */}
         <View style={{
           backgroundColor: 'white',
           borderRadius: 16,
@@ -133,7 +139,12 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
             justifyContent: 'center',
             marginBottom: 16,
           }}>
-            <Ionicons name="qr-code" size={128} color="#9CA3AF" />
+            {/* Show QR code image if available, else placeholder */}
+            {qrCodeUrl ? (
+              <Image source={{ uri: qrCodeUrl }} style={{ width: 180, height: 180, resizeMode: 'contain' }} />
+            ) : (
+              <Ionicons name="qr-code" size={128} color="#9CA3AF" />
+            )}
           </View>
           <Text style={{ fontSize: 12, color: '#6B7280', marginBottom: 8 }}>
             Reward Code
@@ -142,9 +153,10 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
             fontFamily: 'monospace',
             fontSize: 16,
             fontWeight: '600',
-            color: '#374151'
+            color: '#374151',
+            marginBottom: 8
           }}>
-            {reward.qrCode}
+            {rewardCodeText || 'N/A'}
           </Text>
         </View>
 
@@ -317,16 +329,19 @@ export default function RewardsScreen() {
 
   const handleMarkClaimed = async (rewardId: string) => {
     try {
-      // TODO: Implement claim functionality
-      setRewards((prev: Reward[]) => prev.map(r => 
-        r.id === rewardId ? { ...r, claimed: true } : r
-      ));
-      setSelectedReward((prev: Reward | null) => 
-        prev?.id === rewardId ? { ...prev, claimed: true } : prev
-      );
-      Alert.alert('Success', 'Reward marked as claimed!');
+      const { success, error } = await rewardsService.claimRewardById(rewardId);
+      if (success) {
+        setRewards((prev: Reward[]) => prev.map(r => 
+          r.id === rewardId ? { ...r, claimed: true } : r
+        ));
+        setSelectedReward((prev: Reward | null) => 
+          prev?.id === rewardId ? { ...prev, claimed: true } : prev
+        );
+        Alert.alert('Success', 'Reward marked as claimed!');
+      } else {
+        Alert.alert('Error', error || 'Failed to mark reward as claimed. Please try again.');
+      }
     } catch (error) {
-      console.error('Error marking reward as claimed:', error);
       Alert.alert('Error', 'Failed to mark reward as claimed. Please try again.');
     }
   };

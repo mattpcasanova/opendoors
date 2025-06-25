@@ -18,6 +18,9 @@ interface PastGameCardProps {
 }
 
 export default function PastGameCard({ game, onPress }: PastGameCardProps) {
+  const prizeName = game.prize?.name || 'Unknown Prize';
+  const locationName = game.prize?.location_name || 'Unknown Location';
+
   return (
     <TouchableOpacity
       style={[
@@ -38,8 +41,8 @@ export default function PastGameCard({ game, onPress }: PastGameCardProps) {
           {game.win ? 'Won' : 'Lost'}
         </Text>
       </View>
-      <Text style={styles.prizeName}>{game.prize.name}</Text>
-      <Text style={styles.locationName}>{game.prize.location_name}</Text>
+      <Text style={styles.prizeName}>{prizeName}</Text>
+      <Text style={styles.locationName}>{locationName}</Text>
     </TouchableOpacity>
   );
 }

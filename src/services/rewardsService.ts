@@ -1,7 +1,9 @@
 import { supabase } from '../services/supabase/client';
 
 export interface UserReward {
-  id: string;
+  id: string; // unique row id
+  user_id?: string;
+  prize_id?: string;
   company: string;
   reward: string;
   claimed: boolean;
@@ -9,6 +11,8 @@ export interface UserReward {
   icon: string;
   bgColor: string;
   qrCode: string;
+  rewardCode: string;
+  logo_url?: string;
   instructions: string[];
   value?: number;
   address?: string;
@@ -182,83 +186,83 @@ class RewardsService {
   // Get user's claimed rewards from prizes they've won
   async getUserRewards(userId: string): Promise<{ data: UserReward[] | null; error: string | null }> {
     try {
-      console.log('🎁 Fetching rewards for user:', userId);
-      
-      // Get user's claimed rewards (join with prizes table)
+      // First get user rewards
       const { data: userRewards, error: userRewardsError } = await supabase
         .from('user_rewards')
         .select(`
+          id,
+          user_id,
           prize_id,
           claimed_at,
           qr_code,
+          reward_code,
+          logo_url,
           expires_at,
-          created_at,
-          prizes (
-            id,
-            name,
-            description,
-            value,
-            location_name,
-            address,
-            expires_at,
-            prize_type,
-            redemption_method
-          )
+          created_at
         `)
         .eq('user_id', userId)
-        .order('created_at', { ascending: true }); // Sort by oldest first
+        .order('created_at', { ascending: true });
 
       if (userRewardsError) {
-        console.error('Error fetching user rewards:', userRewardsError);
         return { data: null, error: userRewardsError.message };
       }
-
-      console.log('🎁 Raw user rewards from database:', JSON.stringify(userRewards, null, 2));
-
       if (!userRewards || userRewards.length === 0) {
-        console.log('🎁 No rewards found for user');
         return { data: [], error: null };
       }
 
-      // Transform the data to match our UserReward interface
-      const rewards: UserReward[] = (userRewards || [])
-        .map((userReward: any): UserReward | null => {
-          console.log('🎁 Processing reward:', JSON.stringify(userReward, null, 2));
-          
-          const prize = userReward.prizes;
-          if (!prize) {
-            console.error('🎁 Missing prize data for reward:', userReward);
-            return null;
-          }
+      // Then get prizes for all prize_ids
+      const prizeIds = userRewards.map(ur => ur.prize_id);
+      const { data: prizes, error: prizesError } = await supabase
+        .from('prizes')
+        .select(`
+          id,
+          name,
+          description,
+          value,
+          location_name,
+          address,
+          expires_at,
+          prize_type,
+          redemption_method,
+          logo_url
+        `)
+        .in('id', prizeIds);
 
+      if (prizesError) {
+        return { data: null, error: prizesError.message };
+      }
+
+      // Create a map of prizes by id for quick lookup
+      const prizesMap = new Map(prizes?.map(prize => [prize.id, prize]) || []);
+
+      const rewards: UserReward[] = userRewards
+        .map((userReward: any): UserReward | null => {
+          const prize = prizesMap.get(userReward.prize_id);
+          if (!prize) return null;
           const { icon, bgColor } = this.getIconAndColor(prize.location_name || prize.name);
-          
-          const transformedReward: UserReward = {
-            id: prize.id,
-            company: (prize.location_name || prize.name).replace(/\s*\([^)]*\)/, ''), // Remove location details like "(Downtown)"
+          return {
+            id: userReward.id,
+            user_id: userReward.user_id,
+            prize_id: userReward.prize_id,
+            company: (prize.location_name || prize.name).replace(/\s*\([^)]*\)/, ''),
             reward: prize.description || prize.name,
             claimed: !!userReward.claimed_at,
             expirationDate: userReward.expires_at || prize.expires_at || this.getExpirationDate(),
             icon,
             bgColor,
             qrCode: userReward.qr_code,
+            rewardCode: userReward.reward_code,
+            logo_url: userReward.logo_url || prize.logo_url,
             instructions: this.generateInstructions(prize.location_name || prize.name, prize.description || prize.name, prize.prize_type, prize.redemption_method),
             value: prize.value,
             address: prize.address,
             locationName: prize.location_name || prize.name,
             created_at: userReward.created_at
           };
-
-          console.log('🎁 Transformed reward:', JSON.stringify(transformedReward, null, 2));
-          return transformedReward;
         })
-        .filter((reward): reward is UserReward => reward !== null); // Type guard to remove nulls
-
-      console.log('🎁 Final transformed rewards:', JSON.stringify(rewards, null, 2));
+        .filter((reward): reward is UserReward => reward !== null);
       return { data: rewards, error: null };
-
     } catch (error) {
-      console.error('Error in getUserRewards:', error);
       return { data: null, error: 'Failed to fetch rewards' };
     }
   }
@@ -266,46 +270,33 @@ class RewardsService {
   // Add a new reward when user wins a game
   async addUserReward(userId: string, prizeId: string): Promise<{ success: boolean; error: string | null }> {
     try {
-      // Get the current session
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
-        console.error('No authenticated session found');
         return { success: false, error: 'No authenticated session found' };
       }
-
-      console.log('🎁 Adding user reward:', {
-        userId: session.user.id,
-        prizeId,
-        sessionExists: !!session
-      });
-
+      // Fetch prize to get logo_url
+      const { data: prize } = await supabase.from('prizes').select('logo_url').eq('id', prizeId).single();
       const qrCode = this.generateQRCode(prizeId, session.user.id);
-      
-      // Calculate expiration date (7 days from now)
+      const rewardCode = `RCODE-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7);
-      
       const { data, error } = await supabase
         .from('user_rewards')
         .insert({
           user_id: session.user.id,
           prize_id: prizeId,
           qr_code: qrCode,
-          expires_at: expiresAt.toISOString()
+          reward_code: rewardCode,
+          logo_url: prize?.logo_url || null,
+          expires_at: expiresAt.toISOString().split('T')[0]
         })
         .select()
         .single();
-
       if (error) {
-        console.error('Error adding user reward:', error);
         return { success: false, error: error.message };
       }
-
-      console.log('🎁 Successfully added reward:', data);
       return { success: true, error: null };
-
     } catch (error) {
-      console.error('Error in addUserReward:', error);
       return { success: false, error: 'Failed to add reward' };
     }
   }
@@ -320,16 +311,16 @@ class RewardsService {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching available prizes:', error);
         return { data: null, error: error.message };
       }
 
       // Transform prizes to rewards format (these would be unclaimed)
       const rewards: UserReward[] = (prizes || []).map((prize: any) => {
         const { icon, bgColor } = this.getIconAndColor(prize.location_name);
-        
         return {
           id: prize.id,
+          user_id: '',
+          prize_id: prize.id,
           company: prize.location_name.replace(/\s*\([^)]*\)/, ''),
           reward: prize.description,
           claimed: false, // These are available to win, not claimed yet
@@ -337,18 +328,38 @@ class RewardsService {
           icon,
           bgColor,
           qrCode: '', // No QR code until claimed
+          rewardCode: '', // No reward code until claimed
+          logo_url: prize.logo_url || '',
           instructions: this.generateInstructions(prize.location_name, prize.description),
           value: prize.value,
           address: prize.address,
           locationName: prize.location_name,
+          created_at: prize.created_at
         };
       });
 
       return { data: rewards, error: null };
 
     } catch (error) {
-      console.error('Error in getAvailablePrizes:', error);
       return { data: null, error: 'Failed to fetch available prizes' };
+    }
+  }
+
+  // Add claimRewardById to mark only the specific reward as claimed
+  async claimRewardById(rewardId: string): Promise<{ success: boolean; error: string | null }> {
+    try {
+      const { data, error } = await supabase
+        .from('user_rewards')
+        .update({ claimed_at: new Date().toISOString() })
+        .eq('id', rewardId)
+        .select()
+        .single();
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      return { success: true, error: null };
+    } catch (error) {
+      return { success: false, error: 'Failed to claim reward' };
     }
   }
 }

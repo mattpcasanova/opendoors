@@ -2,6 +2,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/hooks/useAuth';
 import { AuthStackParamList, MainStackParamList, RootStackParamList } from './src/types/navigation';
@@ -49,7 +50,13 @@ function RootNavigator() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return null; // or <LoadingScreen />
+    // Show a loading spinner or splash while checking auth
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#009688' }}>
+        <ActivityIndicator size="large" color="#fff" />
+        <Text style={{ color: 'white', fontSize: 24, marginTop: 16 }}>Loading...</Text>
+      </View>
+    );
   }
 
   return (

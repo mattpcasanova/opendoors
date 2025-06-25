@@ -1,12 +1,12 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PastGameCard from '../../components/PastGameCard';
@@ -40,7 +40,11 @@ export default function HistoryScreen() {
       if (gamePlaysResult.error) throw new Error(gamePlaysResult.error);
       if (statsResult.error) throw statsResult.error;
       console.log('Fetched game plays:', gamePlaysResult.data);
-      setGamePlays(gamePlaysResult.data || []);
+      const mappedGamePlays = (gamePlaysResult.data || []).map(gp => ({
+        ...gp,
+        prize: gp.prizes,
+      }));
+      setGamePlays(mappedGamePlays);
       setStats(statsResult.data || null);
     } catch (err: any) {
       console.error('Error fetching history:', err);
