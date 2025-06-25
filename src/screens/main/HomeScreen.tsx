@@ -4,14 +4,14 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Alert,
-  Image,
-  ScrollView as RNScrollView,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Alert,
+    Image,
+    ScrollView as RNScrollView,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import GameCard, { SpecialGameCard } from '../../components/game/GameCard';
@@ -20,6 +20,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useLocation } from '../../hooks/useLocation';
 import { supabase } from '../../lib/supabase';
 import { gamesService, Prize } from '../../services/gameLogic/games';
+import { UserProgress, userProgressService } from '../../services/userProgressService';
 import type { MainStackParamList } from '../../types/navigation';
 import GameScreen from '../game/GameScreen';
 
@@ -55,6 +56,8 @@ interface DailyGameButtonProps {
 }
 
 const DailyGameButton: React.FC<DailyGameButtonProps> = ({ hasPlayedToday, onPress }) => {
+  console.log('🎯 DailyGameButton render - hasPlayedToday:', hasPlayedToday);
+  
   if (hasPlayedToday) {
     return (
       <TouchableOpacity
@@ -246,13 +249,72 @@ export default function HomeScreen() {
     fetchGames();
   }, []);
 
-  // Check if it's a new day and reset daily game
+  // Load user progress from database on mount
   useEffect(() => {
-    const today = new Date().toDateString();
-    if (lastPlayDate !== today) {
-      setHasPlayedAnyGameToday(false);
+    const loadUserProgress = async () => {
+      if (!user) return;
+      
+      try {
+        console.log('📱 Loading user progress for:', user.id);
+        const { data, error } = await userProgressService.loadUserProgress(user.id);
+        
+        if (error) {
+          console.error('❌ Error loading user progress:', error);
+          return;
+        }
+
+        if (data) {
+          console.log('📱 Setting state from loaded progress:', {
+            gamesUntilBonus: data.gamesUntilBonus,
+            hasPlayedToday: data.hasPlayedToday,
+            lastPlayDate: data.lastPlayDate,
+            bonusPlaysAvailable: data.bonusPlaysAvailable
+          });
+          
+          setGamesUntilBonus(data.gamesUntilBonus);
+          setHasPlayedAnyGameToday(data.hasPlayedToday);
+          setLastPlayDate(data.lastPlayDate);
+          setBonusPlaysAvailable(data.bonusPlaysAvailable);
+          
+          console.log('📱 Loaded user progress:', data);
+        }
+      } catch (error) {
+        console.error('❌ Error loading user progress:', error);
+      }
+    };
+
+    loadUserProgress();
+  }, [user]);
+
+  // Save user progress when it changes
+  useEffect(() => {
+    const saveUserProgress = async () => {
+      if (!user) return;
+      
+      try {
+        const progress: UserProgress = {
+          gamesUntilBonus,
+          hasPlayedToday: hasPlayedAnyGameToday,
+          lastPlayDate,
+          bonusPlaysAvailable
+        };
+        
+        const { error } = await userProgressService.saveUserProgress(user.id, progress);
+        if (error) {
+          console.error('❌ Error saving user progress:', error);
+        } else {
+          console.log('💾 Saved user progress:', progress);
+        }
+      } catch (error) {
+        console.error('❌ Error saving user progress:', error);
+      }
+    };
+
+    // Only save if we have a user and the state has been initialized
+    if (user && lastPlayDate !== null) {
+      saveUserProgress();
     }
-  }, [lastPlayDate]);
+  }, [user, gamesUntilBonus, hasPlayedAnyGameToday, lastPlayDate, bonusPlaysAvailable]);
 
   // Add this effect to filter games based on search text
   useEffect(() => {
@@ -276,6 +338,14 @@ export default function HomeScreen() {
   };
 
   const playDailyGame = () => {
+    // In production, this should prevent playing when hasPlayedAnyGameToday is true
+    // For testing, we can allow it but the button should still show grey
+    if (hasPlayedAnyGameToday) {
+      console.log('🎮 Daily game already played today, but allowing for testing');
+      // In production, you would return here:
+      // return;
+    }
+    
     // Navigate to game screen instead of showing alert
     setShowGameScreen(true);
   };
@@ -288,8 +358,10 @@ export default function HomeScreen() {
       authenticated: !!user
     });
     setShowGameScreen(false);
+
+    // Immediately update the UI state to show grey button
     setHasPlayedAnyGameToday(true);
-    setLastPlayDate(new Date().toDateString());
+    console.log('🎮 Immediately set hasPlayedAnyGameToday to true');
 
     // Use session from context
     if (!session && user) {
@@ -366,20 +438,27 @@ export default function HomeScreen() {
     console.log('🎮 Game completed');
     console.log('🎯 Bonus plays available before:', bonusPlaysAvailable);
     
-    // If player has bonus available, consume it and reset progress
-    if (bonusPlaysAvailable > 0) {
-      console.log('✨ Consuming bonus play');
-      setBonusPlaysAvailable(prev => Math.max(0, prev - 1));
-      setGamesUntilBonus(5); // Reset progress bar to 0%
-      Alert.alert('🎉 Bonus Used!', 'Your bonus play has been used! Progress reset.');
-    } else {
-      // Normal game progression
-      const newGamesUntilBonus = Math.max(0, gamesUntilBonus - 1);
-      setGamesUntilBonus(newGamesUntilBonus);
+    // Update user progress in database
+    if (user) {
+      const usedBonus = bonusPlaysAvailable > 0;
+      console.log('🎮 Updating progress with usedBonus:', usedBonus);
+      const { error: progressError } = await userProgressService.updateProgressAfterGame(user.id, won, usedBonus);
       
-      if (newGamesUntilBonus === 0) {
-        setBonusPlaysAvailable(prev => prev + 1);
-        Alert.alert('🎉 Bonus Earned!', 'You\'ve earned a bonus! Your next game will reset your progress.');
+      if (progressError) {
+        console.error('❌ Error updating progress:', progressError);
+      } else {
+        console.log('✅ Progress updated successfully');
+        
+        // Reload progress from database to update UI (but don't override hasPlayedToday)
+        const { data: updatedProgress } = await userProgressService.loadUserProgress(user.id);
+        if (updatedProgress) {
+          console.log('📱 Reloaded progress from database:', updatedProgress);
+          setGamesUntilBonus(updatedProgress.gamesUntilBonus);
+          // Don't override hasPlayedAnyGameToday - let it stay true until next day
+          // setHasPlayedAnyGameToday(updatedProgress.hasPlayedToday);
+          setLastPlayDate(updatedProgress.lastPlayDate);
+          setBonusPlaysAvailable(updatedProgress.bonusPlaysAvailable);
+        }
       }
     }
     
