@@ -2,6 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Location from 'expo-location';
+import * as Notifications from 'expo-notifications';
 import React, { useEffect, useState } from 'react';
 import {
     Alert,
@@ -76,9 +78,30 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Add state for first and last name
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+
+  // Add state for user stats
+  const [userStats, setUserStats] = useState<{ gamesPlayed: number; rewardsEarned: number } | null>(null);
+
   useEffect(() => {
     if (!user) return;
     setLoading(true);
+    // Fetch user profile for first and last name
+    supabase
+      .from('user_profiles')
+      .select('first_name, last_name')
+      .eq('id', user.id)
+      .single()
+      .then(({ data, error }) => {
+        if (data) {
+          setFirstName(data.first_name || '');
+          setLastName(data.last_name || '');
+        }
+        setLoading(false);
+      });
+    // Fetch user_preferences
     supabase
       .from('user_preferences')
       .select('*')
@@ -97,6 +120,29 @@ export default function ProfileScreen() {
         }
         setLoading(false);
       });
+    // Fetch user_settings for privacy toggles
+    supabase
+      .from('user_settings')
+      .select('*')
+      .eq('user_id', user.id)
+      .single()
+      .then(({ data, error }) => {
+        if (data) {
+          setPrivacySettings(prev => prev.map(s =>
+            s.id === 'location'
+              ? { ...s, enabled: !!data.location_enabled }
+              : s.id === 'notifications'
+                ? { ...s, enabled: !!data.notifications_enabled }
+                : s
+          ));
+        }
+      });
+    // Fetch user stats for games played and rewards earned
+    import('../../services/historyService').then(({ historyService }) => {
+      historyService.getUserStats(user.id).then(({ data }) => {
+        if (data) setUserStats({ gamesPlayed: data.gamesPlayed, rewardsEarned: data.rewardsEarned });
+      });
+    });
   }, [user]);
 
   const handleToggle = (key: keyof typeof preferences) => {
@@ -138,8 +184,6 @@ export default function ProfileScreen() {
   // Account Settings
   const accountSettings: SettingItem[] = [
     { id: 'account', label: 'Account Details', icon: 'person', type: 'navigate' },
-    { id: 'security', label: 'Security', icon: 'shield-checkmark', type: 'navigate' },
-    { id: 'payment', label: 'Payment Methods', icon: 'card', type: 'navigate' },
   ];
 
   // Support & Legal
@@ -160,12 +204,89 @@ export default function ProfileScreen() {
     setPreferences(prev => ({ ...prev, [id as keyof typeof preferences]: !prev[id as keyof typeof preferences] }));
   };
 
-  const togglePrivacySetting = (id: string) => {
-    setPrivacySettings(prev =>
-      prev.map(setting =>
-        setting.id === id ? { ...setting, enabled: !setting.enabled } : setting
-      )
-    );
+  const handlePrivacyToggle = async (id: string, value: boolean) => {
+    if (id === 'location') {
+      if (value) {
+        Alert.alert(
+          'Enable Location Services',
+          'Allow OpenDoors to access your location to find nearby games and offers?',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Enable',
+              onPress: async () => {
+                const { status } = await Location.requestForegroundPermissionsAsync();
+                if (status === 'granted') {
+                  setPrivacySettings(prev => prev.map(s => s.id === 'location' ? { ...s, enabled: true } : s));
+                  // Sync to backend
+                  if (user) await supabase.from('user_settings').upsert({ user_id: user.id, location_enabled: true }, { onConflict: 'user_id' });
+                } else {
+                  Alert.alert('Permission Denied', 'Location permission was not granted.');
+                  setPrivacySettings(prev => prev.map(s => s.id === 'location' ? { ...s, enabled: false } : s));
+                  if (user) await supabase.from('user_settings').upsert({ user_id: user.id, location_enabled: false }, { onConflict: 'user_id' });
+                }
+              }
+            }
+          ]
+        );
+      } else {
+        Alert.alert(
+          'Disable Location Services',
+          'Are you sure you want to disable location services? You can re-enable them at any time.',
+          [
+            { text: 'Cancel', style: 'cancel', onPress: () => setPrivacySettings(prev => prev.map(s => s.id === 'location' ? { ...s, enabled: true } : s)) },
+            {
+              text: 'Disable',
+              style: 'destructive',
+              onPress: async () => {
+                setPrivacySettings(prev => prev.map(s => s.id === 'location' ? { ...s, enabled: false } : s));
+                if (user) await supabase.from('user_settings').upsert({ user_id: user.id, location_enabled: false }, { onConflict: 'user_id' });
+              }
+            }
+          ]
+        );
+      }
+    } else if (id === 'notifications') {
+      if (value) {
+        Alert.alert(
+          'Enable Notifications',
+          'Allow OpenDoors to send you push notifications about new games and rewards?',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Enable',
+              onPress: async () => {
+                const { status } = await Notifications.requestPermissionsAsync();
+                if (status === 'granted') {
+                  setPrivacySettings(prev => prev.map(s => s.id === 'notifications' ? { ...s, enabled: true } : s));
+                  if (user) await supabase.from('user_settings').upsert({ user_id: user.id, notifications_enabled: true }, { onConflict: 'user_id' });
+                } else {
+                  Alert.alert('Permission Denied', 'Notification permission was not granted.');
+                  setPrivacySettings(prev => prev.map(s => s.id === 'notifications' ? { ...s, enabled: false } : s));
+                  if (user) await supabase.from('user_settings').upsert({ user_id: user.id, notifications_enabled: false }, { onConflict: 'user_id' });
+                }
+              }
+            }
+          ]
+        );
+      } else {
+        Alert.alert(
+          'Disable Notifications',
+          'Are you sure you want to disable push notifications? You can re-enable them at any time.',
+          [
+            { text: 'Cancel', style: 'cancel', onPress: () => setPrivacySettings(prev => prev.map(s => s.id === 'notifications' ? { ...s, enabled: true } : s)) },
+            {
+              text: 'Disable',
+              style: 'destructive',
+              onPress: async () => {
+                setPrivacySettings(prev => prev.map(s => s.id === 'notifications' ? { ...s, enabled: false } : s));
+                if (user) await supabase.from('user_settings').upsert({ user_id: user.id, notifications_enabled: false }, { onConflict: 'user_id' });
+              }
+            }
+          ]
+        );
+      }
+    }
   };
 
   const handleSettingPress = (id: string) => {
@@ -177,30 +298,8 @@ export default function ProfileScreen() {
       case 'account':
         Alert.alert(
           'Account Details',
-          `Email: ${user?.email || 'Not available'}\nMember since: ${new Date().toLocaleDateString()}\nTotal games played: 0`,
+          `Email: ${user?.email || 'Not available'}\nMember since: ${new Date(user?.created_at || Date.now()).toLocaleDateString()}\nTotal games played: ${userStats?.gamesPlayed ?? 0}\nRewards earned: ${userStats?.rewardsEarned ?? 0}`,
           [{ text: 'OK' }]
-        );
-        break;
-      case 'security':
-        Alert.alert(
-          'Security Settings',
-          'Choose a security option:',
-          [
-            { text: 'Change Password', onPress: () => changePassword() },
-            { text: 'Two-Factor Authentication', onPress: () => setup2FA() },
-            { text: 'Cancel', style: 'cancel' }
-          ]
-        );
-        break;
-      case 'payment':
-        Alert.alert(
-          'Payment Methods',
-          'Manage your payment options:',
-          [
-            { text: 'Add Credit Card', onPress: () => Alert.alert('Info', 'Credit card form would open here') },
-            { text: 'View Saved Cards', onPress: () => viewPaymentMethods() },
-            { text: 'Cancel', style: 'cancel' }
-          ]
         );
         break;
       case 'help':
@@ -216,19 +315,16 @@ export default function ProfileScreen() {
         );
         break;
       case 'terms':
-        openExternalLink('https://opendoors.com/terms');
+        showTermsOfService();
         break;
       case 'privacy':
-        openExternalLink('https://opendoors.com/privacy');
+        showPrivacyPolicy();
         break;
       case 'about':
         Alert.alert(
           'About Open Doors',
           `Version: 1.0.0\nBuild: 2024.1\n\nOpen Doors is a gamified rewards platform that lets you win real prizes from local businesses through probability-based door games.\n\n© 2024 Open Doors Inc.`,
-          [
-            { text: 'Visit Website', onPress: () => openExternalLink('https://opendoors.com') },
-            { text: 'OK' }
-          ]
+          [{ text: 'OK' }]
         );
         break;
       default:
@@ -334,11 +430,9 @@ export default function ProfileScreen() {
   const contactSupport = () => {
     Alert.alert(
       'Contact Support',
-      'Choose how to reach us:',
+      'Get in touch with our support team:',
       [
         { text: 'Email', onPress: () => Linking.openURL('mailto:support@opendoors.com?subject=Support Request') },
-        { text: 'Phone', onPress: () => Linking.openURL('tel:+1234567890') },
-        { text: 'Live Chat', onPress: () => Alert.alert('Info', 'Live chat would open here') },
         { text: 'Cancel', style: 'cancel' }
       ]
     );
@@ -354,6 +448,10 @@ export default function ProfileScreen() {
           text: 'Submit', 
           onPress: (issue) => {
             if (issue && issue.trim()) {
+              // Send to email for now
+              const subject = 'Issue Report - OpenDoors App';
+              const body = `Issue Report:\n\n${issue}\n\nUser: ${user?.email || 'Unknown'}\nDate: ${new Date().toLocaleString()}`;
+              Linking.openURL(`mailto:support@opendoors.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
               Alert.alert('Thank You', 'Your issue has been reported. We\'ll get back to you within 24 hours.');
             }
           }
@@ -376,6 +474,22 @@ export default function ProfileScreen() {
     } catch (error) {
       Alert.alert('Error', 'Failed to open link');
     }
+  };
+
+  const showTermsOfService = () => {
+    Alert.alert(
+      'Terms of Service',
+      `OpenDoors Terms of Service\n\nLast updated: ${new Date().toLocaleDateString()}\n\n1. Acceptance of Terms\nBy using the OpenDoors app, you agree to these terms and conditions.\n\n2. Service Description\nOpenDoors is a gamified rewards platform that allows users to play probability-based door games to win prizes from local businesses.\n\n3. User Eligibility\nYou must be at least 18 years old to use this service.\n\n4. Game Rules\n- Each user gets one free daily game\n- Games are based on probability and chance\n- Prizes are provided by partner businesses\n- All game results are final\n\n5. Rewards and Redemption\n- Rewards must be claimed within 30 days\n- Redemption is subject to business availability\n- OpenDoors is not responsible for business closures or changes\n\n6. Privacy\nYour privacy is important to us. See our Privacy Policy for details.\n\n7. Limitation of Liability\nOpenDoors is not liable for any damages arising from use of the service.\n\n8. Changes to Terms\nWe may update these terms at any time. Continued use constitutes acceptance.\n\n9. Contact\nFor questions about these terms, contact support@opendoors.com`,
+      [{ text: 'OK' }]
+    );
+  };
+
+  const showPrivacyPolicy = () => {
+    Alert.alert(
+      'Privacy Policy',
+      `OpenDoors Privacy Policy\n\nLast updated: ${new Date().toLocaleDateString()}\n\n1. Information We Collect\n- Email address and basic profile information\n- Location data (with your permission)\n- Game play history and preferences\n- Device information and app usage\n\n2. How We Use Your Information\n- To provide and improve our services\n- To send you notifications about games and rewards\n- To personalize your experience\n- To communicate with you about your account\n\n3. Information Sharing\nWe do not sell your personal information. We may share data with:\n- Partner businesses (for reward fulfillment)\n- Service providers (for app functionality)\n- Legal authorities (when required by law)\n\n4. Data Security\nWe implement appropriate security measures to protect your information.\n\n5. Your Rights\nYou can:\n- Access and update your profile information\n- Opt out of notifications\n- Request deletion of your account\n- Control location permissions\n\n6. Data Retention\nWe retain your data as long as your account is active or as required by law.\n\n7. Children's Privacy\nOur service is not intended for users under 18 years old.\n\n8. Changes to Policy\nWe may update this policy. We'll notify you of significant changes.\n\n9. Contact Us\nFor privacy questions, contact support@opendoors.com`,
+      [{ text: 'OK' }]
+    );
   };
 
   const saveProfile = () => {
@@ -425,39 +539,13 @@ export default function ProfileScreen() {
             shadowRadius: 4,
             elevation: 2,
           }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <View style={{
-                width: 60,
-                height: 60,
-                backgroundColor: '#009688',
-                borderRadius: 30,
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginRight: 16,
-              }}>
-                <Text style={{ color: 'white', fontSize: 24, fontWeight: '700' }}>
-                  {user?.email ? user.email.charAt(0).toUpperCase() : 'U'}
-                </Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 18, fontWeight: '600', color: '#374151', marginBottom: 4 }}>
-                  {user?.email ? formatUserName(user.email) : 'User'}
-                </Text>
-                <Text style={{ fontSize: 14, color: '#6B7280' }}>
-                  {user?.email || 'user@example.com'}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={{
-                  backgroundColor: '#F3F4F6',
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  borderRadius: 8,
-                }}
-                onPress={() => handleSettingPress('edit-profile')}
-              >
-                <Text style={{ color: '#374151', fontSize: 12, fontWeight: '600' }}>Edit</Text>
-              </TouchableOpacity>
+            <View style={{ flexDirection: 'column' }}>
+              <Text style={{ fontSize: 18, fontWeight: '600', color: '#374151', marginBottom: 4 }}>
+                {firstName} {lastName}
+              </Text>
+              <Text style={{ fontSize: 14, color: '#6B7280' }}>
+                {user?.email || 'user@example.com'}
+              </Text>
             </View>
           </View>
 
@@ -541,7 +629,7 @@ export default function ProfileScreen() {
                   </View>
                   <Switch
                     value={setting.enabled}
-                    onValueChange={() => togglePrivacySetting(setting.id)}
+                    onValueChange={(value) => handlePrivacyToggle(setting.id, value)}
                     trackColor={{ false: '#E5E7EB', true: '#009688' }}
                     thumbColor={setting.enabled ? 'white' : '#F3F4F6'}
                   />

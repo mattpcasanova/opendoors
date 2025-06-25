@@ -75,10 +75,10 @@ class HistoryService {
 
       if (gameError) throw gameError;
 
-      // Get total rewards earned and claimed
+      // Get total rewards earned and claimed from user_rewards table
       const { data: rewardStats, error: rewardError } = await supabase
-        .from('user_prizes')
-        .select('redemption_status')
+        .from('user_rewards')
+        .select('claimed_at')
         .eq('user_id', userId);
 
       if (rewardError) throw rewardError;
@@ -86,7 +86,7 @@ class HistoryService {
       const stats: UserStats = {
         gamesPlayed: gamePlays?.length || 0,
         rewardsEarned: rewardStats?.length || 0,
-        rewardsClaimed: rewardStats?.filter(r => r.redemption_status === 'claimed').length || 0
+        rewardsClaimed: rewardStats?.filter(r => r.claimed_at).length || 0
       };
 
       console.log('📊 User stats fetched:', stats);
