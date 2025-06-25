@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Alert,
     KeyboardAvoidingView,
@@ -19,6 +19,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import BottomNavBar from '../../components/main/BottomNavBar';
 import { useAuth } from '../../hooks/useAuth';
+import { supabase } from '../../services/supabase/client';
 
 interface PreferenceItem {
   id: string;
@@ -43,23 +44,76 @@ type RootStackParamList = {
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
+type PreferenceKey = 'food_and_dining' | 'shopping' | 'coffee_and_drinks' | 'entertainment' | 'fitness_and_health' | 'beauty_and_wellness';
+
 const formatUserName = (email: string) => {
   return email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 };
+
+const CATEGORIES: { key: PreferenceKey; label: string; icon: string }[] = [
+  { key: 'food_and_dining', label: 'Food & Dining', icon: 'utensils' },
+  { key: 'shopping', label: 'Shopping', icon: 'shopping-bag' },
+  { key: 'coffee_and_drinks', label: 'Coffee & Drinks', icon: 'coffee' },
+  { key: 'entertainment', label: 'Entertainment', icon: 'film' },
+  { key: 'fitness_and_health', label: 'Fitness & Health', icon: 'heartbeat' },
+  { key: 'beauty_and_wellness', label: 'Beauty & Wellness', icon: 'sparkles' },
+];
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const navigation = useNavigation<NavigationProp>();
   
   // Game Preferences State
-  const [gamePreferences, setGamePreferences] = useState<PreferenceItem[]>([
-    { id: 'food', label: 'Food & Dining', icon: 'restaurant', enabled: true },
-    { id: 'shopping', label: 'Shopping', icon: 'bag', enabled: true },
-    { id: 'coffee', label: 'Coffee & Drinks', icon: 'cafe', enabled: false },
-    { id: 'entertainment', label: 'Entertainment', icon: 'film', enabled: true },
-    { id: 'fitness', label: 'Fitness & Health', icon: 'fitness', enabled: false },
-    { id: 'beauty', label: 'Beauty & Wellness', icon: 'sparkles', enabled: true },
-  ]);
+  const [preferences, setPreferences] = useState({
+    food_and_dining: false,
+    shopping: false,
+    coffee_and_drinks: false,
+    entertainment: false,
+    fitness_and_health: false,
+    beauty_and_wellness: false,
+  });
+  const [editMode, setEditMode] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    setLoading(true);
+    supabase
+      .from('user_preferences')
+      .select('*')
+      .eq('user_id', user.id)
+      .single()
+      .then(({ data, error }) => {
+        if (data) {
+          setPreferences({
+            food_and_dining: !!data.food_and_dining,
+            shopping: !!data.shopping,
+            coffee_and_drinks: !!data.coffee_and_drinks,
+            entertainment: !!data.entertainment,
+            fitness_and_health: !!data.fitness_and_health,
+            beauty_and_wellness: !!data.beauty_and_wellness,
+          });
+        }
+        setLoading(false);
+      });
+  }, [user]);
+
+  const handleToggle = (key: keyof typeof preferences) => {
+    if (!editMode) return;
+    setPreferences((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+    setSaving(true);
+    // Upsert the preferences row for this user
+    const { error } = await supabase
+      .from('user_preferences')
+      .upsert({ user_id: user.id, ...preferences }, { onConflict: 'user_id' });
+    setEditMode(false);
+    setSaving(false);
+  };
 
   // Privacy & Notifications State
   const [privacySettings, setPrivacySettings] = useState<SettingItem[]>([
@@ -103,11 +157,7 @@ export default function ProfileScreen() {
   const [tempUserName, setTempUserName] = useState(userName);
 
   const toggleGamePreference = (id: string) => {
-    setGamePreferences(prev => 
-      prev.map(pref => 
-        pref.id === id ? { ...pref, enabled: !pref.enabled } : pref
-      )
-    );
+    setPreferences(prev => ({ ...prev, [id as keyof typeof preferences]: !prev[id as keyof typeof preferences] }));
   };
 
   const togglePrivacySetting = (id: string) => {
@@ -147,7 +197,7 @@ export default function ProfileScreen() {
           'Payment Methods',
           'Manage your payment options:',
           [
-            { text: 'Add Credit Card', onPress: () => addPaymentMethod() },
+            { text: 'Add Credit Card', onPress: () => Alert.alert('Info', 'Credit card form would open here') },
             { text: 'View Saved Cards', onPress: () => viewPaymentMethods() },
             { text: 'Cancel', style: 'cancel' }
           ]
@@ -412,55 +462,42 @@ export default function ProfileScreen() {
           </View>
 
           {/* Game Preferences */}
-          <View style={{
-            backgroundColor: 'white',
-            borderRadius: 16,
-            padding: 20,
-            marginBottom: 24,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 4,
-            elevation: 2,
-          }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-              <Ionicons name="heart" size={20} color="#009688" style={{ marginRight: 8 }} />
-              <Text style={{ fontSize: 18, fontWeight: '600', color: '#374151', flex: 1 }}>
-                Game Preferences
-              </Text>
-              <TouchableOpacity>
-                <Text style={{ color: '#009688', fontSize: 14, fontWeight: '600' }}>Edit</Text>
+          <View style={{ backgroundColor: 'white', borderRadius: 16, padding: 20, marginBottom: 24, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <Text style={{ fontSize: 20, fontWeight: '700', color: '#222' }}>Game Preferences</Text>
+              <TouchableOpacity onPress={() => setEditMode((v) => !v)}>
+                <Text style={{ color: '#009688', fontWeight: '600', fontSize: 16 }}>{editMode ? 'Cancel' : 'Edit'}</Text>
               </TouchableOpacity>
             </View>
-
-            {gamePreferences.map((preference, index) => (
-              <View key={preference.id}>
-                <View style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  paddingVertical: 12,
-                }}>
-                  <Ionicons 
-                    name={preference.icon as any} 
-                    size={20} 
-                    color="#6B7280" 
-                    style={{ marginRight: 12 }} 
-                  />
-                  <Text style={{ flex: 1, fontSize: 16, color: '#374151' }}>
-                    {preference.label}
-                  </Text>
-                  <Switch
-                    value={preference.enabled}
-                    onValueChange={() => toggleGamePreference(preference.id)}
-                    trackColor={{ false: '#E5E7EB', true: '#009688' }}
-                    thumbColor={preference.enabled ? 'white' : '#F3F4F6'}
-                  />
-                </View>
-                {index < gamePreferences.length - 1 && (
-                  <View style={{ height: 1, backgroundColor: '#F3F4F6', marginLeft: 32 }} />
-                )}
+            {CATEGORIES.map((cat) => (
+              <View key={cat.key} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 18 }}>
+                <Text style={{ fontSize: 18, color: '#444', width: 32 }}>{/* icon placeholder */}</Text>
+                <Text style={{ flex: 1, fontSize: 16, color: '#222' }}>{cat.label}</Text>
+                <TouchableOpacity
+                  disabled={!editMode}
+                  onPress={() => handleToggle(cat.key as keyof typeof preferences)}
+                  style={{ opacity: editMode ? 1 : 0.5 }}
+                >
+                  <View style={{
+                    width: 48, height: 28, borderRadius: 14, backgroundColor: preferences[cat.key as keyof typeof preferences] ? '#009688' : '#E5E7EB', justifyContent: 'center', padding: 2,
+                  }}>
+                    <View style={{
+                      width: 24, height: 24, borderRadius: 12, backgroundColor: 'white', alignSelf: preferences[cat.key as keyof typeof preferences] ? 'flex-end' : 'flex-start',
+                      shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 2, elevation: 1,
+                    }} />
+                  </View>
+                </TouchableOpacity>
               </View>
             ))}
+            {editMode && (
+              <TouchableOpacity
+                onPress={handleSave}
+                style={{ marginTop: 20, backgroundColor: '#009688', borderRadius: 8, paddingVertical: 12, alignItems: 'center', opacity: saving ? 0.6 : 1 }}
+                disabled={saving}
+              >
+                <Text style={{ color: 'white', fontWeight: '700', fontSize: 16 }}>{saving ? 'Saving...' : 'Save'}</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Privacy & Notifications */}
@@ -738,27 +775,27 @@ export default function ProfileScreen() {
             </Text>
             
             <ScrollView style={{ maxHeight: 300 }}>
-              {gamePreferences.map((preference, index) => (
-                <View key={preference.id} style={{
+              {CATEGORIES.map((cat) => (
+                <View key={cat.key} style={{
                   flexDirection: 'row',
                   alignItems: 'center',
                   paddingVertical: 12,
                 }}>
-                  <Ionicons 
-                    name={preference.icon as any} 
-                    size={20} 
-                    color="#6B7280" 
-                    style={{ marginRight: 12 }} 
-                  />
                   <Text style={{ flex: 1, fontSize: 16, color: '#374151' }}>
-                    {preference.label}
+                    {cat.label}
                   </Text>
-                  <Switch
-                    value={preference.enabled}
-                    onValueChange={() => toggleGamePreference(preference.id)}
-                    trackColor={{ false: '#E5E7EB', true: '#009688' }}
-                    thumbColor={preference.enabled ? 'white' : '#F3F4F6'}
-                  />
+                  <TouchableOpacity
+                    onPress={() => toggleGamePreference(cat.key)}
+                  >
+                    <View style={{
+                      width: 48, height: 28, borderRadius: 14, backgroundColor: preferences[cat.key as keyof typeof preferences] ? '#009688' : '#E5E7EB', justifyContent: 'center', padding: 2,
+                    }}>
+                      <View style={{
+                        width: 24, height: 24, borderRadius: 12, backgroundColor: 'white', alignSelf: preferences[cat.key as keyof typeof preferences] ? 'flex-end' : 'flex-start',
+                        shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 2, elevation: 1,
+                      }} />
+                    </View>
+                  </TouchableOpacity>
                 </View>
               ))}
             </ScrollView>
