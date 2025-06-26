@@ -19,6 +19,8 @@ export type MainStackParamList = {
 export type RootStackParamList = {
   AuthStack: undefined;
   MainStack: undefined;
+  Survey: undefined;
+  GameScreen: undefined;
 };
 
 export type AuthNavigationProp = NativeStackNavigationProp<AuthStackParamList>;

@@ -19,8 +19,6 @@ class UserProgressService {
   // Load user progress from database
   async loadUserProgress(userId: string): Promise<{ data: UserProgress | null; error: string | null }> {
     try {
-      console.log('📱 Loading user progress for:', userId);
-      
       const { data, error } = await supabase
         .from('user_profiles')
         .select('games_until_bonus, last_daily_play_date, bonus_plays_available')
@@ -33,7 +31,6 @@ class UserProgressService {
       }
 
       if (!data) {
-        console.log('📱 No user profile found, using defaults');
         return { 
           data: {
             gamesUntilBonus: 5,
@@ -45,30 +42,14 @@ class UserProgressService {
         };
       }
 
-      console.log('📱 Raw data from database:', data);
-
       // Get today's date in EST
       const todayEST = this.getTodayEST();
-      
-      console.log('📱 Date calculations:', {
-        todayEST: todayEST,
-        lastDailyPlayDate: data.last_daily_play_date
-      });
       
       // Check if user has played today by comparing last_daily_play_date with today
       let hasPlayedToday = false;
       if (data.last_daily_play_date) {
         // Compare dates in YYYY-MM-DD format
         hasPlayedToday = data.last_daily_play_date === todayEST;
-        
-        console.log('📅 Date comparison:', { 
-          lastDailyPlayDateFromDB: data.last_daily_play_date,
-          todayEST: todayEST,
-          hasPlayedToday,
-          areEqual: data.last_daily_play_date === todayEST
-        });
-      } else {
-        console.log('📅 No last_daily_play_date found, hasPlayedToday = false');
       }
 
       const progress: UserProgress = {
@@ -78,7 +59,6 @@ class UserProgressService {
         bonusPlaysAvailable: data.bonus_plays_available
       };
 
-      console.log('📱 Final progress object:', progress);
       return { data: progress, error: null };
     } catch (error: any) {
       console.error('❌ Error loading user progress:', error);
@@ -89,16 +69,12 @@ class UserProgressService {
   // Save user progress to database
   async saveUserProgress(userId: string, progress: UserProgress): Promise<{ error: string | null }> {
     try {
-      console.log('💾 Saving user progress for:', userId, progress);
-      
       const updateData = {
         games_until_bonus: progress.gamesUntilBonus,
         last_daily_play_date: progress.lastPlayDate,
         bonus_plays_available: progress.bonusPlaysAvailable,
         updated_at: new Date().toISOString()
       };
-      
-      console.log('💾 Update data being sent to database:', updateData);
       
       const { error } = await supabase
         .from('user_profiles')
@@ -110,7 +86,6 @@ class UserProgressService {
         return { error: error.message };
       }
 
-      console.log('✅ User progress saved successfully');
       return { error: null };
     } catch (error: any) {
       console.error('❌ Error saving user progress:', error);
@@ -121,8 +96,6 @@ class UserProgressService {
   // Update progress after a game is played
   async updateProgressAfterGame(userId: string, won: boolean, usedBonus: boolean = false): Promise<{ error: string | null }> {
     try {
-      console.log('🎮 Updating progress after game for:', userId, { won, usedBonus });
-      
       // Get current progress first
       const { data: currentProgress, error: loadError } = await this.loadUserProgress(userId);
       if (loadError || !currentProgress) {
@@ -132,10 +105,6 @@ class UserProgressService {
       // Set last play date in EST as YYYY-MM-DD format
       const todayEST = this.getTodayEST();
       
-      console.log('🎮 Setting last play date:', {
-        todayEST: todayEST
-      });
-
       let newProgress: UserProgress = {
         ...currentProgress,
         hasPlayedToday: true, // This will be recalculated on next load
@@ -155,8 +124,6 @@ class UserProgressService {
           newProgress.bonusPlaysAvailable = currentProgress.bonusPlaysAvailable + 1;
         }
       }
-
-      console.log('🎮 New progress to save:', newProgress);
 
       // Save updated progress
       return await this.saveUserProgress(userId, newProgress);

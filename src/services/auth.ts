@@ -24,11 +24,7 @@ class AuthService {
       const cleanLastName = String(lastName).trim();
       const cleanPhone = phone ? String(phone).trim() : null;
 
-      console.log('Starting signup process for:', { 
-        email: cleanEmail, 
-        firstName: cleanFirstName, 
-        lastName: cleanLastName 
-      });
+      console.log('🔍 Starting signup process for:', cleanEmail);
 
       const { data, error } = await supabase.auth.signUp({
         email: cleanEmail,
@@ -43,26 +39,54 @@ class AuthService {
         }
       });
 
+      console.log('🔍 Signup result:', { 
+        success: !error, 
+        userId: data?.user?.id,
+        hasSession: !!data?.session,
+        error: error?.message 
+      });
+
       if (error) {
-        console.error('Auth signup error:', error);
+        console.error('❌ Auth signup error:', error);
         throw error;
       }
 
       if (!data.user) {
-        console.error('No user data returned from signup');
+        console.error('❌ No user data returned from signup');
         throw new Error('No user data returned from signup');
       }
 
-      console.log('Auth user created successfully:', { 
-        email: data.user.email, 
-        userId: data.user.id 
+      console.log('✅ User created successfully:', data.user.id);
+      console.log('🔍 Session data:', { 
+        hasSession: !!data.session,
+        sessionUser: data.session?.user?.id 
       });
 
+      // For testing: Update user profile status to 'active' to bypass email confirmation
+      if (data.user) {
+        try {
+          // Update user profile status
+          const { error: updateError } = await supabase
+            .from('user_profiles')
+            .update({ status: 'active' })
+            .eq('id', data.user.id);
+          
+          if (updateError) {
+            console.warn('⚠️ Could not update user status to active:', updateError);
+          } else {
+            console.log('✅ User profile status updated to active');
+          }
+        } catch (profileError) {
+          console.warn('⚠️ Error updating user profile status:', profileError);
+        }
+      }
+
       // Profile will be created automatically by trigger
+      console.log('🔍 Returning signup data (user not signed in)');
       return { data, error: null };
       
     } catch (error: any) {
-      console.error('Sign up error:', {
+      console.error('❌ Sign up error:', {
         message: error.message,
         code: error.code,
         details: error.details,
@@ -91,34 +115,52 @@ class AuthService {
     }
   }
 
-  // Sign in user
+  // Sign in existing user
   async signIn({ email, password }: SignInData) {
     try {
-      // Defensive parameter checking and cleaning
-      if (!email || !password) {
-        throw new Error('Email and password are required');
+      if (email === undefined || email === null) {
+        return { data: null, error: { message: 'Email is required' } };
       }
       
-      const cleanEmail = String(email || '').trim().toLowerCase();
-      const cleanPassword = String(password || '');
+      if (password === undefined || password === null) {
+        return { data: null, error: { message: 'Password is required' } };
+      }
       
+      const cleanEmail = String(email).trim().toLowerCase();
+      const cleanPassword = String(password);
+
       if (!cleanEmail || !cleanPassword) {
-        throw new Error('Valid email and password are required');
+        return { data: null, error: { message: 'Email and password cannot be empty' } };
       }
-
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: cleanEmail,
-        password: cleanPassword,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      return { data, error: null };
       
-    } catch (error: any) {
-      return { data: null, error };
+      console.log('🔍 Starting signin process for:', cleanEmail);
+      
+      const result = await supabase.auth.signInWithPassword({ 
+        email: cleanEmail, 
+        password: cleanPassword 
+      });
+      
+      console.log('🔍 Signin result:', { 
+        success: !result.error, 
+        userId: result.data?.user?.id,
+        error: result.error?.message 
+      });
+      
+      if (result.error) {
+        console.error('❌ Signin error:', result.error);
+        return { data: null, error: result.error };
+      }
+      
+      console.log('✅ Signin successful for user:', result.data?.user?.id);
+      // Don't manually set state here - let the auth state change handler do it
+      return { data: result.data, error: null };
+      
+    } catch (error) {
+      console.error('❌ Signin catch block error:', error);
+      return {
+        data: null,
+        error: error instanceof Error ? error : { message: 'An unexpected error occurred during sign in' }
+      };
     }
   }
 

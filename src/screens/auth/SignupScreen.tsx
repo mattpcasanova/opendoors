@@ -4,15 +4,15 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
-    Alert,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
@@ -99,11 +99,17 @@ export default function SignupScreen() {
     setLoading(true);
     
     try {
+      console.log('🔍 Starting signup process...');
       const result = await signUp({
         firstName,
         lastName,
         email,
         password,
+      });
+
+      console.log('🔍 Signup result:', { 
+        success: !result.error, 
+        error: result.error?.message 
       });
 
       if (result.error) {
@@ -116,8 +122,12 @@ export default function SignupScreen() {
         }
         
         Alert.alert('Error', errorMessage);
+      } else {
+        console.log('✅ Signup successful, letting RootNavigator handle flow');
+        // Do not navigate or reset navigation here. RootNavigator will handle the flow based on auth state.
       }
     } catch (error) {
+      console.error('❌ Signup error:', error);
       Alert.alert('Error', 'An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);

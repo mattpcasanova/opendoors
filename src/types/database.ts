@@ -116,6 +116,10 @@ export interface Database {
           subscription_expires_at: string | null;
           created_at: string | null;
           updated_at: string | null;
+          games_until_bonus: number;
+          last_daily_play_date: string | null;
+          bonus_plays_available: number;
+          has_completed_survey: boolean;
         };
         Insert: {
           id: string;
@@ -138,6 +142,10 @@ export interface Database {
           subscription_expires_at?: string | null;
           created_at?: string | null;
           updated_at?: string | null;
+          games_until_bonus?: number;
+          last_daily_play_date?: string | null;
+          bonus_plays_available?: number;
+          has_completed_survey?: boolean;
         };
         Update: {
           id?: string;
@@ -160,6 +168,10 @@ export interface Database {
           subscription_expires_at?: string | null;
           created_at?: string | null;
           updated_at?: string | null;
+          games_until_bonus?: number;
+          last_daily_play_date?: string | null;
+          bonus_plays_available?: number;
+          has_completed_survey?: boolean;
         };
       }
       games: {

@@ -37,6 +37,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('🔍 Initial session check:', { 
+        hasSession: !!session, 
+        userId: session?.user?.id 
+      });
       if (session) {
         setUser(session.user);
         setSession(session);
@@ -50,6 +54,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen for auth changes and restore session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('🔍 Auth state change:', { 
+          event, 
+          hasSession: !!session, 
+          userId: session?.user?.id 
+        });
         if (session?.user) {
           setUser(session.user);
           setSession(session);
@@ -64,10 +73,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription?.unsubscribe();
   }, []);
 
-  useEffect(() => {
-    console.log('Auth user state changed:', user);
-  }, [user]);
-
   const signUp = async (data: SignUpData): Promise<AuthResult> => {
     setLoading(true);
     try {
@@ -78,12 +83,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         lastName: String(data.lastName || '').trim(),
         phone: data.phone ? String(data.phone).trim() : undefined,
       };
-
-      console.log('AuthProvider signUp called:', { 
-        email: cleanData.email, 
-        firstName: cleanData.firstName, 
-        lastName: cleanData.lastName 
-      });
 
       const result = await authService.signUp(cleanData);
       
@@ -119,8 +118,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!cleanEmail || !cleanPassword) {
         return { error: { message: 'Email and password cannot be empty' } };
       }
-
-      console.log('AuthProvider signIn called');
       
       const result = await authService.signIn({ 
         email: cleanEmail, 

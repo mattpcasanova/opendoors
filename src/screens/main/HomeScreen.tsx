@@ -4,21 +4,20 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-    Alert,
-    Image,
-    ScrollView as RNScrollView,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  Image,
+  ScrollView as RNScrollView,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import GameCard, { SpecialGameCard } from '../../components/game/GameCard';
 import BottomNavBar from '../../components/main/BottomNavBar';
 import { useAuth } from '../../hooks/useAuth';
 import { useLocation } from '../../hooks/useLocation';
-import { supabase } from '../../lib/supabase';
 import { gamesService, Prize } from '../../services/gameLogic/games';
 import { UserProgress, userProgressService } from '../../services/userProgressService';
 import type { MainStackParamList } from '../../types/navigation';
@@ -56,8 +55,6 @@ interface DailyGameButtonProps {
 }
 
 const DailyGameButton: React.FC<DailyGameButtonProps> = ({ hasPlayedToday, onPress }) => {
-  console.log('🎯 DailyGameButton render - hasPlayedToday:', hasPlayedToday);
-  
   if (hasPlayedToday) {
     return (
       <TouchableOpacity
@@ -200,7 +197,7 @@ export default function HomeScreen() {
 
   // Debug log filter/sort state
   useEffect(() => {
-    console.log('Filter state:', { selectedCategories, distance, sortBy, showOnlyFavorites });
+    // Filter state logging removed for cleaner console
   }, [selectedCategories, distance, sortBy, showOnlyFavorites]);
 
   useEffect(() => {
@@ -209,32 +206,23 @@ export default function HomeScreen() {
       setError(null);
       
       try {
-        console.log('🏠 Starting to fetch games...');
-        
         // First, let's see all active games
         const allGamesResult = await gamesService.getActiveGames();
-        console.log('🏠 All active games:', allGamesResult);
         
         const [featuredResult, regularResult] = await Promise.all([
           gamesService.getFeaturedGame(),
           gamesService.getRegularGames()
         ]);
 
-        console.log('🏠 Featured game result:', featuredResult);
-        console.log('🏠 Regular games result:', regularResult);
-
         if (featuredResult.error) {
           console.error('❌ Error fetching featured game:', featuredResult.error);
         } else {
-          console.log('✅ Featured game set:', featuredResult.data?.name);
           setFeaturedGame(featuredResult.data);
         }
 
         if (regularResult.error) {
           console.error('❌ Error fetching regular games:', regularResult.error);
         } else {
-          console.log('✅ Regular games set:', regularResult.data?.length, 'games');
-          console.log('✅ Regular games list:', regularResult.data?.map(g => g.name));
           setRegularGames(regularResult.data || []);
         }
 
@@ -255,7 +243,6 @@ export default function HomeScreen() {
       if (!user) return;
       
       try {
-        console.log('📱 Loading user progress for:', user.id);
         const { data, error } = await userProgressService.loadUserProgress(user.id);
         
         if (error) {
@@ -264,19 +251,10 @@ export default function HomeScreen() {
         }
 
         if (data) {
-          console.log('📱 Setting state from loaded progress:', {
-            gamesUntilBonus: data.gamesUntilBonus,
-            hasPlayedToday: data.hasPlayedToday,
-            lastPlayDate: data.lastPlayDate,
-            bonusPlaysAvailable: data.bonusPlaysAvailable
-          });
-          
           setGamesUntilBonus(data.gamesUntilBonus);
           setHasPlayedAnyGameToday(data.hasPlayedToday);
           setLastPlayDate(data.lastPlayDate);
           setBonusPlaysAvailable(data.bonusPlaysAvailable);
-          
-          console.log('📱 Loaded user progress:', data);
         }
       } catch (error) {
         console.error('❌ Error loading user progress:', error);
@@ -302,8 +280,6 @@ export default function HomeScreen() {
         const { error } = await userProgressService.saveUserProgress(user.id, progress);
         if (error) {
           console.error('❌ Error saving user progress:', error);
-        } else {
-          console.log('💾 Saved user progress:', progress);
         }
       } catch (error) {
         console.error('❌ Error saving user progress:', error);
@@ -341,7 +317,6 @@ export default function HomeScreen() {
     // In production, this should prevent playing when hasPlayedAnyGameToday is true
     // For testing, we can allow it but the button should still show grey
     if (hasPlayedAnyGameToday) {
-      console.log('🎮 Daily game already played today, but allowing for testing');
       // In production, you would return here:
       // return;
     }
@@ -351,21 +326,13 @@ export default function HomeScreen() {
   };
 
   const handleGameComplete = async (won: boolean, switched: boolean) => {
-    console.log('🔍 Debug user info:', {
-      user: user?.id,
-      email: user?.email,
-      currentGame: currentGame?.id,
-      authenticated: !!user
-    });
     setShowGameScreen(false);
 
     // Immediately update the UI state to show grey button
     setHasPlayedAnyGameToday(true);
-    console.log('🎮 Immediately set hasPlayedAnyGameToday to true');
 
     // Use session from context
     if (!session && user) {
-      console.log('🔄 Session missing but user exists, context session is null.');
       Alert.alert(
         'Session Expired',
         'Your session has expired. Please log in again to save your game progress.',
@@ -386,24 +353,6 @@ export default function HomeScreen() {
     // Record the game only if we have a valid session
     if (user && currentGame && session) {
       try {
-        // Supabase auth and query debugging
-        try {
-          const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-          console.log('🔍 Supabase auth user:', authUser?.id);
-          console.log('🔍 Local user state:', user?.id);
-          console.log('🔍 Auth error:', authError);
-
-          // Test a simple query to see if auth context works
-          const { data: testData, error: testError } = await supabase
-            .from('game_plays')
-            .select('count')
-            .limit(1);
-          console.log('🔍 Simple query test:', { testData, testError });
-        } catch (err) {
-          console.error('🔍 Auth debug failed:', err);
-        }
-
-        console.log('🎮 Recording game for user:', user.id, 'prize:', currentGame.id);
         const result = await gamesService.recordGame({
           user_id: user.id,
           prize_id: currentGame.id,
@@ -422,7 +371,6 @@ export default function HomeScreen() {
             : String(result.error);
           Alert.alert('Error', 'Failed to record game: ' + errorMsg);
         } else {
-          console.log('✅ Game and reward recorded successfully');
           if (won) {
             Alert.alert('🎉 Congratulations!', `You won: ${currentGame.name}!\nCheck your rewards to claim it.`);
           }
@@ -434,25 +382,18 @@ export default function HomeScreen() {
     } else if (!user || !currentGame) {
       console.error('❌ Missing user or currentGame for recording');
     }
-
-    console.log('🎮 Game completed');
-    console.log('🎯 Bonus plays available before:', bonusPlaysAvailable);
     
     // Update user progress in database
     if (user) {
       const usedBonus = bonusPlaysAvailable > 0;
-      console.log('🎮 Updating progress with usedBonus:', usedBonus);
       const { error: progressError } = await userProgressService.updateProgressAfterGame(user.id, won, usedBonus);
       
       if (progressError) {
         console.error('❌ Error updating progress:', progressError);
       } else {
-        console.log('✅ Progress updated successfully');
-        
         // Reload progress from database to update UI (but don't override hasPlayedToday)
         const { data: updatedProgress } = await userProgressService.loadUserProgress(user.id);
         if (updatedProgress) {
-          console.log('📱 Reloaded progress from database:', updatedProgress);
           setGamesUntilBonus(updatedProgress.gamesUntilBonus);
           // Don't override hasPlayedAnyGameToday - let it stay true until next day
           // setHasPlayedAnyGameToday(updatedProgress.hasPlayedToday);
@@ -461,8 +402,6 @@ export default function HomeScreen() {
         }
       }
     }
-    
-    setCurrentGame(null);
   };
 
   const handleBackFromGame = () => {

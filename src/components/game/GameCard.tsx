@@ -42,38 +42,24 @@ const getIconForPrize = (prizeType: string, name: string) => {
   }
 };
 
+const handleImageError = (e: any) => {
+  // Handle image load error silently
+};
+
 // Component to render logo or fallback to emoji
 const CompanyLogo = ({ prize }: { prize: Prize }) => {
   const { icon } = getIconForPrize(prize.prize_type, prize.name);
-  
-  // Debug log
-  console.log('CompanyLogo:', prize.name, '| logo_url:', prize.logo_url);
 
   if (prize.logo_url) {
     return (
-      <View style={{
-        width: 72, // Increased from 48
-        height: 72, // Increased from 48
-        backgroundColor: 'white',
-        borderRadius: 32, // Half of width/height
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: 16,
-        overflow: 'hidden',
-        borderWidth: 2,
-        borderColor: '#009688', // Teal border
-      }}>
+      <View className="w-12 h-12 bg-gray-100 rounded-lg items-center justify-center mr-3">
         <Image
-          key={prize.logo_url}
           source={{ uri: prize.logo_url }}
+          className="w-8 h-8"
           style={{
-            width: 70, // Fill almost the entire space (64 - 4 for border)
-            height: 70, // Fill almost the entire space (64 - 4 for border)
             resizeMode: 'contain',
           }}
-          onError={e => {
-            console.log('Image failed to load for', prize.name, '| url:', prize.logo_url, '| error:', e.nativeEvent);
-          }}
+          onError={handleImageError}
         />
       </View>
     );

@@ -35,13 +35,9 @@ class GamesService {
   // Get all active games/prizes
   async getActiveGames() {
     try {
-      console.log('🎮 Fetching all active games...');
-      
       const { data, error } = await supabase
         .from('active_games')
         .select('id, name, description, value, logo_url, image_url, prize_type, address, location_name, doors, stock_quantity, expires_at, is_special, created_at');
-
-      console.log('🎮 All active games result:', { data, error, count: data?.length });
 
       if (error) throw error;
       return { data, error: null };
@@ -54,8 +50,6 @@ class GamesService {
   // Get featured/special game (marked as special OR highest value)
   async getFeaturedGame() {
     try {
-      console.log('⭐ Fetching featured game...');
-      
       // First try to get games marked as special
       const { data: specialGames, error: specialError } = await supabase
         .from('active_games')
@@ -69,7 +63,6 @@ class GamesService {
       // If we have a special game, use it
       if (specialGames && specialGames.length > 0) {
         const featuredGame = specialGames[0];
-        console.log('⭐ Found special game:', featuredGame.name);
         return { data: featuredGame, error: null };
       }
 
@@ -84,13 +77,6 @@ class GamesService {
 
       const featuredGame = highestValueGames && highestValueGames.length > 0 ? highestValueGames[0] : null;
       
-      console.log('⭐ Featured game result:', { 
-        featuredGame: featuredGame?.name, 
-        value: featuredGame?.value,
-        isSpecial: featuredGame?.is_special,
-        error: null
-      });
-
       return { data: featuredGame, error: null };
     } catch (error: any) {
       console.error('❌ Error fetching featured game:', error);
@@ -101,8 +87,6 @@ class GamesService {
   // Get regular games (excluding featured/special games)
   async getRegularGames() {
     try {
-      console.log('📋 Fetching regular games...');
-      
       // Get all active games that are NOT marked as special
       const { data: allGames, error: allGamesError } = await supabase
         .from('active_games')
@@ -111,8 +95,6 @@ class GamesService {
         .order('created_at', { ascending: false });
 
       if (allGamesError) throw allGamesError;
-      
-      console.log('📋 Regular games fetched (non-special):', allGames?.length);
 
       if (!allGames || allGames.length === 0) {
         // If no non-special games, get all games and exclude the featured one
@@ -131,14 +113,8 @@ class GamesService {
         const sortedByValue = [...allAnyGames].sort((a, b) => (b.value || 0) - (a.value || 0));
         const regularGames = allAnyGames.filter(game => game.id !== sortedByValue[0].id);
         
-        console.log('📋 Using fallback regular games:', regularGames.length);
         return { data: regularGames, error: null };
       }
-
-      console.log('📋 Regular games result:', { 
-        total: allGames.length,
-        games: allGames.map(g => g.name)
-      });
 
       return { data: allGames, error: null };
     } catch (error: any) {
@@ -159,7 +135,6 @@ class GamesService {
     game_duration_seconds?: number;
   }) {
     try {
-      console.log('🎮 Recording game with data:', gameData);
       // Insert into game_plays table
       const { data: gamePlay, error: gameError } = await supabase
         .from('game_plays')
@@ -183,11 +158,8 @@ class GamesService {
         return { error: gameError, data: null };
       }
 
-      console.log('✅ Game recorded successfully:', gamePlay);
-
       // If user won, insert into user_rewards table
       if (gameData.won && gameData.prize_id) {
-        console.log('🏆 User won! Creating reward...');
         const { data: reward, error: rewardError } = await supabase
           .from('user_rewards')
           .insert({
@@ -202,8 +174,6 @@ class GamesService {
         if (rewardError) {
           console.error('❌ Error inserting into user_rewards table:', rewardError);
           // Don't return error here - game was recorded successfully
-        } else {
-          console.log('✅ Reward recorded successfully:', reward);
         }
       }
 
