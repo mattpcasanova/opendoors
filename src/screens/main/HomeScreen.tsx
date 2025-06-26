@@ -8,14 +8,13 @@ import {
   Image,
   ScrollView as RNScrollView,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import GameCard, { SpecialGameCard } from '../../components/game/GameCard';
+import GameCard from '../../components/game/GameCard';
 import BottomNavBar from '../../components/main/BottomNavBar';
 import { useAuth } from '../../hooks/useAuth';
 import { useLocation } from '../../hooks/useLocation';
@@ -107,47 +106,31 @@ const DailyGameButton: React.FC<DailyGameButtonProps> = ({ hasPlayedToday, onPre
           width: '100%',
           maxWidth: 480,
           alignSelf: 'center',
-          backgroundColor: 'transparent',
-          borderRadius: 28,
-          padding: 24,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'relative',
-          overflow: 'hidden',
-          shadowColor: '#14b8a6',
-          shadowOpacity: 0.18,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: 4 },
         }}
       >
-        {/* Animated background elements */}
         <LinearGradient
           colors={["#2dd4bf", "#14b8a6"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
-          style={{ ...StyleSheet.absoluteFillObject, borderRadius: 28 }}
-        />
-        <View style={{ position: 'absolute', top: 16, right: 32, width: 12, height: 12, backgroundColor: 'rgba(255,255,255,0.20)', borderRadius: 6 }} />
-        <View style={{ position: 'absolute', bottom: 24, left: 48, width: 8, height: 8, backgroundColor: 'rgba(255,255,255,0.30)', borderRadius: 4 }} />
-        <View style={{ position: 'absolute', top: '50%', right: 64, width: 10, height: 10, backgroundColor: 'rgba(255,255,255,0.25)', borderRadius: 5 }} />
-        <View style={{ position: 'absolute', bottom: 16, right: 80, width: 6, height: 6, backgroundColor: 'rgba(255,255,255,0.40)', borderRadius: 3 }} />
-        {/* Subtle shine effect */}
-        <LinearGradient
-          colors={["transparent", "rgba(255,255,255,0.10)", "transparent"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={{ ...StyleSheet.absoluteFillObject, borderRadius: 28, transform: [{ skewX: '-12deg' }] }}
-        />
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, zIndex: 1 }}>
-          <View style={{ width: 48, height: 48, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 24, alignItems: 'center', justifyContent: 'center' }}>
-            <Ionicons name="gift" size={30} color="white" />
+          style={{ borderRadius: 24, padding: 24, position: 'relative', overflow: 'hidden', width: '100%', maxWidth: 480, alignSelf: 'center' }}
+        >
+          <View style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(45,212,191,0.12)' }} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ width: 48, height: 48, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 24, alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name="gift" size={28} color="white" style={{ opacity: 0.9 }} />
+              </View>
+              <View>
+                <Text style={{ color: 'white', fontSize: 20, fontWeight: 'bold' }}>Play Your Free Daily Game!</Text>
+                <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14 }}>Win amazing prizes every day</Text>
+              </View>
+            </View>
           </View>
-          <View style={{ marginLeft: 8 }}>
-            <Text style={{ color: 'white', fontSize: 22, fontWeight: 'bold' }}>Play Your Free Daily Game!</Text>
-            <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 15 }}>Win amazing prizes every day</Text>
-          </View>
-        </View>
+          {/* Floating particles effect (simple static dots for now) */}
+          <View style={{ position: 'absolute', top: 8, right: 32, width: 8, height: 8, backgroundColor: 'rgba(255,255,255,0.4)', borderRadius: 4 }} />
+          <View style={{ position: 'absolute', bottom: 12, left: 32, width: 6, height: 6, backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 3 }} />
+          <View style={{ position: 'absolute', top: '50%', right: 48, width: 10, height: 10, backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: 5 }} />
+        </LinearGradient>
       </TouchableOpacity>
     </View>
   );
@@ -653,7 +636,8 @@ export default function HomeScreen() {
         {!searchText && featuredGame && (
           <>
             <Text className="text-gray-900 text-xl font-semibold mb-4">Today's special</Text>
-            <SpecialGameCard
+            <GameCard
+              variant="featured"
               prize={featuredGame}
               userLocation={location}
               onPress={() => playGame(featuredGame)}
@@ -665,7 +649,8 @@ export default function HomeScreen() {
         {!searchText && !featuredGame && (
           <>
             <Text className="text-gray-900 text-xl font-semibold mb-4">Today's special</Text>
-            <SpecialGameCard
+            <GameCard
+              variant="featured"
               prize={{
                 id: 'target-gift-card',
                 name: 'Target Gift Card',

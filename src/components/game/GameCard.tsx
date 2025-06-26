@@ -15,13 +15,38 @@ interface Props {
   prize: Prize;
   onPress: () => void;
   userLocation?: Coordinates | null;
+  variant?: "default" | "featured";
 }
 
-interface SpecialGameCardProps {
-  prize: Prize;
-  onPress: () => void;
-  userLocation?: Coordinates | null;
-}
+// Helper function to format category for display
+const formatCategory = (category?: string): string => {
+  if (!category) return 'Food & Drinks';
+  
+  switch (category) {
+    case 'food_and_dining': return 'Food & Dining';
+    case 'coffee_and_drinks': return 'Coffee & Drinks';
+    case 'shopping': return 'Shopping';
+    case 'entertainment': return 'Entertainment';
+    case 'fitness_and_health': return 'Fitness & Health';
+    case 'beauty_and_wellness': return 'Beauty & Wellness';
+    default: return 'Food & Drinks';
+  }
+};
+
+// Helper function to get category color
+const getCategoryColor = (category?: string): { bg: string; text: string } => {
+  if (!category) return { bg: '#f0f9ff', text: '#0369a1' };
+  
+  switch (category) {
+    case 'food_and_dining': return { bg: '#fef3c7', text: '#d97706' };
+    case 'coffee_and_drinks': return { bg: '#e0f2fe', text: '#0284c7' };
+    case 'shopping': return { bg: '#f3e8ff', text: '#7c3aed' };
+    case 'entertainment': return { bg: '#e0f2fe', text: '#0284c7' };
+    case 'fitness_and_health': return { bg: '#dcfce7', text: '#16a34a' };
+    case 'beauty_and_wellness': return { bg: '#fce7f3', text: '#ec4899' };
+    default: return { bg: '#f0f9ff', text: '#0369a1' };
+  }
+};
 
 // Helper function to get icon and background color based on prize
 const getIconForPrize = (prizeType: string, name: string) => {
@@ -102,11 +127,12 @@ const calculateDistance = (userLocation: Coordinates | null, address: string | u
   return '1.5 mi'; // Default
 };
 
-export default function GameCard({ prize, onPress, userLocation }: Props) {
+export default function GameCard({ prize, onPress, userLocation, variant = "default" }: Props) {
   const distance = calculateDistance(userLocation || null, prize.address);
   const { user } = useAuth();
   const [favorited, setFavorited] = useState(false);
   const [loadingFavorite, setLoadingFavorite] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -135,337 +161,285 @@ export default function GameCard({ prize, onPress, userLocation }: Props) {
     setLoadingFavorite(false);
   };
 
-  return (
-    <TouchableOpacity
-      style={{
-        backgroundColor: 'white',
-        borderRadius: 16,
-        padding: 20,
-        flexDirection: 'column',
-        marginBottom: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.08,
-        shadowRadius: 4,
-        elevation: 2,
-        minHeight: 120,
-      }}
-      onPress={onPress}
-      activeOpacity={0.8}
-    >
-      {/* Main Content Row */}
-      <View style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 16,
-      }}>
-        <CompanyLogo prize={prize} />
-        <View style={{ flex: 1, flexDirection: 'column', justifyContent: 'center', marginRight: 16 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-            <Text style={{ 
-              fontSize: 16, 
-              fontWeight: '600', 
-              color: '#333',
+  const categoryColors = getCategoryColor(prize.category);
+  const formattedCategory = formatCategory(prize.category);
+
+  if (variant === "featured") {
+    return (
+      <View style={{ marginBottom: 16 }}>
+        <TouchableOpacity
+          onPress={onPress}
+          activeOpacity={0.85}
+          style={{
+            backgroundColor: '#14b8a6',
+            borderRadius: 24,
+            overflow: 'hidden',
+            shadowColor: '#14b8a6',
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: 0.18,
+            shadowRadius: 24,
+            elevation: 10,
+          }}
+        >
+          {/* Premium badge */}
+          <View style={{ position: 'absolute', top: 16, left: 16, zIndex: 10 }}>
+            <View style={{
+              backgroundColor: 'white',
+              paddingHorizontal: 14,
+              paddingVertical: 6,
+              borderRadius: 20,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.08,
+              shadowRadius: 4,
+              elevation: 2,
             }}>
-              {prize.location_name || prize.name}
-            </Text>
+              <Ionicons name="star" size={16} color="#14b8a6" />
+              <Text style={{ color: '#14b8a6', fontSize: 14, fontWeight: 'bold' }}>
+                TODAY'S SPECIAL
+              </Text>
+            </View>
+          </View>
+
+          {/* Favorite button */}
+          <TouchableOpacity
+            onPress={toggleFavorite}
+            disabled={loadingFavorite}
+            style={{
+              position: 'absolute',
+              top: 16,
+              right: 16,
+              zIndex: 10,
+              padding: 10,
+              borderRadius: 20,
+              backgroundColor: 'rgba(255,255,255,0.2)',
+            }}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name={favorited ? 'heart' : 'heart-outline'}
+              size={24}
+              color={favorited ? '#ef4444' : 'white'}
+            />
+          </TouchableOpacity>
+
+          <View style={{ padding: 20, paddingTop: 56 }}>
+            {/* Company logo section */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <View style={{
+                width: 56,
+                height: 56,
+                backgroundColor: 'white',
+                borderRadius: 16,
+                alignItems: 'center',
+                justifyContent: 'center',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.08,
+                shadowRadius: 4,
+                elevation: 2,
+              }}>
+                {prize.logo_url ? (
+                  <Image
+                    source={{ uri: prize.logo_url }}
+                    style={{ width: 48, height: 48, resizeMode: 'contain' }}
+                    onError={handleImageError}
+                  />
+                ) : (
+                  <Text style={{ fontSize: 32 }}>{getIconForPrize(prize.prize_type, prize.name).icon}</Text>
+                )}
+              </View>
+
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                {/* Main title: free item/service */}
+                <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold', marginBottom: 2 }}>
+                  {prize.name || 'Free Reward'}
+                </Text>
+                {/* Subtitle: company name */}
+                <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 15, fontWeight: '500', marginBottom: 8 }}>
+                  {prize.company_name || 'OpenDoors'}
+                </Text>
+                <View style={{
+                  backgroundColor: 'rgba(255,255,255,0.2)',
+                  paddingHorizontal: 10,
+                  paddingVertical: 4,
+                  borderRadius: 12,
+                  alignSelf: 'flex-start',
+                }}>
+                  <Text style={{ color: 'white', fontSize: 13, fontWeight: '600' }}>
+                    {formattedCategory}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Location */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 18 }}>
+              <Ionicons name="location" size={18} color="white" style={{ marginRight: 6 }} />
+              <Text style={{ color: 'white', fontSize: 15, fontWeight: '500' }}>
+                {distance}
+              </Text>
+            </View>
+
+            {/* Play button */}
+            <TouchableOpacity
+              onPress={onPress}
+              activeOpacity={0.8}
+              style={{
+                backgroundColor: 'white',
+                paddingVertical: 12,
+                borderRadius: 16,
+                alignItems: 'center',
+                shadowColor: '#14b8a6',
+                shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: 0.18,
+                shadowRadius: 16,
+                elevation: 6,
+              }}
+            >
+              <Text style={{ color: '#14b8a6', fontSize: 16, fontWeight: 'bold' }}>
+                Play Now
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // Default card
+  return (
+    <View style={{ marginBottom: 16 }}>
+      <TouchableOpacity
+        onPress={onPress}
+        activeOpacity={0.85}
+        style={{
+          backgroundColor: 'white',
+          borderRadius: 24,
+          overflow: 'hidden',
+          shadowColor: '#14b8a6',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.18,
+          shadowRadius: 24,
+          elevation: 10,
+          borderWidth: 1,
+          borderColor: 'rgba(0,0,0,0.04)',
+          transform: [{ scale: isPressed ? 0.98 : 1 }],
+        }}
+        onPressIn={() => setIsPressed(true)}
+        onPressOut={() => setIsPressed(false)}
+      >
+        <View style={{ padding: 20 }}>
+          {/* Header with logo and favorite */}
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+              {/* Company logo container - bigger, less padding */}
+              <View style={{
+                width: 56,
+                height: 56,
+                borderRadius: 16,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: '#f8f9fa',
+                borderWidth: 2,
+                borderColor: 'rgba(20, 184, 166, 0.1)',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.08,
+                shadowRadius: 4,
+                elevation: 2,
+                overflow: 'hidden',
+              }}>
+                {prize.logo_url ? (
+                  <Image
+                    source={{ uri: prize.logo_url }}
+                    style={{ width: 48, height: 48, resizeMode: 'contain' }}
+                    onError={handleImageError}
+                  />
+                ) : (
+                  <Text style={{ fontSize: 32 }}>{getIconForPrize(prize.prize_type, prize.name).icon}</Text>
+                )}
+              </View>
+
+              <View style={{ flex: 1, marginLeft: 12, minWidth: 0 }}>
+                {/* Main title: free item/service */}
+                <Text style={{ color: '#111827', fontSize: 18, fontWeight: 'bold', marginBottom: 2 }}>
+                  {prize.name || 'Free Reward'}
+                </Text>
+                {/* Subtitle: company name */}
+                <Text style={{ color: '#6b7280', fontSize: 15, fontWeight: '500', marginBottom: 8 }}>
+                  {prize.company_name || 'OpenDoors'}
+                </Text>
+                <View style={{
+                  backgroundColor: categoryColors.bg,
+                  paddingHorizontal: 10,
+                  paddingVertical: 4,
+                  borderRadius: 12,
+                  alignSelf: 'flex-start',
+                }}>
+                  <Text style={{ color: categoryColors.text, fontSize: 13, fontWeight: '600' }}>
+                    {formattedCategory}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
             <TouchableOpacity
               onPress={toggleFavorite}
               disabled={loadingFavorite}
-              style={{ marginLeft: 8, padding: 2 }}
-              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              style={{
+                padding: 10,
+                borderRadius: 20,
+                backgroundColor: favorited ? 'rgba(239, 68, 68, 0.1)' : 'transparent',
+                shadowColor: favorited ? '#ef4444' : 'transparent',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: favorited ? 0.2 : 0,
+                shadowRadius: 8,
+                elevation: favorited ? 4 : 0,
+              }}
+              activeOpacity={0.7}
             >
               <Ionicons
-                name={favorited ? 'star' : 'star-outline'}
-                size={20}
-                color={favorited ? '#FFD700' : '#B0B0B0'}
-                style={{ marginTop: 1 }}
+                name={favorited ? 'heart' : 'heart-outline'}
+                size={24}
+                color={favorited ? '#ef4444' : '#9ca3af'}
               />
             </TouchableOpacity>
           </View>
-          <Text style={{ 
-            fontSize: 13,
-            color: '#666',
-            lineHeight: 18,
-            marginBottom: 6,
-          }} numberOfLines={3}>
-            {prize.description}
-          </Text>
-          {prize.doors !== 3 && (
-            <Text style={{ 
-              fontSize: 12, 
-              color: '#009688', 
-              fontWeight: '500',
-              marginTop: 4
-            }}>
-              Higher difficulty • More doors
-            </Text>
-          )}
-        </View>
-        <View style={{
-          backgroundColor: '#009688',
-          paddingHorizontal: 28,
-          paddingVertical: 14,
-          borderRadius: 24,
-          shadowColor: '#009688',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.18,
-          shadowRadius: 6,
-          elevation: 4,
-        }}>
-          <Text style={{ 
-            color: 'white',
-            fontSize: 16,
-            fontWeight: '700',
-            letterSpacing: 1,
-            textTransform: 'uppercase',
-          }}>
-            PLAY
-          </Text>
-        </View>
-      </View>
 
-      {/* Bottom Info Row */}
-      <View style={{
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingTop: 8,
-        borderTopWidth: 1,
-        borderTopColor: '#F3F4F6',
-      }}>
-        {/* Distance */}
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Text style={{ fontSize: 12, color: '#9CA3AF', marginRight: 4 }}>📍</Text>
-          <Text style={{ 
-            fontSize: 12, 
-            color: '#6B7280', 
-            fontWeight: '500' 
-          }}>
-            {distance}
-          </Text>
-        </View>
-        
-        {/* Doors */}
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Text style={{ fontSize: 12, color: '#9CA3AF', marginRight: 4 }}>🚪</Text>
-          <Text style={{ 
-            fontSize: 12, 
-            color: '#6B7280', 
-            fontWeight: '500' 
-          }}>
-            {prize.doors} door{prize.doors !== 1 ? 's' : ''}
-          </Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-}
-
-// Special/Featured Game Card with distance and doors info
-export function SpecialGameCard({ prize, onPress, userLocation }: SpecialGameCardProps) {
-  const distance = calculateDistance(userLocation || null, prize.address);
-  
-  const getIconForPrize = (name: string) => {
-    const lowerName = name.toLowerCase();
-    if (lowerName.includes('target')) return '🎯';
-    if (lowerName.includes('gift')) return '🎁';
-    if (lowerName.includes('movie')) return '🎬';
-    if (lowerName.includes('starbucks')) return '☕';
-    if (lowerName.includes('chick')) return '🐔';
-    return '⭐';
-  };
-
-  const formatValue = (value: number) => {
-    return value >= 1 ? `${Math.floor(value)}` : `${value.toFixed(2)}`;
-  };
-
-  return (
-    <TouchableOpacity
-      style={{
-        marginBottom: 32,
-        borderRadius: 16,
-        overflow: 'hidden',
-        shadowColor: '#FF9800',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.25,
-        shadowRadius: 8,
-        elevation: 6,
-      }}
-      onPress={onPress}
-      activeOpacity={0.9}
-    >
-      {/* Gradient Background */}
-      <View style={{
-        backgroundColor: '#FF9800',
-        padding: 24,
-        position: 'relative',
-      }}>
-        {/* Decorative element */}
-        <View style={{
-          position: 'absolute',
-          top: '-50%',
-          right: -20,
-          width: 100,
-          height: '200%',
-          backgroundColor: 'rgba(255,255,255,0.2)',
-          transform: [{ rotate: '15deg' }],
-          opacity: 0.3,
-        }} />
-        
-        <View style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: 16,
-        }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{
-              color: 'white',
-              fontSize: 24,
-              fontWeight: '700',
-              marginBottom: 8,
-            }}>
-              {prize.location_name || prize.name}
-            </Text>
-            <Text style={{
-              color: 'white',
-              fontSize: 16,
-              marginBottom: 4,
-              opacity: 0.95,
-            }}>
-              {prize.description}
-            </Text>
-            <Text style={{
-              color: '#FFE0B2',
-              fontSize: 14,
-              marginBottom: 16,
-            }}>
-              Limited time • {prize.stock_quantity} available
-            </Text>
-            
-            <TouchableOpacity
-              style={{
-                backgroundColor: 'white',
-                alignSelf: 'flex-start',
-                paddingHorizontal: 28,
-                paddingVertical: 14,
-                borderRadius: 24,
-                shadowColor: '#FF9800',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.18,
-                shadowRadius: 6,
-                elevation: 4,
-              }}
-              activeOpacity={0.8}
-              onPress={onPress}
-            >
-              <Text style={{
-                color: '#FF9800',
-                fontSize: 16,
-                fontWeight: '700',
-                letterSpacing: 1,
-                textTransform: 'uppercase',
-              }}>
-                Play now
-              </Text>
-            </TouchableOpacity>
-          </View>
-          
-          {/* Company Logo for Special Card */}
-          {prize.logo_url ? (
-            <View style={{
-              width: 72, // Updated to match new size
-              height: 72, // Updated to match new size
-              backgroundColor: 'white',
-              borderRadius: 36, // Half of width/height
-              alignItems: 'center',
-              justifyContent: 'center',
-              overflow: 'hidden',
-              borderWidth: 2,
-              borderColor: '#009688', // Teal border to match regular cards
-            }}>
-              <Image
-                source={{ uri: prize.logo_url }}
-                style={{
-                  width: 70, // Fill almost the entire space (72 - 4 for border)
-                  height: 70, // Fill almost the entire space (72 - 4 for border)
-                  resizeMode: 'contain',
-                }}
-                defaultSource={require('../../../assets/OpenDoorsLogo.png')}
-              />
-            </View>
-          ) : (
-            <View style={{
-              width: 72, // Updated to match new size
-              height: 72, // Updated to match new size
-              backgroundColor: 'white',
-              borderRadius: 36, // Half of width/height
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderWidth: 2,
-              borderColor: '#009688', // Teal border to match regular cards
-            }}>
-              <Text style={{ fontSize: 32, opacity: 0.9 }}>
-                {getIconForPrize(prize.name)}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Bottom Info Row for Special Card */}
-        <View style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          paddingTop: 12,
-          borderTopWidth: 1,
-          borderTopColor: 'rgba(255,255,255,0.2)',
-        }}>
-          {/* Distance */}
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={{ fontSize: 14, color: 'white', marginRight: 6, opacity: 0.8 }}>📍</Text>
-            <Text style={{ 
-              fontSize: 14, 
-              color: 'white', 
-              fontWeight: '500',
-              opacity: 0.9,
-            }}>
+          {/* Location */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 18 }}>
+            <Ionicons name="location" size={18} color="#6b7280" style={{ marginRight: 6 }} />
+            <Text style={{ color: '#6b7280', fontSize: 15, fontWeight: '500' }}>
               {distance}
             </Text>
           </View>
-          
-          {/* Doors */}
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={{ fontSize: 14, color: 'white', marginRight: 6, opacity: 0.8 }}>🚪</Text>
-            <Text style={{ 
-              fontSize: 14, 
-              color: 'white', 
-              fontWeight: '500',
-              opacity: 0.9,
-            }}>
-              {prize.doors} door{prize.doors !== 1 ? 's' : ''}
-            </Text>
-          </View>
 
-          {/* Special Badge */}
-          <View style={{
-            backgroundColor: 'rgba(255,255,255,0.2)',
-            paddingHorizontal: 8,
-            paddingVertical: 4,
-            borderRadius: 12,
-          }}>
-            <Text style={{
-              color: 'white',
-              fontSize: 12,
-              fontWeight: '600',
-              opacity: 0.9,
-            }}>
-              ⭐ SPECIAL
+          {/* Play button */}
+          <TouchableOpacity
+            onPress={onPress}
+            activeOpacity={0.8}
+            style={{
+              backgroundColor: '#14b8a6',
+              paddingVertical: 12,
+              borderRadius: 16,
+              alignItems: 'center',
+              shadowColor: '#14b8a6',
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.18,
+              shadowRadius: 16,
+              elevation: 6,
+            }}
+          >
+            <Text style={{ color: 'white', fontSize: 16, fontWeight: 'bold' }}>
+              Play Now
             </Text>
-          </View>
+          </TouchableOpacity>
         </View>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </View>
   );
 }

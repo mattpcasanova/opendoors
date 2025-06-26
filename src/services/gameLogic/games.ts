@@ -9,6 +9,8 @@ export interface Prize {
   image_url?: string;
   logo_url?: string;
   prize_type: string;
+  category?: string;
+  company_name?: string;
   address?: string;
   location_name?: string;
   doors: number;
@@ -37,7 +39,7 @@ class GamesService {
     try {
       const { data, error } = await supabase
         .from('active_games')
-        .select('id, name, description, value, logo_url, image_url, prize_type, address, location_name, doors, stock_quantity, expires_at, is_special, created_at');
+        .select('id, name, description, value, logo_url, image_url, prize_type, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, created_at');
 
       if (error) throw error;
       return { data, error: null };
@@ -53,7 +55,7 @@ class GamesService {
       // First try to get games marked as special
       const { data: specialGames, error: specialError } = await supabase
         .from('active_games')
-        .select('id, name, description, value, logo_url, image_url, prize_type, address, location_name, doors, stock_quantity, expires_at, is_special, created_at')
+        .select('id, name, description, value, logo_url, image_url, prize_type, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, created_at')
         .eq('is_special', true)
         .order('value', { ascending: false })
         .limit(1);
@@ -69,7 +71,7 @@ class GamesService {
       // Otherwise, fall back to highest value game
       const { data: highestValueGames, error: valueError } = await supabase
         .from('active_games')
-        .select('id, name, description, value, logo_url, image_url, prize_type, address, location_name, doors, stock_quantity, expires_at, is_special, created_at')
+        .select('id, name, description, value, logo_url, image_url, prize_type, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, created_at')
         .order('value', { ascending: false })
         .limit(1);
 
@@ -90,7 +92,7 @@ class GamesService {
       // Get all active games that are NOT marked as special
       const { data: allGames, error: allGamesError } = await supabase
         .from('active_games')
-        .select('id, name, description, value, logo_url, image_url, prize_type, address, location_name, doors, stock_quantity, expires_at, is_special, created_at')
+        .select('id, name, description, value, logo_url, image_url, prize_type, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, created_at')
         .eq('is_special', false)
         .order('created_at', { ascending: false });
 
@@ -100,7 +102,7 @@ class GamesService {
         // If no non-special games, get all games and exclude the featured one
         const { data: allAnyGames, error: anyGamesError } = await supabase
           .from('active_games')
-          .select('id, name, description, value, logo_url, image_url, prize_type, address, location_name, doors, stock_quantity, expires_at, is_special, created_at')
+          .select('id, name, description, value, logo_url, image_url, prize_type, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, created_at')
           .order('created_at', { ascending: false });
 
         if (anyGamesError) throw anyGamesError;
