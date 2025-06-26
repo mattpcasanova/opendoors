@@ -764,7 +764,7 @@ export default function ProfileScreen() {
           </View>
         </ScrollView>
       </SafeAreaView>
-      <BottomNavBar initialTab="Profile" />
+      <BottomNavBar />
 
       {/* Edit Profile Modal */}
       <Modal

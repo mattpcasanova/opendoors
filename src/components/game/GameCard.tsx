@@ -1,5 +1,5 @@
 // src/components/game/GameCard.tsx
-import { Ionicons } from '@expo/vector-icons';
+import { Heart, MapPin, Star } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../hooks/useAuth';
@@ -197,7 +197,7 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
               shadowRadius: 4,
               elevation: 2,
             }}>
-              <Ionicons name="star" size={16} color="#14b8a6" />
+              <Star size={16} color="#14b8a6" />
               <Text style={{ color: '#14b8a6', fontSize: 14, fontWeight: 'bold' }}>
                 TODAY'S SPECIAL
               </Text>
@@ -219,10 +219,10 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
             }}
             activeOpacity={0.7}
           >
-            <Ionicons
-              name={favorited ? 'heart' : 'heart-outline'}
+            <Heart
               size={24}
               color={favorited ? '#ef4444' : 'white'}
+              fill={favorited ? '#ef4444' : 'none'}
             />
           </TouchableOpacity>
 
@@ -278,7 +278,7 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
 
             {/* Location */}
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 18 }}>
-              <Ionicons name="location" size={18} color="white" style={{ marginRight: 6 }} />
+              <MapPin size={18} color="white" style={{ marginRight: 6 }} />
               <Text style={{ color: 'white', fontSize: 15, fontWeight: '500' }}>
                 {distance}
               </Text>
@@ -402,17 +402,17 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
               }}
               activeOpacity={0.7}
             >
-              <Ionicons
-                name={favorited ? 'heart' : 'heart-outline'}
+              <Heart
                 size={24}
                 color={favorited ? '#ef4444' : '#9ca3af'}
+                fill={favorited ? '#ef4444' : 'none'}
               />
             </TouchableOpacity>
           </View>
 
           {/* Location */}
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 18 }}>
-            <Ionicons name="location" size={18} color="#6b7280" style={{ marginRight: 6 }} />
+            <MapPin size={18} color="#6b7280" style={{ marginRight: 6 }} />
             <Text style={{ color: '#6b7280', fontSize: 15, fontWeight: '500' }}>
               {distance}
             </Text>

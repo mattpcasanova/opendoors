@@ -1,7 +1,8 @@
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Gift, Zap } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -164,7 +165,7 @@ const ProgressSection: React.FC<ProgressSectionProps> = ({
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={{ width: 48, height: 48, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 24, alignItems: 'center', justifyContent: 'center' }}>
-                <Ionicons name="star" size={28} color="white" style={{ opacity: 0.9 }} />
+                <Ionicons name="gift" size={28} color="white" style={{ opacity: 0.9 }} />
               </View>
               <View>
                 <Text style={{ color: 'white', fontSize: 20, fontWeight: 'bold' }}>Bonus Available!</Text>
@@ -192,7 +193,7 @@ const ProgressSection: React.FC<ProgressSectionProps> = ({
             </Text>
           </View>
           <View style={{ width: 48, height: 48, backgroundColor: '#CCFBF1', borderRadius: 24, alignItems: 'center', justifyContent: 'center' }}>
-            <Ionicons name="gift" size={28} color="#14B8A6" />
+            <Gift size={28} color="#14B8A6" />
           </View>
         </View>
         {/* Progress Bar */}
@@ -235,7 +236,7 @@ const ProgressSection: React.FC<ProgressSectionProps> = ({
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 }}>
           <Text style={{ fontSize: 12, color: '#6B7280' }}>Start</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-            <Feather name="zap" size={14} color="#F59E42" />
+            <Zap size={14} color="#F59E42" />
             <Text style={{ fontSize: 12, color: '#6B7280', marginLeft: 2 }}>Bonus</Text>
           </View>
         </View>
@@ -841,7 +842,7 @@ export default function HomeScreen() {
         )}
       </ScrollView>
 
-      <BottomNavBar initialTab="Home" />
+      <BottomNavBar />
     </SafeAreaView>
   );
 }

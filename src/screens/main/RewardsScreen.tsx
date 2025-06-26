@@ -4,13 +4,13 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    Image,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  Image,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import BottomNavBar from '../../components/main/BottomNavBar';
@@ -274,7 +274,7 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
       </ScrollView>
 
       {/* Bottom Navigation Bar */}
-      <BottomNavBar initialTab="Rewards" />
+      <BottomNavBar />
     </SafeAreaView>
   );
 }
@@ -545,7 +545,7 @@ export default function RewardsScreen() {
         </View>
       </ScrollView>
 
-      <BottomNavBar initialTab="Rewards" />
+      <BottomNavBar />
     </SafeAreaView>
   );
 }

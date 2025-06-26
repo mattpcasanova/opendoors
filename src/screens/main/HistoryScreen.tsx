@@ -140,7 +140,7 @@ export default function HistoryScreen() {
         {renderStats()}
         {renderGameHistory()}
       </ScrollView>
-      <BottomNavBar initialTab="History" />
+      <BottomNavBar />
     </SafeAreaView>
   );
 }
