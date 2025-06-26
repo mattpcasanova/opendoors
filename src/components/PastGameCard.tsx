@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -23,52 +24,78 @@ export default function PastGameCard({ game, onPress }: PastGameCardProps) {
   const locationName = game.prize?.location_name || 'Unknown Location';
   const logoUrl = game.prize?.logo_url;
 
+  const formatGameDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.abs(now.getTime() - date.getTime()) / (1000 * 60 * 60);
+    if (diffInHours < 24) {
+      return format(date, 'h:mm a');
+    } else if (diffInHours < 168) {
+      return format(date, 'EEE h:mm a');
+    } else {
+      return format(date, 'MMM d, yyyy');
+    }
+  };
+
   return (
     <TouchableOpacity
-      style={[
-        styles.gameCard,
-        { backgroundColor: game.win ? '#E8F5E9' : '#FFEBEE', flexDirection: 'row', alignItems: 'center' }
-      ]}
+      style={styles.gameCard}
       onPress={onPress}
       activeOpacity={0.7}
     >
-      {/* Logo section */}
-      <View style={{
-        width: 64,
-        height: 64,
-        backgroundColor: logoUrl ? 'white' : '#F3F4F6',
-        borderRadius: 32,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: 16,
-        borderWidth: logoUrl ? 2 : 0,
-        borderColor: logoUrl ? '#009688' : 'transparent',
-        overflow: 'hidden',
-      }}>
-        {logoUrl ? (
-          <Image
-            source={{ uri: logoUrl }}
-            style={{ width: 60, height: 60, borderRadius: 30, resizeMode: 'contain' }}
+      {/* Left side - Logo and result indicator */}
+      <View style={styles.leftSection}>
+        <View style={[
+          styles.logoContainer,
+          { borderColor: game.win ? '#10B981' : '#EF4444' }
+        ]}>
+          {logoUrl ? (
+            <Image
+              source={{ uri: logoUrl }}
+              style={styles.logoImage}
+            />
+          ) : (
+            <Text style={styles.logoEmoji}>🎁</Text>
+          )}
+        </View>
+        <View style={[
+          styles.resultIndicator,
+          { backgroundColor: game.win ? '#10B981' : '#EF4444' }
+        ]}>
+          <Ionicons 
+            name={game.win ? 'checkmark' : 'close'} 
+            size={12} 
+            color="white" 
           />
-        ) : (
-          <Text style={{ fontSize: 32 }}>🎁</Text>
-        )}
+        </View>
       </View>
-      {/* Info section */}
-      <View style={{ flex: 1 }}>
-        <View style={styles.gameHeader}>
+      {/* Right side - Game info */}
+      <View style={styles.rightSection}>
+        <View style={styles.headerRow}>
           <Text style={styles.gameDate}>
-            {format(new Date(game.created_at), 'MMM d, yyyy h:mm a')}
+            {formatGameDate(game.created_at)}
           </Text>
-          <Text style={[
-            styles.gameResult,
-            { color: game.win ? '#2E7D32' : '#C62828' }
+          <View style={[
+            styles.resultBadge,
+            { backgroundColor: game.win ? '#DCFCE7' : '#FEE2E2' }
           ]}>
-            {game.win ? 'Won' : 'Lost'}
+            <Text style={[
+              styles.resultText,
+              { color: game.win ? '#166534' : '#DC2626' }
+            ]}>
+              {game.win ? 'Won' : 'Lost'}
+            </Text>
+          </View>
+        </View>
+        <Text style={styles.prizeName} numberOfLines={2}>
+          {prizeName}
+        </Text>
+        <View style={styles.locationRow}>
+          <Ionicons name="location-outline" size={14} color="#6B7280" />
+          <Text style={styles.locationName} numberOfLines={1}>
+            {locationName}
           </Text>
         </View>
-        <Text style={styles.prizeName}>{prizeName}</Text>
-        <Text style={styles.locationName}>{locationName}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -77,36 +104,95 @@ export default function PastGameCard({ game, onPress }: PastGameCardProps) {
 const styles = StyleSheet.create({
   gameCard: {
     backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
-    elevation: 2,
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
   },
-  gameHeader: {
+  leftSection: {
+    position: 'relative',
+    marginRight: 16,
+  },
+  logoContainer: {
+    width: 56,
+    height: 56,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    overflow: 'hidden',
+  },
+  logoImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    resizeMode: 'contain',
+  },
+  logoEmoji: {
+    fontSize: 24,
+  },
+  resultIndicator: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'white',
+  },
+  rightSection: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   gameDate: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: 13,
+    color: '#6B7280',
+    fontWeight: '500',
   },
-  gameResult: {
-    fontSize: 14,
-    fontWeight: 'bold',
+  resultBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  resultText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   prizeName: {
     fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 6,
+    lineHeight: 20,
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
   },
   locationName: {
     fontSize: 14,
-    color: '#666',
+    color: '#6B7280',
+    marginLeft: 4,
+    flex: 1,
+    fontWeight: '500',
   },
 }); 
