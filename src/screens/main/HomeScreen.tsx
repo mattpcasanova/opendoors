@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -8,6 +8,7 @@ import {
   Image,
   ScrollView as RNScrollView,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -57,39 +58,98 @@ interface DailyGameButtonProps {
 const DailyGameButton: React.FC<DailyGameButtonProps> = ({ hasPlayedToday, onPress }) => {
   if (hasPlayedToday) {
     return (
-      <TouchableOpacity
-        className="bg-gray-400 py-4 px-6 rounded-2xl mb-6 flex-row items-center justify-center"
-        disabled={true}
-        style={{
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-          elevation: 3,
-        }}
-      >
-        <Ionicons name="checkmark-circle" size={20} color="white" />
-        <Text className="text-white text-base font-bold ml-2">Played Today - Come Back Tomorrow!</Text>
-      </TouchableOpacity>
+      <View style={{ alignItems: 'center', marginBottom: 24 }}>
+        <View
+          style={{
+            width: '100%',
+            maxWidth: 480,
+            alignSelf: 'center',
+            backgroundColor: '#9CA3AF',
+            borderRadius: 28,
+            padding: 24,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative',
+            overflow: 'hidden',
+            shadowColor: '#000',
+            shadowOpacity: 0.08,
+            shadowRadius: 8,
+            shadowOffset: { width: 0, height: 2 },
+          }}
+        >
+          {/* Subtle background pattern */}
+          <View style={{ position: 'absolute', inset: 0, opacity: 0.10 }} pointerEvents="none">
+            <View style={{ position: 'absolute', top: 16, right: 32, width: 8, height: 8, backgroundColor: 'white', borderRadius: 4 }} />
+            <View style={{ position: 'absolute', bottom: 24, left: 48, width: 4, height: 4, backgroundColor: 'white', borderRadius: 2 }} />
+            <View style={{ position: 'absolute', top: '50%', right: 64, width: 6, height: 6, backgroundColor: 'white', borderRadius: 3 }} />
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, zIndex: 1 }}>
+            <View style={{ width: 40, height: 40, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 20, alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="checkmark-circle" size={28} color="white" />
+            </View>
+            <View style={{ marginLeft: 8 }}>
+              <Text style={{ color: 'white', fontSize: 20, fontWeight: 'bold' }}>Played Today</Text>
+              <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14 }}>Come back tomorrow for more!</Text>
+            </View>
+          </View>
+        </View>
+      </View>
     );
   }
 
   return (
-    <TouchableOpacity
-      className="bg-green-500 py-4 px-6 rounded-2xl mb-6 flex-row items-center justify-center"
-      onPress={onPress}
-      activeOpacity={0.8}
-      style={{
-        shadowColor: '#22C55E',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.25,
-        shadowRadius: 8,
-        elevation: 6,
-      }}
-    >
-      <Ionicons name="gift" size={20} color="white" />
-      <Text className="text-white text-base font-bold ml-2">Play Your Free Daily Game!</Text>
-    </TouchableOpacity>
+    <View style={{ alignItems: 'center', marginBottom: 24 }}>
+      <TouchableOpacity
+        onPress={onPress}
+        activeOpacity={0.85}
+        style={{
+          width: '100%',
+          maxWidth: 480,
+          alignSelf: 'center',
+          backgroundColor: 'transparent',
+          borderRadius: 28,
+          padding: 24,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative',
+          overflow: 'hidden',
+          shadowColor: '#14b8a6',
+          shadowOpacity: 0.18,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 4 },
+        }}
+      >
+        {/* Animated background elements */}
+        <LinearGradient
+          colors={["#2dd4bf", "#14b8a6"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={{ ...StyleSheet.absoluteFillObject, borderRadius: 28 }}
+        />
+        <View style={{ position: 'absolute', top: 16, right: 32, width: 12, height: 12, backgroundColor: 'rgba(255,255,255,0.20)', borderRadius: 6 }} />
+        <View style={{ position: 'absolute', bottom: 24, left: 48, width: 8, height: 8, backgroundColor: 'rgba(255,255,255,0.30)', borderRadius: 4 }} />
+        <View style={{ position: 'absolute', top: '50%', right: 64, width: 10, height: 10, backgroundColor: 'rgba(255,255,255,0.25)', borderRadius: 5 }} />
+        <View style={{ position: 'absolute', bottom: 16, right: 80, width: 6, height: 6, backgroundColor: 'rgba(255,255,255,0.40)', borderRadius: 3 }} />
+        {/* Subtle shine effect */}
+        <LinearGradient
+          colors={["transparent", "rgba(255,255,255,0.10)", "transparent"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={{ ...StyleSheet.absoluteFillObject, borderRadius: 28, transform: [{ skewX: '-12deg' }] }}
+        />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, zIndex: 1 }}>
+          <View style={{ width: 48, height: 48, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 24, alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name="gift" size={30} color="white" />
+          </View>
+          <View style={{ marginLeft: 8 }}>
+            <Text style={{ color: 'white', fontSize: 22, fontWeight: 'bold' }}>Play Your Free Daily Game!</Text>
+            <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 15 }}>Win amazing prizes every day</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    </View>
   );
 };
 
@@ -103,46 +163,99 @@ const ProgressSection: React.FC<ProgressSectionProps> = ({
   bonusPlaysAvailable 
 }) => {
   const totalGames = 5;
-  const progressPercentage = gamesUntilBonus === 5 ? 0 : ((totalGames - gamesUntilBonus) / totalGames) * 100;
+  const completedGames = totalGames - gamesUntilBonus;
+  const progressPercentage = (completedGames / totalGames) * 100;
   const hasBonusPlay = bonusPlaysAvailable > 0;
 
   // Show static indicator if bonus play is available
   if (hasBonusPlay) {
     return (
-      <View className="mb-8">
-        <View
-          className="py-4 px-6 rounded-2xl flex-row items-center justify-center bg-green-500"
-          style={{
-            shadowColor: '#22C55E',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.25,
-            shadowRadius: 8,
-            elevation: 6,
-          }}
+      <View style={{ alignItems: 'center', marginBottom: 32 }}>
+        <LinearGradient
+          colors={["#2dd4bf", "#14b8a6"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={{ borderRadius: 24, padding: 24, position: 'relative', overflow: 'hidden', width: '100%', maxWidth: 480, alignSelf: 'center' }}
         >
-          <Ionicons name="star" size={24} color="white" />
-          <Text className="text-white text-lg font-bold ml-3">
-            Bonus Available! Play any game.
-          </Text>
-        </View>
+          <View style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(45,212,191,0.12)' }} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ width: 48, height: 48, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 24, alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name="star" size={28} color="white" style={{ opacity: 0.9 }} />
+              </View>
+              <View>
+                <Text style={{ color: 'white', fontSize: 20, fontWeight: 'bold' }}>Bonus Available!</Text>
+                <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14 }}>Play any game for free</Text>
+              </View>
+            </View>
+          </View>
+          {/* Floating particles effect (simple static dots for now) */}
+          <View style={{ position: 'absolute', top: 8, right: 32, width: 8, height: 8, backgroundColor: 'rgba(255,255,255,0.4)', borderRadius: 4 }} />
+          <View style={{ position: 'absolute', bottom: 12, left: 32, width: 6, height: 6, backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 3 }} />
+          <View style={{ position: 'absolute', top: '50%', right: 48, width: 10, height: 10, backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: 5 }} />
+        </LinearGradient>
       </View>
     );
   }
 
-  // Always show progress bar if not complete
   return (
-    <View className="mb-8">
-      <Text className="text-gray-900 text-base font-medium mb-3">
-        {gamesUntilBonus} more games for bonus door
-      </Text>
-      <View className="bg-gray-200 h-2 rounded-full">
-        <View 
-          className="h-full rounded-full"
-          style={{ 
-            width: `${progressPercentage}%`, 
-            backgroundColor: '#FF9800'
-          }}
-        />
+    <View style={{ alignItems: 'center', marginBottom: 32 }}>
+      <View style={{ backgroundColor: 'white', borderRadius: 24, padding: 24, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, borderWidth: 1, borderColor: '#F3F4F6', width: '100%', maxWidth: 480, alignSelf: 'center' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <View>
+            <Text style={{ color: '#111827', fontSize: 18, fontWeight: '600' }}>Progress to Bonus</Text>
+            <Text style={{ color: '#6B7280', fontSize: 14 }}>
+              {gamesUntilBonus} more game{gamesUntilBonus !== 1 ? 's' : ''} to unlock
+            </Text>
+          </View>
+          <View style={{ width: 48, height: 48, backgroundColor: '#CCFBF1', borderRadius: 24, alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name="gift" size={28} color="#14B8A6" />
+          </View>
+        </View>
+        {/* Progress Bar */}
+        <View style={{ marginBottom: 12 }}>
+          <View style={{ height: 12, backgroundColor: '#E5E7EB', borderRadius: 6, overflow: 'hidden' }}>
+            <LinearGradient
+              colors={["#14B8A6", "#10B981"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{ width: `${progressPercentage}%`, height: 12, borderRadius: 6, position: 'absolute', left: 0, top: 0 }}
+            >
+              <View style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.2)' }} />
+            </LinearGradient>
+          </View>
+        </View>
+        {/* Progress Dots */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+          {Array.from({ length: totalGames }, (_, i) => (
+            <View
+              key={i}
+              style={{
+                width: 12,
+                height: 12,
+                borderRadius: 6,
+                backgroundColor:
+                  i < completedGames
+                    ? '#14B8A6'
+                    : i === completedGames
+                    ? '#5EEAD4'
+                    : '#D1D5DB',
+                transform: [
+                  { scale: i < completedGames ? 1.15 : 1 },
+                ],
+                borderWidth: i === completedGames ? 2 : 0,
+                borderColor: i === completedGames ? '#99F6E4' : 'transparent',
+              }}
+            />
+          ))}
+        </View>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 }}>
+          <Text style={{ fontSize: 12, color: '#6B7280' }}>Start</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+            <Feather name="zap" size={14} color="#F59E42" />
+            <Text style={{ fontSize: 12, color: '#6B7280', marginLeft: 2 }}>Bonus</Text>
+          </View>
+        </View>
       </View>
     </View>
   );
