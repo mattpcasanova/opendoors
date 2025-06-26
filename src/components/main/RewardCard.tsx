@@ -1,5 +1,5 @@
 // src/components/RewardCard.tsx
-import { Ionicons } from '@expo/vector-icons';
+import { Calendar, ChevronRight } from 'lucide-react-native';
 import React from 'react';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 
@@ -70,110 +70,69 @@ export default function RewardCard({ reward, onPress }: Props) {
     <TouchableOpacity
       style={{
         backgroundColor: 'white',
-        borderRadius: 16,
-        padding: 16,
+        borderRadius: 20,
+        padding: 24,
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 12,
+        marginBottom: 16,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.08,
-        shadowRadius: 4,
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
         elevation: 2,
+        borderWidth: 1,
+        borderColor: '#F3F4F6',
       }}
       onPress={() => onPress(reward)}
-      activeOpacity={0.8}
+      activeOpacity={0.85}
     >
-      {/* Icon or Logo */}
+      {/* Logo */}
       <View style={{
-        width: 48,
-        height: 48,
-        backgroundColor: reward.logo_url ? 'transparent' : getBackgroundColor(reward.bgColor),
-        borderRadius: 24,
+        width: 64,
+        height: 64,
+        borderRadius: 16,
+        overflow: 'hidden',
+        backgroundColor: '#F3F4F6',
+        marginRight: 18,
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: 16
+        flexShrink: 0,
       }}>
         {reward.logo_url ? (
           <Image
             source={{ uri: reward.logo_url }}
-            style={{ width: 52, height: 52, borderRadius: 26, resizeMode: 'contain' }}
+            style={{ width: 64, height: 64, resizeMode: 'cover' }}
           />
         ) : (
-          <Text style={{ fontSize: 24 }}>{reward.icon}</Text>
+          <Text style={{ fontSize: 32 }}>{reward.icon}</Text>
         )}
       </View>
-      
-      {/* Content */}
-      <View style={{ flex: 1 }}>
-        <View style={{ 
-          flexDirection: 'row', 
-          alignItems: 'center', 
-          marginBottom: 4 
-        }}>
-          <Text style={{ 
-            fontSize: 16, 
-            fontWeight: '600', 
-            color: '#333',
-            marginRight: 8
-          }}>
+
+      {/* Info */}
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+          <Text style={{ fontWeight: 'bold', fontSize: 18, color: '#111827', flexShrink: 1 }} numberOfLines={1}>
             {reward.company}
           </Text>
           {reward.claimed && (
-            <View style={{
-              backgroundColor: '#DCFCE7',
-              paddingHorizontal: 8,
-              paddingVertical: 2,
-              borderRadius: 12,
-            }}>
-              <Text style={{
-                fontSize: 10,
-                color: '#166534',
-                fontWeight: '600'
-              }}>
-                Claimed
-              </Text>
+            <View style={{ backgroundColor: '#DCFCE7', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2, marginLeft: 8 }}>
+              <Text style={{ color: '#16A34A', fontSize: 12, fontWeight: 'bold' }}>Claimed</Text>
             </View>
           )}
         </View>
-        
-        <Text style={{ 
-          fontSize: 14, 
-          color: '#666',
-          marginBottom: 4,
-        }}>
+        <Text style={{ color: '#6B7280', fontSize: 14, marginBottom: 8 }} numberOfLines={2}>
           {reward.reward}
         </Text>
-        
-        <Text style={{ 
-          fontSize: 12, 
-          color: getExpirationColor(),
-          fontWeight: '500'
-        }}>
-          {formatExpirationText(reward.expirationDate)}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <Calendar size={16} color="#9CA3AF" />
+          <Text style={{ fontSize: 13, color: isExpiringSoon ? '#DC2626' : '#6B7280', fontWeight: isExpiringSoon ? '600' : '400', marginLeft: 4 }}>
+            {formatExpirationText(reward.expirationDate)}
+          </Text>
+        </View>
       </View>
-      
-      {/* Right side indicators */}
-      <View style={{ 
-        flexDirection: 'row', 
-        alignItems: 'center' 
-      }}>
-        {isExpiringSoon && !reward.claimed && (
-          <View style={{
-            width: 8,
-            height: 8,
-            backgroundColor: '#EA580C',
-            borderRadius: 4,
-            marginRight: 8
-          }} />
-        )}
-        <Ionicons 
-          name="chevron-forward" 
-          size={20} 
-          color="#9CA3AF" 
-        />
-      </View>
+
+      {/* Chevron */}
+      <ChevronRight size={20} color="#9CA3AF" style={{ marginLeft: 12 }} />
     </TouchableOpacity>
   );
 }
