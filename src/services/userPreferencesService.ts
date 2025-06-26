@@ -50,4 +50,59 @@ export const userPreferencesService = {
       return { error: error.message };
     }
   },
+
+  async saveSurveyPreferences(userId: string, preferences: Record<string, boolean | string>): Promise<{ error: string | null }> {
+    // Map category keys to correct DB columns
+    const dbPrefs: Record<string, boolean | string> = {
+      food_and_dining: preferences.food || false,
+      shopping: preferences.shopping || false,
+      coffee_and_drinks: preferences.coffee || false,
+      entertainment: preferences.entertainment || false,
+      fitness_and_health: preferences.fitness || false,
+      beauty_and_wellness: preferences.beauty || false,
+      distance_preference: preferences.distance_preference || '',
+    };
+    try {
+      const { error } = await supabase
+        .from('user_preferences')
+        .upsert({ user_id: userId, ...dbPrefs }, { onConflict: 'user_id' });
+      if (error) {
+        console.error('❌ Error saving survey preferences:', error);
+        return { error: error.message };
+      }
+      return { error: null };
+    } catch (error: any) {
+      console.error('❌ Exception saving survey preferences:', error);
+      return { error: error.message };
+    }
+  },
+
+  async saveSurveyAnswers(userId: string, answers: {
+    reward_style: string;
+    reward_types: string[];
+    social_sharing: string;
+    category_ratings: Record<string, number>;
+    discovery_source: string;
+  }): Promise<{ error: string | null }> {
+    try {
+      const { error } = await supabase
+        .from('user_survey_answers')
+        .upsert({
+          user_id: userId,
+          reward_style: answers.reward_style,
+          reward_types: answers.reward_types,
+          social_sharing: answers.social_sharing,
+          category_ratings: answers.category_ratings,
+          discovery_source: answers.discovery_source,
+        }, { onConflict: 'user_id' });
+      if (error) {
+        console.error('❌ Error saving survey answers:', error);
+        return { error: error.message };
+      }
+      return { error: null };
+    } catch (error: any) {
+      console.error('❌ Exception saving survey answers:', error);
+      return { error: error.message };
+    }
+  },
 }; 

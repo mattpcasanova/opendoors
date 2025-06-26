@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
+    Image,
     KeyboardAvoidingView,
     Platform,
     SafeAreaView,
@@ -157,14 +158,27 @@ export default function SurveyScreen({ onComplete }: SurveyScreenProps) {
     setLoading(true);
 
     try {
+      // Save preferences (categories as booleans, distance_preference)
+      const categoryPrefs: Record<string, boolean | string> = {};
+      categories.forEach(cat => {
+        categoryPrefs[cat.key] = selectedCategories.includes(cat.key);
+      });
+      categoryPrefs.distance_preference = distance;
+      await userPreferencesService.saveSurveyPreferences(user.id, categoryPrefs);
+      // Save user_survey_answers
+      const surveyAnswers = {
+        reward_style: rewardStyle,
+        reward_types: rewardTypes,
+        social_sharing: socialSharing,
+        category_ratings: ratings,
+        discovery_source: discovery,
+      };
+      await userPreferencesService.saveSurveyAnswers(user.id, surveyAnswers);
       const { error } = await userPreferencesService.markSurveyComplete(user.id);
-
       if (error) {
         Alert.alert('Error', `Failed to save survey answers: ${error}`);
         return;
       }
-
-      // Call the onComplete callback to update the navigation state
       if (onComplete) {
         onComplete();
       }
@@ -189,8 +203,8 @@ export default function SurveyScreen({ onComplete }: SurveyScreenProps) {
 
   const renderSlide1 = () => (
     <View className="space-y-6">
-      <View className="text-center mb-8">
-        <Text className="text-2xl font-bold text-gray-900 mb-3">What type of rewards are you most interested in winning?</Text>
+      <View className="text-center mb-4">
+        <Text className="text-2xl font-bold text-gray-900 mb-2">What type of rewards are you most interested in winning?</Text>
         <Text className="text-gray-600">Select all that apply</Text>
       </View>
       
@@ -219,11 +233,10 @@ export default function SurveyScreen({ onComplete }: SurveyScreenProps) {
 
   const renderSlide2 = () => (
     <View className="space-y-6">
-      <View className="text-center mb-8">
-        <Text className="text-2xl font-bold text-gray-900 mb-3">What distance range would you like to see for available rewards?</Text>
-        <Text className="text-gray-600">Choose your preferred range</Text>
+      <View className="text-center mb-4">
+        <Text className="text-2xl font-bold text-gray-900 mb-2">What is the maximum distance you'd be willing to travel for a reward?</Text>
+        <Text className="text-gray-600">We'll always show you the closest rewards first.</Text>
       </View>
-      
       <View className="space-y-4">
         {distanceOptions.map(option => (
           <TouchableOpacity
@@ -247,8 +260,8 @@ export default function SurveyScreen({ onComplete }: SurveyScreenProps) {
 
   const renderSlide3 = () => (
     <View className="space-y-6">
-      <View className="text-center mb-8">
-        <Text className="text-2xl font-bold text-gray-900 mb-3">What kind of rewards do you prefer?</Text>
+      <View className="text-center mb-4">
+        <Text className="text-2xl font-bold text-gray-900 mb-2">What kind of rewards do you prefer?</Text>
         <Text className="text-gray-600">Choose your style</Text>
       </View>
       
@@ -302,8 +315,8 @@ export default function SurveyScreen({ onComplete }: SurveyScreenProps) {
 
     return (
       <View className="space-y-6">
-        <View className="text-center mb-8">
-          <Text className="text-2xl font-bold text-gray-900 mb-3">Which reward types excite you most?</Text>
+        <View className="text-center mb-4">
+          <Text className="text-2xl font-bold text-gray-900 mb-2">Which reward types excite you most?</Text>
           <Text className="text-gray-600">Click to select, use arrows to reorder by preference</Text>
         </View>
         
@@ -391,8 +404,8 @@ export default function SurveyScreen({ onComplete }: SurveyScreenProps) {
 
   const renderSlide5 = () => (
     <View className="space-y-6">
-      <View className="text-center mb-8">
-        <Text className="text-2xl font-bold text-gray-900 mb-3">Would you be interested in sharing your wins with friends?</Text>
+      <View className="text-center mb-4">
+        <Text className="text-2xl font-bold text-gray-900 mb-2">Would you be interested in sharing your wins with friends?</Text>
         <Text className="text-gray-600">Help us understand your social preferences</Text>
       </View>
       
@@ -418,47 +431,48 @@ export default function SurveyScreen({ onComplete }: SurveyScreenProps) {
   );
 
   const renderSlide6 = () => (
-    <View className="space-y-6">
-      <View className="text-center mb-8">
-        <Text className="text-2xl font-bold text-gray-900 mb-3">Rate your interest in these reward categories</Text>
-        <Text className="text-gray-600">1 = Not interested, 7 = Very interested</Text>
+    <View style={{ paddingHorizontal: 12, marginBottom: 0 }}>
+      <View style={{ alignItems: 'center', marginBottom: 12 }}>
+        <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#111827', marginBottom: 4, paddingHorizontal: 8, textAlign: 'center' }}>
+          Rate your interest in these reward categories
+        </Text>
+        <Text style={{ color: '#6B7280', fontSize: 14, marginBottom: 8 }}>1 = Not interested, 7 = Very interested</Text>
       </View>
-      
-      <View className="space-y-6">
+      <ScrollView style={{ maxHeight: 340 }} contentContainerStyle={{ paddingBottom: 12 }}>
         {ratingCategories.map(category => (
-          <View key={category} className="bg-white p-6 rounded-2xl border border-gray-200">
-            <Text className="font-semibold text-gray-900 mb-4">{category}</Text>
-            <View className="flex-row justify-between items-center">
-              <Text className="text-sm text-gray-500">Not interested</Text>
-              <View className="flex-row space-x-2">
-                {[1, 2, 3, 4, 5, 6, 7].map(rating => (
-                  <TouchableOpacity
-                    key={rating}
-                    onPress={() => handleRatingChange(category, rating)}
-                    className={`w-10 h-10 rounded-full border-2 font-semibold items-center justify-center ${
-                      ratings[category] === rating
-                        ? 'bg-teal-600 border-teal-600'
-                        : 'bg-white border-gray-300'
-                    }`}
-                  >
-                    <Text className={`font-semibold ${
-                      ratings[category] === rating ? 'text-white' : 'text-gray-700'
-                    }`}>{rating}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              <Text className="text-sm text-gray-500">Very interested</Text>
+          <View key={category} style={{ backgroundColor: 'white', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', marginBottom: 16 }}>
+            <Text style={{ fontWeight: '600', color: '#111827', marginBottom: 8, paddingHorizontal: 4 }}>{category}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              {[1, 2, 3, 4, 5, 6, 7].map(rating => (
+                <TouchableOpacity
+                  key={rating}
+                  onPress={() => handleRatingChange(category, rating)}
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    borderWidth: 2,
+                    borderColor: ratings[category] === rating ? '#14B8A6' : '#E5E7EB',
+                    backgroundColor: ratings[category] === rating ? '#14B8A6' : 'white',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginHorizontal: 2,
+                  }}
+                >
+                  <Text style={{ fontWeight: 'bold', color: ratings[category] === rating ? 'white' : '#111827' }}>{rating}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
         ))}
-      </View>
+      </ScrollView>
     </View>
   );
 
   const renderSlide7 = () => (
     <View className="space-y-6">
-      <View className="text-center mb-8">
-        <Text className="text-2xl font-bold text-gray-900 mb-3">How did you hear about Open Doors?</Text>
+      <View className="text-center mb-4">
+        <Text className="text-2xl font-bold text-gray-900 mb-2">How did you hear about Open Doors?</Text>
         <Text className="text-gray-600">Help us understand how you discovered us</Text>
       </View>
       
@@ -523,8 +537,8 @@ export default function SurveyScreen({ onComplete }: SurveyScreenProps) {
                   <Text className="text-2xl font-bold text-white">Welcome to Open Doors!</Text>
                   <Text className="text-teal-100">Let's personalize your experience</Text>
                 </View>
-                <View className="w-16 h-16 bg-teal-100 rounded-full items-center justify-center">
-                  <Text className="text-2xl">🚪</Text>
+                <View className="w-16 h-16 bg-teal-100 rounded-full items-center justify-center overflow-hidden">
+                  <Image source={require('../../../assets/OpenDoorsLogo.png')} style={{ width: 48, height: 48, resizeMode: 'contain' }} />
                 </View>
               </View>
               
