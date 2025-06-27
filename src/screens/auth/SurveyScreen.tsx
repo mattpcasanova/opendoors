@@ -1,31 +1,31 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
+import { ArrowDown, ArrowUp, Check, ChevronLeft, ChevronRight, Star } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View
+  Alert,
+  Animated,
+  Dimensions,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
 import { userPreferencesService } from '../../services/userPreferencesService';
 import { RootStackParamList } from '../../types/navigation';
 
+const { width, height } = Dimensions.get('window');
+
 type SurveyScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Survey'>;
 
-interface SurveyScreenProps {
-  onComplete?: () => void;
-}
-
-export default function SurveyScreen({ onComplete }: SurveyScreenProps) {
+export default function SurveyScreen({ onComplete }: { onComplete: () => void }) {
   const navigation = useNavigation<SurveyScreenNavigationProp>();
   const { user } = useAuth();
   const [currentSlide, setCurrentSlide] = useState(1);
@@ -39,41 +39,57 @@ export default function SurveyScreen({ onComplete }: SurveyScreenProps) {
   const [loading, setLoading] = useState(false);
 
   const totalSlides = 7;
+  const progressPercentage = (currentSlide / totalSlides) * 100;
 
   const categories = [
-    { key: 'food', label: 'Food & Dining', icon: '🍕' },
-    { key: 'shopping', label: 'Shopping', icon: '🛍️' },
-    { key: 'coffee', label: 'Coffee & Drinks', icon: '☕' },
-    { key: 'entertainment', label: 'Entertainment', icon: '🎬' },
-    { key: 'fitness', label: 'Fitness & Health', icon: '💪' },
-    { key: 'beauty', label: 'Beauty & Wellness', icon: '💄' }
+    { key: 'food', label: 'Food & Dining', icon: '🍕', color: 'from-orange-400 to-red-500' },
+    { key: 'shopping', label: 'Shopping', icon: '🛍️', color: 'from-pink-400 to-purple-500' },
+    { key: 'coffee', label: 'Coffee & Drinks', icon: '☕', color: 'from-amber-400 to-orange-500' },
+    { key: 'entertainment', label: 'Entertainment', icon: '🎬', color: 'from-blue-400 to-indigo-500' },
+    { key: 'fitness', label: 'Fitness & Health', icon: '💪', color: 'from-green-400 to-emerald-500' },
+    { key: 'beauty', label: 'Beauty & Wellness', icon: '💄', color: 'from-rose-400 to-pink-500' },
   ];
 
   const distanceOptions = [
-    'Within 5 miles',
-    'Between 5-10 miles', 
-    'Between 10-25 miles',
-    'Any distance'
+    { value: 'Within 5 miles', icon: '🚶', description: 'Walking distance' },
+    { value: 'Between 5-10 miles', icon: '🚗', description: 'Short drive' },
+    { value: 'Between 10-25 miles', icon: '🛣️', description: 'Longer trip' },
+    { value: 'Any distance', icon: '✈️', description: 'Worth the journey' },
   ];
 
   const rewardStyleOptions = [
-    'Safer bets with smaller rewards',
-    'Something in the middle',
-    'High-risk/high-reward'
+    {
+      value: 'Safer bets with smaller rewards',
+      icon: '🛡️',
+      description: 'Consistent wins, lower risk',
+      color: 'from-green-400 to-emerald-500',
+    },
+    {
+      value: 'Something in the middle',
+      icon: '⚖️',
+      description: 'Balanced approach',
+      color: 'from-blue-400 to-indigo-500',
+    },
+    {
+      value: 'High-risk/high-reward',
+      icon: '🎯',
+      description: 'Big wins, higher stakes',
+      color: 'from-purple-400 to-pink-500',
+    },
   ];
 
   const rewardTypeOptions = [
-    'Free items',
-    'Percentage discounts',
-    'BOGO offers',
-    'Exclusive experiences',
-    'Early access deals'
+    { value: 'Free items', icon: '🎁' },
+    { value: 'Percentage discounts', icon: '💰' },
+    { value: 'BOGO offers', icon: '🔄' },
+    { value: 'Exclusive experiences', icon: '⭐' },
+    { value: 'Early access deals', icon: '⚡' },
   ];
 
   const socialOptions = [
-    'Yes, I\'d love to share',
-    'Maybe occasionally',
-    'Prefer to keep private'
+    { value: "Yes, I'd love to share", icon: '📢', description: 'Share the excitement!' },
+    { value: 'Maybe occasionally', icon: '🤔', description: 'Sometimes' },
+    { value: 'Prefer to keep private', icon: '🔒', description: 'Just for me' },
   ];
 
   const ratingCategories = [
@@ -82,28 +98,39 @@ export default function SurveyScreen({ onComplete }: SurveyScreenProps) {
     'Retail shopping deals',
     'Tech & electronics',
     'Local services (spa, salon, etc.)',
-    'Experiences & activities'
+    'Experiences & activities',
   ];
 
   const discoveryOptions = [
-    'Social media',
-    'Friend or family',
-    'App store browsing',
-    'Online search',
-    'Advertisement',
-    'Other'
+    { value: 'Social media', icon: '📱' },
+    { value: 'Friend or family', icon: '👥' },
+    { value: 'App store browsing', icon: '📲' },
+    { value: 'Online search', icon: '🔍' },
+    { value: 'Advertisement', icon: '📺' },
+    { value: 'Other', icon: '❓' },
   ];
 
   const handleCategoryToggle = (category: string) => {
-    setSelectedCategories(prev => 
-      prev.includes(category) 
-        ? prev.filter(c => c !== category)
-        : [...prev, category]
+    setSelectedCategories((prev) =>
+      prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category],
     );
   };
 
-  const handleRatingChange = (category: string, rating: number) => {
-    setRatings(prev => ({ ...prev, [category]: rating }));
+  const handleRewardTypeToggle = (type: string) => {
+    setRewardTypes((prev) => (prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]));
+  };
+
+  const moveRewardType = (type: string, direction: 'up' | 'down') => {
+    const currentIndex = rewardTypes.indexOf(type);
+    if (direction === 'up' && currentIndex > 0) {
+      const newOrder = [...rewardTypes];
+      [newOrder[currentIndex], newOrder[currentIndex - 1]] = [newOrder[currentIndex - 1], newOrder[currentIndex]];
+      setRewardTypes(newOrder);
+    } else if (direction === 'down' && currentIndex < rewardTypes.length - 1) {
+      const newOrder = [...rewardTypes];
+      [newOrder[currentIndex], newOrder[currentIndex + 1]] = [newOrder[currentIndex + 1], newOrder[currentIndex]];
+      setRewardTypes(newOrder);
+    }
   };
 
   const nextSlide = () => {
@@ -165,6 +192,7 @@ export default function SurveyScreen({ onComplete }: SurveyScreenProps) {
       });
       categoryPrefs.distance_preference = distance;
       await userPreferencesService.saveSurveyPreferences(user.id, categoryPrefs);
+
       // Save user_survey_answers
       const surveyAnswers = {
         reward_style: rewardStyle,
@@ -174,11 +202,13 @@ export default function SurveyScreen({ onComplete }: SurveyScreenProps) {
         discovery_source: discovery,
       };
       await userPreferencesService.saveSurveyAnswers(user.id, surveyAnswers);
+      
       const { error } = await userPreferencesService.markSurveyComplete(user.id);
       if (error) {
         Alert.alert('Error', `Failed to save survey answers: ${error}`);
         return;
       }
+      
       if (onComplete) {
         onComplete();
       }
@@ -190,40 +220,49 @@ export default function SurveyScreen({ onComplete }: SurveyScreenProps) {
   };
 
   const renderProgressBar = () => (
-    <View className="w-full bg-gray-200 h-2 rounded-full mb-8">
-      <View 
-        className="h-full rounded-full"
-        style={{ 
-          width: `${(currentSlide / totalSlides) * 100}%`,
-          backgroundColor: '#FF9800'
-        }}
-      />
+    <View style={styles.progressBarContainer}>
+      <View style={styles.progressBar}>
+        <Animated.View 
+          style={[
+            styles.progressFill,
+            { width: `${progressPercentage}%` }
+          ]} 
+        />
+      </View>
     </View>
   );
 
   const renderSlide1 = () => (
-    <View className="space-y-6">
-      <View className="text-center mb-4">
-        <Text className="text-2xl font-bold text-gray-900 mb-2">What type of rewards are you most interested in winning?</Text>
-        <Text className="text-gray-600">Select all that apply</Text>
+    <View style={styles.slideContainer}>
+      <View style={styles.slideHeader}>
+        <Text style={styles.slideTitle}>What rewards interest you most?</Text>
+        <Text style={styles.slideSubtitle}>Select all that apply</Text>
       </View>
-      
-      <View className="grid grid-cols-2 gap-4">
-        {categories.map(category => (
+
+      <View style={styles.categoriesGrid}>
+        {categories.map((category) => (
           <TouchableOpacity
             key={category.key}
             onPress={() => handleCategoryToggle(category.key)}
-            className={`p-6 rounded-2xl border-2 transition-all duration-200 ${
-              selectedCategories.includes(category.key)
-                ? 'bg-teal-600 border-teal-600'
-                : 'bg-white border-gray-200'
-            }`}
+            style={[
+              styles.categoryCard,
+              selectedCategories.includes(category.key) && styles.categoryCardSelected,
+            ]}
+            activeOpacity={0.8}
           >
-            <View className="text-center">
-              <Text className="text-3xl mb-3">{category.icon}</Text>
-              <Text className={`font-semibold text-sm ${
-                selectedCategories.includes(category.key) ? 'text-white' : 'text-gray-900'
-              }`}>{category.label}</Text>
+            <View style={styles.categoryContent}>
+              <Text style={styles.categoryIcon}>{category.icon}</Text>
+              <Text style={[
+                styles.categoryLabel,
+                selectedCategories.includes(category.key) && styles.categoryLabelSelected
+              ]}>
+                {category.label}
+              </Text>
+              {selectedCategories.includes(category.key) && (
+                <View style={styles.checkmarkContainer}>
+                  <Check size={16} color="white" />
+                </View>
+              )}
             </View>
           </TouchableOpacity>
         ))}
@@ -232,26 +271,45 @@ export default function SurveyScreen({ onComplete }: SurveyScreenProps) {
   );
 
   const renderSlide2 = () => (
-    <View className="space-y-6">
-      <View className="text-center mb-4">
-        <Text className="text-2xl font-bold text-gray-900 mb-2">What is the maximum distance you'd be willing to travel for a reward?</Text>
-        <Text className="text-gray-600">We'll always show you the closest rewards first.</Text>
+    <View style={styles.slideContainer}>
+      <View style={styles.slideHeader}>
+        <Text style={styles.slideTitle}>How far will you travel?</Text>
+        <Text style={styles.slideSubtitle}>We'll show you the closest rewards first</Text>
       </View>
-      <View className="space-y-4">
-        {distanceOptions.map(option => (
+
+      <View style={styles.optionsList}>
+        {distanceOptions.map((option) => (
           <TouchableOpacity
-            key={option}
-            onPress={() => setDistance(option)}
-            className={`p-6 rounded-2xl border-2 transition-all duration-200 flex-row items-center ${
-              distance === option
-                ? 'bg-teal-600 border-teal-600'
-                : 'bg-white border-gray-200'
-            }`}
+            key={option.value}
+            onPress={() => setDistance(option.value)}
+            style={[
+              styles.optionCard,
+              distance === option.value && styles.optionCardSelected,
+            ]}
+            activeOpacity={0.8}
           >
-            <Ionicons name="location" size={24} color={distance === option ? 'white' : '#6B7280'} />
-            <Text className={`font-semibold text-lg ml-4 ${
-              distance === option ? 'text-white' : 'text-gray-900'
-            }`}>{option}</Text>
+            <View style={styles.optionContent}>
+              <Text style={styles.optionIcon}>{option.icon}</Text>
+              <View style={styles.optionTextContainer}>
+                <Text style={[
+                  styles.optionTitle,
+                  distance === option.value && styles.optionTitleSelected
+                ]}>
+                  {option.value}
+                </Text>
+                <Text style={[
+                  styles.optionDescription,
+                  distance === option.value && styles.optionDescriptionSelected
+                ]}>
+                  {option.description}
+                </Text>
+              </View>
+              {distance === option.value && (
+                <View style={styles.checkmarkContainer}>
+                  <Check size={20} color="white" />
+                </View>
+              )}
+            </View>
           </TouchableOpacity>
         ))}
       </View>
@@ -259,171 +317,178 @@ export default function SurveyScreen({ onComplete }: SurveyScreenProps) {
   );
 
   const renderSlide3 = () => (
-    <View className="space-y-6">
-      <View className="text-center mb-4">
-        <Text className="text-2xl font-bold text-gray-900 mb-2">What kind of rewards do you prefer?</Text>
-        <Text className="text-gray-600">Choose your style</Text>
+    <View style={styles.slideContainer}>
+      <View style={styles.slideHeader}>
+        <Text style={styles.slideTitle}>What's your style?</Text>
+        <Text style={styles.slideSubtitle}>Choose your reward preference</Text>
       </View>
-      
-      <View className="space-y-4">
-        {rewardStyleOptions.map(option => (
+
+      <View style={styles.optionsList}>
+        {rewardStyleOptions.map((option) => (
           <TouchableOpacity
-            key={option}
-            onPress={() => setRewardStyle(option)}
-            className={`p-6 rounded-2xl border-2 transition-all duration-200 flex-row items-center ${
-              rewardStyle === option
-                ? 'bg-teal-600 border-teal-600'
-                : 'bg-white border-gray-200'
-            }`}
+            key={option.value}
+            onPress={() => setRewardStyle(option.value)}
+            style={[
+              styles.optionCard,
+              rewardStyle === option.value && styles.optionCardSelected,
+            ]}
+            activeOpacity={0.8}
           >
-            <Ionicons name="trending-up" size={24} color={rewardStyle === option ? 'white' : '#6B7280'} />
-            <Text className={`font-semibold text-lg ml-4 ${
-              rewardStyle === option ? 'text-white' : 'text-gray-900'
-            }`}>{option}</Text>
+            <View style={styles.optionContent}>
+              <Text style={styles.optionIcon}>{option.icon}</Text>
+              <View style={styles.optionTextContainer}>
+                <Text style={[
+                  styles.optionTitle,
+                  rewardStyle === option.value && styles.optionTitleSelected
+                ]}>
+                  {option.value}
+                </Text>
+                <Text style={[
+                  styles.optionDescription,
+                  rewardStyle === option.value && styles.optionDescriptionSelected
+                ]}>
+                  {option.description}
+                </Text>
+              </View>
+              {rewardStyle === option.value && (
+                <View style={styles.checkmarkContainer}>
+                  <Check size={20} color="white" />
+                </View>
+              )}
+            </View>
           </TouchableOpacity>
         ))}
       </View>
     </View>
   );
 
-  const renderSlide4 = () => {
-    const handleClick = (option: string) => {
-      if (!rewardTypes.includes(option)) {
-        setRewardTypes([...rewardTypes, option]);
-      } else {
-        setRewardTypes(rewardTypes.filter(item => item !== option));
-      }
-    };
+  const renderSlide4 = () => (
+    <View style={styles.slideContainer}>
+      <View style={styles.slideHeader}>
+        <Text style={styles.slideTitle}>Rank your favorites</Text>
+        <Text style={styles.slideSubtitle}>Select and reorder by preference</Text>
+      </View>
 
-    const moveUp = (item: string) => {
-      const currentIndex = rewardTypes.indexOf(item);
-      if (currentIndex > 0) {
-        const newOrder = [...rewardTypes];
-        [newOrder[currentIndex], newOrder[currentIndex - 1]] = [newOrder[currentIndex - 1], newOrder[currentIndex]];
-        setRewardTypes(newOrder);
-      }
-    };
+      <View style={styles.optionsList}>
+        {rewardTypeOptions.map((option) => {
+          const isSelected = rewardTypes.includes(option.value);
+          const rankPosition = isSelected ? rewardTypes.indexOf(option.value) + 1 : null;
 
-    const moveDown = (item: string) => {
-      const currentIndex = rewardTypes.indexOf(item);
-      if (currentIndex < rewardTypes.length - 1) {
-        const newOrder = [...rewardTypes];
-        [newOrder[currentIndex], newOrder[currentIndex + 1]] = [newOrder[currentIndex + 1], newOrder[currentIndex]];
-        setRewardTypes(newOrder);
-      }
-    };
+          return (
+            <View
+              key={option.value}
+              style={[
+                styles.optionCard,
+                isSelected && styles.optionCardSelected
+              ]}
+            >
+              <View style={styles.optionContent}>
+                <TouchableOpacity 
+                  onPress={() => handleRewardTypeToggle(option.value)} 
+                  style={[styles.optionTextContainer, { flexDirection: 'row', alignItems: 'center' }]}
+                >
+                  <Text style={[styles.optionIcon, { marginRight: 12 }]}>{option.icon}</Text>
+                  <Text style={[
+                    styles.optionTitle,
+                    isSelected && styles.optionTitleSelected
+                  ]}>
+                    {option.value}
+                  </Text>
+                </TouchableOpacity>
 
-    return (
-      <View className="space-y-6">
-        <View className="text-center mb-4">
-          <Text className="text-2xl font-bold text-gray-900 mb-2">Which reward types excite you most?</Text>
-          <Text className="text-gray-600">Click to select, use arrows to reorder by preference</Text>
-        </View>
-        
-        <View className="space-y-4">
-          {rewardTypeOptions.map((option) => {
-            const isSelected = rewardTypes.includes(option);
-            const rankPosition = isSelected ? rewardTypes.indexOf(option) + 1 : null;
-            
-            return (
-              <TouchableOpacity
-                key={option}
-                onPress={() => handleClick(option)}
-                className={`p-6 rounded-2xl border-2 transition-all duration-200 flex-row items-center justify-between ${
-                  isSelected
-                    ? 'bg-teal-600 border-teal-600'
-                    : 'bg-white border-gray-200'
-                }`}
-              >
-                <View className="flex-row items-center">
-                  <Ionicons name="gift" size={24} color={isSelected ? 'white' : '#6B7280'} />
-                  <Text className={`font-semibold text-lg ml-4 ${
-                    isSelected ? 'text-white' : 'text-gray-900'
-                  }`}>{option}</Text>
-                </View>
                 {isSelected && (
-                  <View className="flex-row items-center space-x-2">
-                    <View className="flex-col space-y-1">
+                  <View style={styles.rankingControls}>
+                    <View style={styles.arrowButtons}>
                       <TouchableOpacity
-                        onPress={(e) => {
-                          e.stopPropagation();
-                          moveUp(option);
-                        }}
+                        onPress={() => moveRewardType(option.value, 'up')}
                         disabled={rankPosition === 1}
-                        className={`w-6 h-6 rounded items-center justify-center ${
-                          rankPosition === 1 
-                            ? 'opacity-50' 
-                            : ''
-                        }`}
+                        style={[
+                          styles.arrowButton,
+                          rankPosition === 1 && styles.arrowButtonDisabled
+                        ]}
                       >
-                        <Ionicons name="chevron-up" size={16} color="white" />
+                        <ArrowUp size={16} color={rankPosition === 1 ? '#9CA3AF' : '#6B7280'} />
                       </TouchableOpacity>
                       <TouchableOpacity
-                        onPress={(e) => {
-                          e.stopPropagation();
-                          moveDown(option);
-                        }}
+                        onPress={() => moveRewardType(option.value, 'down')}
                         disabled={rankPosition === rewardTypes.length}
-                        className={`w-6 h-6 rounded items-center justify-center ${
-                          rankPosition === rewardTypes.length 
-                            ? 'opacity-50' 
-                            : ''
-                        }`}
+                        style={[
+                          styles.arrowButton,
+                          rankPosition === rewardTypes.length && styles.arrowButtonDisabled
+                        ]}
                       >
-                        <Ionicons name="chevron-down" size={16} color="white" />
+                        <ArrowDown size={16} color={rankPosition === rewardTypes.length ? '#9CA3AF' : '#6B7280'} />
                       </TouchableOpacity>
                     </View>
-                    <View className="bg-white rounded-full w-8 h-8 items-center justify-center ml-2">
-                      <Text className="text-teal-600 font-bold">{rankPosition}</Text>
+                    <View style={styles.rankBadge}>
+                      <Text style={styles.rankNumber}>{rankPosition}</Text>
                     </View>
                   </View>
                 )}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-        
-        {rewardTypes.length > 0 && (
-          <View className="bg-white p-4 rounded-xl border border-gray-200 mt-6">
-            <Text className="font-semibold text-gray-900 mb-2">Your ranking:</Text>
-            <View className="space-y-2">
-              {rewardTypes.map((item, index) => (
-                <View key={item} className="flex-row items-center">
-                  <View className="w-6 h-6 bg-teal-100 rounded-full items-center justify-center mr-3">
-                    <Text className="text-teal-600 text-xs font-bold">{index + 1}</Text>
-                  </View>
-                  <Text className="text-sm text-gray-700">{item}</Text>
-                </View>
-              ))}
+              </View>
             </View>
-          </View>
-        )}
+          );
+        })}
       </View>
-    );
-  };
+
+      {rewardTypes.length > 0 && (
+        <View style={styles.rankingSummary}>
+          <Text style={styles.rankingTitle}>Your ranking:</Text>
+          <View style={styles.rankingList}>
+            {rewardTypes.map((item, index) => (
+              <View key={item} style={styles.rankingItem}>
+                <View style={styles.rankBadge}>
+                  <Text style={styles.rankNumber}>{index + 1}</Text>
+                </View>
+                <Text style={styles.rankingText}>{item}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+    </View>
+  );
 
   const renderSlide5 = () => (
-    <View className="space-y-6">
-      <View className="text-center mb-4">
-        <Text className="text-2xl font-bold text-gray-900 mb-2">Would you be interested in sharing your wins with friends?</Text>
-        <Text className="text-gray-600">Help us understand your social preferences</Text>
+    <View style={styles.slideContainer}>
+      <View style={styles.slideHeader}>
+        <Text style={styles.slideTitle}>Share your wins?</Text>
+        <Text style={styles.slideSubtitle}>How social do you want to be?</Text>
       </View>
-      
-      <View className="space-y-4">
-        {socialOptions.map(option => (
+
+      <View style={styles.optionsList}>
+        {socialOptions.map((option) => (
           <TouchableOpacity
-            key={option}
-            onPress={() => setSocialSharing(option)}
-            className={`p-6 rounded-2xl border-2 transition-all duration-200 flex-row items-center ${
-              socialSharing === option
-                ? 'bg-teal-600 border-teal-600'
-                : 'bg-white border-gray-200'
-            }`}
+            key={option.value}
+            onPress={() => setSocialSharing(option.value)}
+            style={[
+              styles.optionCard,
+              socialSharing === option.value && styles.optionCardSelected
+            ]}
+            activeOpacity={0.8}
           >
-            <Ionicons name="people" size={24} color={socialSharing === option ? 'white' : '#6B7280'} />
-            <Text className={`font-semibold text-lg ml-4 ${
-              socialSharing === option ? 'text-white' : 'text-gray-900'
-            }`}>{option}</Text>
+            <View style={[styles.optionContent, { flexDirection: 'row', alignItems: 'center' }]}>
+              <Text style={[styles.optionIcon, { marginRight: 12 }]}>{option.icon}</Text>
+              <View style={styles.optionTextContainer}>
+                <Text style={[
+                  styles.optionTitle,
+                  socialSharing === option.value && styles.optionTitleSelected
+                ]}>
+                  {option.value}
+                </Text>
+                <Text style={[
+                  styles.optionDescription,
+                  socialSharing === option.value && styles.optionDescriptionSelected
+                ]}>
+                  {option.description}
+                </Text>
+              </View>
+              {socialSharing === option.value && (
+                <View style={styles.checkmarkContainer}>
+                  <Check size={20} color="white" />
+                </View>
+              )}
+            </View>
           </TouchableOpacity>
         ))}
       </View>
@@ -431,70 +496,75 @@ export default function SurveyScreen({ onComplete }: SurveyScreenProps) {
   );
 
   const renderSlide6 = () => (
-    <View style={{ paddingHorizontal: 12, marginBottom: 0 }}>
-      <View style={{ alignItems: 'center', marginBottom: 12 }}>
-        <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#111827', marginBottom: 4, paddingHorizontal: 8, textAlign: 'center' }}>
-          Rate your interest in these reward categories
-        </Text>
-        <Text style={{ color: '#6B7280', fontSize: 14, marginBottom: 8 }}>1 = Not interested, 7 = Very interested</Text>
+    <View style={styles.slideContainer}>
+      <View style={styles.slideHeader}>
+        <Text style={styles.slideTitle}>Rate your interests</Text>
+        <Text style={styles.slideSubtitle}>1 = Not interested, 7 = Very interested</Text>
       </View>
-      <ScrollView style={{ maxHeight: 340 }} contentContainerStyle={{ paddingBottom: 12 }}>
-        {ratingCategories.map(category => (
-          <View key={category} style={{ backgroundColor: 'white', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', marginBottom: 16 }}>
-            <Text style={{ fontWeight: '600', color: '#111827', marginBottom: 8, paddingHorizontal: 4 }}>{category}</Text>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              {[1, 2, 3, 4, 5, 6, 7].map(rating => (
+
+      <View style={styles.ratingsList}>
+        {ratingCategories.map((category) => (
+          <View key={category} style={styles.ratingCard}>
+            <Text style={styles.ratingTitle}>{category}</Text>
+            <View style={styles.ratingButtonsContainer}>
+              {[1, 2, 3, 4, 5, 6, 7].map((rating) => (
                 <TouchableOpacity
                   key={rating}
-                  onPress={() => handleRatingChange(category, rating)}
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 18,
-                    borderWidth: 2,
-                    borderColor: ratings[category] === rating ? '#14B8A6' : '#E5E7EB',
-                    backgroundColor: ratings[category] === rating ? '#14B8A6' : 'white',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginHorizontal: 2,
-                  }}
+                  onPress={() => setRatings((prev) => ({ ...prev, [category]: rating }))}
+                  style={[
+                    styles.ratingButton,
+                    ratings[category] === rating && styles.ratingButtonSelected,
+                  ]}
                 >
-                  <Text style={{ fontWeight: 'bold', color: ratings[category] === rating ? 'white' : '#111827' }}>{rating}</Text>
+                  <Text 
+                    style={[
+                      styles.ratingButtonText,
+                      ratings[category] === rating && styles.ratingButtonTextSelected,
+                    ]}
+                  >
+                    {rating}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
           </View>
         ))}
-      </ScrollView>
+      </View>
     </View>
   );
 
   const renderSlide7 = () => (
-    <View className="space-y-6">
-      <View className="text-center mb-4">
-        <Text className="text-2xl font-bold text-gray-900 mb-2">How did you hear about Open Doors?</Text>
-        <Text className="text-gray-600">Help us understand how you discovered us</Text>
+    <View style={styles.slideContainer}>
+      <View style={styles.slideHeader}>
+        <Text style={styles.slideTitle}>How did you find us?</Text>
+        <Text style={styles.slideSubtitle}>Help us understand our reach</Text>
       </View>
-      
-      <View className="space-y-4">
-        {discoveryOptions.map(option => (
+
+      <View style={styles.categoriesGrid}>
+        {discoveryOptions.map((option) => (
           <TouchableOpacity
-            key={option}
-            onPress={() => setDiscovery(option)}
-            className={`p-6 rounded-2xl border-2 transition-all duration-200 flex-row items-center ${
-              discovery === option
-                ? 'bg-teal-600 border-teal-600'
-                : 'bg-white border-gray-200'
-            }`}
+            key={option.value}
+            onPress={() => setDiscovery(option.value)}
+            style={[
+              styles.categoryCard,
+              discovery === option.value && styles.categoryCardSelected
+            ]}
+            activeOpacity={0.8}
           >
-            <Ionicons 
-              name="star" 
-              size={24} 
-              color={discovery === option ? '#FFD700' : '#9CA3AF'} 
-            />
-            <Text className={`font-semibold text-lg ml-4 ${
-              discovery === option ? 'text-white' : 'text-gray-900'
-            }`}>{option}</Text>
+            <View style={styles.categoryContent}>
+              <Text style={styles.categoryIcon}>{option.icon}</Text>
+              <Text style={[
+                styles.categoryLabel,
+                discovery === option.value && styles.categoryLabelSelected
+              ]}>
+                {option.value}
+              </Text>
+              {discovery === option.value && (
+                <View style={styles.checkmarkContainer}>
+                  <Check size={16} color="white" />
+                </View>
+              )}
+            </View>
           </TouchableOpacity>
         ))}
       </View>
@@ -502,98 +572,128 @@ export default function SurveyScreen({ onComplete }: SurveyScreenProps) {
   );
 
   const renderCurrentSlide = () => {
-    switch(currentSlide) {
-      case 1: return renderSlide1();
-      case 2: return renderSlide2();
-      case 3: return renderSlide3();
-      case 4: return renderSlide4();
-      case 5: return renderSlide5();
-      case 6: return renderSlide6();
-      case 7: return renderSlide7();
-      default: return renderSlide1();
+    switch (currentSlide) {
+      case 1:
+        return renderSlide1();
+      case 2:
+        return renderSlide2();
+      case 3:
+        return renderSlide3();
+      case 4:
+        return renderSlide4();
+      case 5:
+        return renderSlide5();
+      case 6:
+        return renderSlide6();
+      case 7:
+        return renderSlide7();
+      default:
+        return renderSlide1();
     }
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#009688' }}>
-      <LinearGradient
-        colors={['#009688', '#00796B']}
-        style={{ flex: 1 }}
-      >
+    <LinearGradient
+      colors={['#14B8A6', '#0D9488', '#059669']}
+      style={styles.container}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+    >
+      {/* Background decorative elements */}
+      <View style={styles.backgroundDecorations}>
+        <View style={[styles.blurCircle, styles.blurCircle1]} />
+        <View style={[styles.blurCircle, styles.blurCircle2]} />
+        <View style={[styles.blurCircle, styles.blurCircle3]} />
+      </View>
+
+      <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView 
-          style={{ flex: 1 }}
+          style={styles.keyboardView}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
           <ScrollView 
-            style={{ flex: 1 }}
-            contentContainerStyle={{ flexGrow: 1 }}
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             bounces={true}
           >
-            {/* Header */}
-            <View className="bg-gradient-to-r from-teal-600 to-teal-700 text-white p-6">
-              <View className="flex-row items-center justify-between mb-4">
-                <View>
-                  <Text className="text-2xl font-bold text-white">Welcome to Open Doors!</Text>
-                  <Text className="text-teal-100">Let's personalize your experience</Text>
+            {/* Enhanced Header */}
+            <View style={styles.header}>
+              <View style={styles.headerContent}>
+                <View style={styles.headerText}>
+                  <Text style={styles.headerTitle}>Welcome to OpenDoors!</Text>
+                  <Text style={styles.headerSubtitle}>Let's personalize your experience</Text>
                 </View>
-                <View className="w-16 h-16 bg-teal-100 rounded-full items-center justify-center overflow-hidden">
-                  <Image source={require('../../../assets/OpenDoorsLogo.png')} style={{ width: 48, height: 48, resizeMode: 'contain' }} />
+                <View style={styles.logoContainer}>
+                  <Image 
+                    source={require('../../../assets/OpenDoorsLogo.png')} 
+                    style={styles.logoImage}
+                  />
                 </View>
               </View>
-              
-              {/* Progress indicator */}
-              <View className="flex-row items-center justify-between mb-2">
-                <Text className="text-sm text-white">Step {currentSlide} of {totalSlides}</Text>
-                <Text className="text-sm text-white">{Math.round((currentSlide / totalSlides) * 100)}% complete</Text>
+
+              {/* Enhanced Progress */}
+              <View style={styles.progressInfo}>
+                <Text style={styles.progressText}>
+                  Step {currentSlide} of {totalSlides}
+                </Text>
+                <Text style={styles.progressPercentage}>
+                  {Math.round(progressPercentage)}% complete
+                </Text>
               </View>
               {renderProgressBar()}
             </View>
 
             {/* Main Content */}
-            <View className="bg-gray-50 flex-1 px-6 py-8">
-              <View className="max-w-2xl mx-auto">
+            <View style={styles.content}>
+              <View style={styles.slideWrapper}>
                 {renderCurrentSlide()}
-                
-                {/* Navigation Buttons */}
-                <View className="flex-row justify-between mt-12">
+
+                {/* Enhanced Navigation */}
+                <View style={styles.navigation}>
                   <TouchableOpacity
                     onPress={prevSlide}
                     disabled={currentSlide === 1}
-                    className={`flex-row items-center px-6 py-3 rounded-xl font-semibold ${
-                      currentSlide === 1
-                        ? 'bg-gray-300'
-                        : 'bg-white border-2 border-teal-600'
-                    }`}
+                    style={[
+                      styles.navButton,
+                      styles.backButton,
+                      currentSlide === 1 && styles.navButtonDisabled
+                    ]}
+                    activeOpacity={0.8}
                   >
-                    <Ionicons name="chevron-back" size={20} color={currentSlide === 1 ? '#6B7280' : '#009688'} />
-                    <Text className={`ml-2 font-semibold ${
-                      currentSlide === 1 ? 'text-gray-500' : 'text-teal-600'
-                    }`}>Back</Text>
+                    <ChevronLeft size={20} color={currentSlide === 1 ? 'rgba(255,255,255,0.5)' : 'white'} />
+                    <Text style={[
+                      styles.navButtonText,
+                      currentSlide === 1 && styles.navButtonTextDisabled
+                    ]}>
+                      Back
+                    </Text>
                   </TouchableOpacity>
-                  
+
                   {currentSlide === totalSlides ? (
                     <TouchableOpacity
                       onPress={handleComplete}
                       disabled={loading}
-                      className="flex-row items-center px-6 py-3 rounded-xl font-semibold bg-green-500"
+                      style={[styles.navButton, styles.completeButton]}
+                      activeOpacity={0.8}
                     >
                       {loading ? (
-                        <ActivityIndicator size="small" color="white" />
+                        <View style={styles.loadingSpinner} />
                       ) : (
                         <>
-                          <Text className="text-white font-semibold">Get Started!</Text>
-                          <Ionicons name="chevron-forward" size={20} color="white" className="ml-2" />
+                          <Text style={styles.completeButtonText}>Get Started!</Text>
+                          <Star size={20} color="white" />
                         </>
                       )}
                     </TouchableOpacity>
                   ) : (
                     <TouchableOpacity
                       onPress={nextSlide}
-                      className="flex-row items-center px-6 py-3 rounded-xl font-semibold bg-teal-600"
+                      style={[styles.navButton, styles.nextButton]}
+                      activeOpacity={0.8}
                     >
-                      <Text className="text-white font-semibold">Next</Text>
-                      <Ionicons name="chevron-forward" size={20} color="white" className="ml-2" />
+                      <Text style={styles.nextButtonText}>Next</Text>
+                      <ChevronRight size={20} color="#0D9488" />
                     </TouchableOpacity>
                   )}
                 </View>
@@ -601,7 +701,421 @@ export default function SurveyScreen({ onComplete }: SurveyScreenProps) {
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
-      </LinearGradient>
-    </SafeAreaView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  backgroundDecorations: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+  },
+  blurCircle: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 1000,
+  },
+  blurCircle1: {
+    width: 128,
+    height: 128,
+    top: 80,
+    right: 40,
+  },
+  blurCircle2: {
+    width: 96,
+    height: 96,
+    bottom: 160,
+    left: 32,
+  },
+  blurCircle3: {
+    width: 64,
+    height: 64,
+    top: height * 0.33,
+    left: width * 0.25,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  header: {
+    paddingTop: 64,
+    paddingBottom: 32,
+    paddingHorizontal: 24,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  headerText: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 8,
+  },
+  headerSubtitle: {
+    fontSize: 18,
+    color: '#E0F2F1',
+  },
+  logoContainer: {
+    width: 80,
+    height: 80,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  logoImage: {
+    width: 56,
+    height: 56,
+    resizeMode: 'contain',
+    opacity: 0.95,
+  },
+  progressInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  progressText: {
+    color: 'white',
+    fontWeight: '500',
+  },
+  progressPercentage: {
+    color: '#E0F2F1',
+  },
+  progressBarContainer: {
+    marginBottom: 32,
+  },
+  progressBar: {
+    width: '100%',
+    height: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#FCD34D',
+    borderRadius: 4,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+  },
+  slideWrapper: {
+    maxWidth: 600,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  slideContainer: {
+    gap: 32,
+  },
+  slideHeader: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  slideTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  slideSubtitle: {
+    fontSize: 18,
+    color: '#E0F2F1',
+    textAlign: 'center',
+  },
+  categoriesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  categoryCard: {
+    width: (width - 80) / 2,
+    padding: 24,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  categoryCardSelected: {
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  categoryContent: {
+    alignItems: 'center',
+  },
+  categoryIcon: {
+    fontSize: 32,
+    marginBottom: 16,
+  },
+  categoryIconContainer: {
+    width: 64,
+    height: 64,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  categoryLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'center',
+  },
+  categoryLabelSelected: {
+    color: '#1E293B',
+  },
+  checkmarkContainer: {
+    width: 24,
+    height: 24,
+    backgroundColor: '#14B8A6',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+  },
+  optionsList: {
+    gap: 16,
+  },
+  optionCard: {
+    padding: 24,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  optionCardSelected: {
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  optionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  optionIcon: {
+    fontSize: 24,
+    marginRight: 16,
+  },
+  optionIconContainer: {
+    width: 48,
+    height: 48,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  optionTextContainer: {
+    flex: 1,
+  },
+  optionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 4,
+  },
+  optionTitleSelected: {
+    color: '#1E293B',
+  },
+  optionDescription: {
+    fontSize: 14,
+    color: '#E0F2F1',
+  },
+  optionDescriptionSelected: {
+    color: '#6B7280',
+  },
+  rankingControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  arrowButtons: {
+    gap: 4,
+  },
+  arrowButton: {
+    padding: 4,
+    borderRadius: 12,
+  },
+  arrowButtonDisabled: {
+    opacity: 0.3,
+  },
+  rankBadge: {
+    width: 40,
+    height: 40,
+    backgroundColor: '#14B8A6',
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rankNumber: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  rankingSummary: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 24,
+    padding: 24,
+  },
+  rankingTitle: {
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 16,
+  },
+  rankingList: {
+    gap: 12,
+  },
+  rankingItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  rankingText: {
+    color: 'white',
+    marginLeft: 12,
+  },
+  ratingsList: {
+    marginTop: 16,
+  },
+  ratingCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 24,
+    padding: 24,
+    marginBottom: 16,
+  },
+  ratingTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 16,
+  },
+  ratingButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    gap: 8,
+  },
+  ratingButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  ratingButtonSelected: {
+    backgroundColor: 'white',
+    borderColor: 'white',
+    transform: [{scale: 1.1}],
+  },
+  ratingButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  ratingButtonTextSelected: {
+    color: '#14B8A6',
+  },
+  navigation: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 48,
+    gap: 16,
+  },
+  navButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    gap: 8,
+  },
+  backButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  navButtonDisabled: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  navButtonText: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  navButtonTextDisabled: {
+    color: 'rgba(255, 255, 255, 0.5)',
+  },
+  nextButton: {
+    backgroundColor: 'white',
+  },
+  nextButtonText: {
+    color: '#0D9488',
+    fontWeight: '600',
+  },
+  completeButton: {
+    backgroundColor: '#10B981',
+  },
+  completeButtonText: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  loadingSpinner: {
+    width: 20,
+    height: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderTopColor: 'white',
+    borderRadius: 10,
+  },
+});
