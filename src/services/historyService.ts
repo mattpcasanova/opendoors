@@ -24,6 +24,21 @@ export interface UserStats {
   rewardsClaimed: number;
 }
 
+interface PrizeData {
+  id: string;
+  name: string;
+  description: string;
+  location_name: string;
+  logo_url?: string;
+}
+
+interface SupabaseGamePlay {
+  id: string;
+  created_at: string;
+  win: boolean;
+  prize: PrizeData | null;
+}
+
 export interface GamePlay {
   id: string;
   created_at: string;
@@ -112,29 +127,62 @@ class HistoryService {
   // Get the last 20 games played by the user
   async getUserGamePlays(userId: string) {
     try {
-      const { data, error } = await supabase
+      // First get game plays
+      const { data: gamePlays, error: gamePlaysError } = await supabase
         .from('game_plays')
         .select(`
-          *,
-          prizes (
-            id,
-            name,
-            description,
-            value,
-            prize_type,
-            location_name,
-            logo_url
-          )
+          id,
+          created_at,
+          win,
+          prize_id
         `)
         .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(20);
 
-      if (error) {
-        console.error('Error fetching game plays:', error);
-        return { error: error.message, data: null };
+      if (gamePlaysError) {
+        console.error('Error fetching game plays:', gamePlaysError);
+        return { error: gamePlaysError.message, data: null };
       }
 
-      return { data, error: null };
+      if (!gamePlays || gamePlays.length === 0) {
+        return { data: [], error: null };
+      }
+
+      // Then get prizes for all prize_ids
+      const prizeIds = gamePlays.map(gp => gp.prize_id);
+      const { data: prizes, error: prizesError } = await supabase
+        .from('prizes')
+        .select(`
+          id,
+          name,
+          description,
+          location_name,
+          logo_url
+        `)
+        .in('id', prizeIds);
+
+      if (prizesError) {
+        console.error('Error fetching prizes:', prizesError);
+        return { error: prizesError.message, data: null };
+      }
+
+      // Create a map of prizes by id for quick lookup
+      const prizesMap = new Map(prizes?.map(prize => [prize.id, prize]) || []);
+
+      // Map the response to include the prize data correctly
+      const mappedData = gamePlays.map(gp => ({
+        id: gp.id,
+        created_at: gp.created_at,
+        win: gp.win,
+        prize: {
+          name: prizesMap.get(gp.prize_id)?.name || 'Unknown Prize',
+          location_name: prizesMap.get(gp.prize_id)?.location_name || 'Unknown Location',
+          logo_url: prizesMap.get(gp.prize_id)?.logo_url
+        }
+      }));
+
+      return { data: mappedData, error: null };
     } catch (err) {
       console.error('Unexpected error:', err);
       return { error: 'Failed to fetch game plays', data: null };

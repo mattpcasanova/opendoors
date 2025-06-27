@@ -1,4 +1,3 @@
-
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -7,9 +6,11 @@ import { Gift, Zap } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  DeviceEventEmitter,
   ScrollView as RNScrollView,
   ScrollView,
   Text,
+  TextInput,
   TouchableOpacity,
   View
 } from 'react-native';
@@ -17,7 +18,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import GameCard from '../../components/game/GameCard';
 import BottomNavBar from '../../components/main/BottomNavBar';
 import Header from "../../components/main/Header";
-import SearchBar from '../../components/main/SearchBar';
 import { useAuth } from '../../hooks/useAuth';
 import { useLocation } from '../../hooks/useLocation';
 import { gamesService, Prize } from '../../services/gameLogic/games';
@@ -424,81 +424,67 @@ export default function HomeScreen() {
   };
 
   const handleGameComplete = async (won: boolean, switched: boolean) => {
-    setShowGameScreen(false);
-
-    // Immediately update the UI state to show grey button
-    setHasPlayedAnyGameToday(true);
-
-    // Use session from context
-    if (!session && user) {
-      Alert.alert(
-        'Session Expired',
-        'Your session has expired. Please log in again to save your game progress.',
-        [
-          { text: 'Later', style: 'cancel' },
-          {
-            text: 'Log In',
-            onPress: () => {
-              navigation.navigate('Login' as any);
-              return;
-            }
-          }
-        ]
-      );
-      return;
-    }
-
-    // Record the game only if we have a valid session
-    if (user && currentGame && session) {
-      try {
-        const result = await gamesService.recordGame({
-          user_id: user.id,
-          prize_id: currentGame.id,
-          chosen_door: 1, // You can track actual values if needed
-          winning_door: 1, // You can track actual values if needed  
-          revealed_door: 2, // You can track actual values if needed
-          switched,
-          won,
-          game_duration_seconds: 0, // You can track actual duration if needed
-        });
-
-        if (result.error) {
-          console.error('❌ Failed to record game:', result.error);
-          const errorMsg = typeof result.error === 'object' && result.error !== null && 'message' in result.error
-            ? (result.error as any).message
-            : String(result.error);
-          Alert.alert('Error', 'Failed to record game: ' + errorMsg);
-        } else {
-          if (won) {
-            Alert.alert('🎉 Congratulations!', `You won: ${currentGame.name}!\nCheck your rewards to claim it.`);
-          }
-        }
-      } catch (err) {
-        console.error('❌ Failed to record game:', err);
-        Alert.alert('Error', 'Failed to record game.');
-      }
-    } else if (!user || !currentGame) {
-      console.error('❌ Missing user or currentGame for recording');
-    }
+    if (!user || !currentGame) return;
     
-    // Update user progress in database
-    if (user) {
-      const usedBonus = bonusPlaysAvailable > 0;
-      const { error: progressError } = await userProgressService.updateProgressAfterGame(user.id, won, usedBonus);
+    try {
+      // Record the game result
+      const { error: gameError } = await gamesService.recordGame({
+        user_id: user.id,
+        prize_id: currentGame.id,
+        won,
+        switched,
+        chosen_door: 1, // TODO: Track actual chosen door
+        winning_door: won ? 1 : 2, // TODO: Track actual winning door
+        revealed_door: 3, // TODO: Track actual revealed door
+        game_duration_seconds: 30 // TODO: Track actual duration
+      });
+
+      if (gameError) {
+        console.error('❌ Error recording game:', gameError);
+        Alert.alert('Error', 'Failed to save game result. Please try again.');
+        return;
+      }
+
+      // Show result alert
+      Alert.alert(
+        won ? 'Congratulations!' : 'Better luck next time!',
+        won
+          ? `You won ${currentGame.name}!`
+          : 'Keep playing to win great prizes!',
+        [{ 
+          text: 'OK',
+          onPress: () => setShowGameScreen(false)
+        }]
+      );
       
-      if (progressError) {
-        console.error('❌ Error updating progress:', progressError);
-      } else {
-        // Reload progress from database to update UI (but don't override hasPlayedToday)
-        const { data: updatedProgress } = await userProgressService.loadUserProgress(user.id);
-        if (updatedProgress) {
-          setGamesUntilBonus(updatedProgress.gamesUntilBonus);
-          // Don't override hasPlayedAnyGameToday - let it stay true until next day
-          // setHasPlayedAnyGameToday(updatedProgress.hasPlayedToday);
-          setLastPlayDate(updatedProgress.lastPlayDate);
-          setBonusPlaysAvailable(updatedProgress.bonusPlaysAvailable);
+      // Update user progress in database
+      if (user) {
+        const usedBonus = bonusPlaysAvailable > 0;
+        const { error: progressError } = await userProgressService.updateProgressAfterGame(user.id, won, usedBonus);
+        
+        if (progressError) {
+          console.error('❌ Error updating progress:', progressError);
+        } else {
+          // Reload progress from database to update UI
+          const { data: updatedProgress } = await userProgressService.loadUserProgress(user.id);
+          if (updatedProgress) {
+            setGamesUntilBonus(updatedProgress.gamesUntilBonus);
+            setLastPlayDate(updatedProgress.lastPlayDate);
+            setBonusPlaysAvailable(updatedProgress.bonusPlaysAvailable);
+          }
         }
       }
+
+      // Emit events to refresh History and Rewards screens
+      DeviceEventEmitter.emit('REFRESH_HISTORY');
+      DeviceEventEmitter.emit('REFRESH_REWARDS');
+
+      // Set hasPlayedToday to true
+      setHasPlayedAnyGameToday(true);
+
+    } catch (error) {
+      console.error('❌ Error in handleGameComplete:', error);
+      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
     }
   };
 
@@ -556,11 +542,31 @@ export default function HomeScreen() {
         contentContainerStyle={{ paddingBottom: 100 }}
       >
         {/* Search Bar */}
-        <SearchBar
-          value={searchText}
-          onChangeText={setSearchText}
-          containerStyle={{ marginTop: 16 }}
-        />
+        <View className="mb-8 mt-4">
+          <View className="bg-white rounded-3xl px-5 py-3 flex-row items-center shadow-sm"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.08,
+              shadowRadius: 8,
+              elevation: 3,
+            }}
+          >
+            <Ionicons name="search" size={20} color="#999999" />
+            <TextInput
+              className="flex-1 ml-3 text-base text-gray-900"
+              placeholder="Search games by name or description"
+              placeholderTextColor="#999999"
+              value={searchText}
+              onChangeText={setSearchText}
+            />
+            {searchText.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchText('')}>
+                <Ionicons name="close-circle" size={20} color="#999999" />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
 
         {/* Search Results Info */}
         {searchText.length > 0 && (

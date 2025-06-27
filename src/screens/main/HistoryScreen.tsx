@@ -2,11 +2,12 @@ import { GamepadIcon } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  DeviceEventEmitter,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PastGameCard from '../../components/PastGameCard';
@@ -28,11 +29,20 @@ export default function HistoryScreen() {
     }
   }, [user]);
 
+  useEffect(() => {
+    // Listen for refresh events
+    const subscription = DeviceEventEmitter.addListener('REFRESH_HISTORY', fetchHistory);
+    
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
   const fetchHistory = async () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('Fetching history for user:', user?.id);
+      console.log('🎮 Fetching history for user:', user?.id);
       // Fetch both game plays and stats in parallel
       const [gamePlaysResult, statsResult] = await Promise.all([
         historyService.getUserGamePlays(user!.id),
@@ -40,18 +50,28 @@ export default function HistoryScreen() {
       ]);
       if (gamePlaysResult.error) throw new Error(gamePlaysResult.error);
       if (statsResult.error) throw statsResult.error;
-      console.log('Fetched game plays:', gamePlaysResult.data);
-      const mappedGamePlays = (gamePlaysResult.data || []).map(gp => ({
-        ...gp,
-        prize: {
-          ...gp.prizes,
-          logo_url: gp.prizes?.logo_url,
-        },
-      }));
+      console.log('🎮 Raw game plays data:', JSON.stringify(gamePlaysResult.data, null, 2));
+      
+      // Map the game plays data correctly
+      const mappedGamePlays = (gamePlaysResult.data || []).map(gp => {
+        console.log('🎮 Mapping game play:', gp);
+        return {
+          id: gp.id,
+          created_at: gp.created_at,
+          win: gp.win,
+          prize: {
+            name: gp.prize?.name || 'Unknown Prize',
+            location_name: gp.prize?.location_name || 'Unknown Location',
+            logo_url: gp.prize?.logo_url
+          }
+        };
+      });
+
+      console.log('🎮 Mapped game plays:', JSON.stringify(mappedGamePlays, null, 2));
       setGamePlays(mappedGamePlays);
       setStats(statsResult.data || null);
     } catch (err: any) {
-      console.error('Error fetching history:', err);
+      console.error('❌ Error fetching history:', err);
       setError(err.message);
     } finally {
       setLoading(false);

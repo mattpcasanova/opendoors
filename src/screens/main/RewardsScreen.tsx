@@ -5,6 +5,7 @@ import { CheckCircle, Clock, Gift } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
+  DeviceEventEmitter,
   Image,
   ScrollView,
   Text,
@@ -272,8 +273,19 @@ export default function RewardsScreen() {
   const [filteredRewards, setFilteredRewards] = useState<Reward[]>([]);
 
   useEffect(() => {
-    fetchRewards();
+    if (user) {
+      fetchRewards();
+    }
   }, [user]);
+
+  useEffect(() => {
+    // Listen for refresh events
+    const subscription = DeviceEventEmitter.addListener('REFRESH_REWARDS', fetchRewards);
+    
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   // Filter rewards based on search text
   useEffect(() => {
@@ -322,7 +334,7 @@ export default function RewardsScreen() {
       const expiryDate = new Date(r.expirationDate);
       const now = new Date();
       const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      return daysUntilExpiry <= 7 && !r.claimed;
+      return daysUntilExpiry <= 3 && daysUntilExpiry > 0 && !r.claimed;
     }).length
   };
 
