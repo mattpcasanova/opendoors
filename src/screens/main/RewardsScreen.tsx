@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { CheckCircle, Clock, Gift } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
@@ -375,62 +376,137 @@ export default function RewardsScreen() {
           marginBottom: 24,
           gap: 12,
         }}>
+          {/* Total Rewards Card */}
           <View style={{
             flex: 1,
             backgroundColor: 'white',
-            borderRadius: 12,
-            padding: 16,
+            borderRadius: 16,
+            padding: 20,
             alignItems: 'center',
             shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 4,
-            elevation: 2,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.1,
+            shadowRadius: 12,
+            elevation: 6,
+            borderWidth: 1,
+            borderColor: '#F1F5F9',
           }}>
-            <Text style={{ fontSize: 24, fontWeight: '700', color: '#009688' }}>
+            <View style={{
+              width: 48,
+              height: 48,
+              backgroundColor: '#E6FFFA',
+              borderRadius: 24,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 12,
+            }}>
+              <Gift size={24} color="#009688" strokeWidth={2} />
+            </View>
+            <Text style={{ 
+              fontSize: 28, 
+              fontWeight: '800', 
+              color: '#009688',
+              marginBottom: 4,
+            }}>
               {stats.totalRewards}
             </Text>
-            <Text style={{ fontSize: 12, color: '#6B7280', textAlign: 'center', marginTop: 4 }}>
+            <Text style={{ 
+              fontSize: 13, 
+              color: '#64748B', 
+              textAlign: 'center',
+              fontWeight: '500',
+              lineHeight: 16,
+            }}>
               Total{'\n'}Rewards
             </Text>
           </View>
 
+          {/* Already Claimed Card */}
           <View style={{
             flex: 1,
             backgroundColor: 'white',
-            borderRadius: 12,
-            padding: 16,
+            borderRadius: 16,
+            padding: 20,
             alignItems: 'center',
             shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 4,
-            elevation: 2,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.1,
+            shadowRadius: 12,
+            elevation: 6,
+            borderWidth: 1,
+            borderColor: '#F1F5F9',
           }}>
-            <Text style={{ fontSize: 24, fontWeight: '700', color: '#009688' }}>
+            <View style={{
+              width: 48,
+              height: 48,
+              backgroundColor: '#DCFCE7',
+              borderRadius: 24,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 12,
+            }}>
+              <CheckCircle size={24} color="#16A34A" strokeWidth={2} />
+            </View>
+            <Text style={{ 
+              fontSize: 28, 
+              fontWeight: '800', 
+              color: '#16A34A',
+              marginBottom: 4,
+            }}>
               {stats.activeClaimed}
             </Text>
-            <Text style={{ fontSize: 12, color: '#6B7280', textAlign: 'center', marginTop: 4 }}>
+            <Text style={{ 
+              fontSize: 13, 
+              color: '#64748B', 
+              textAlign: 'center',
+              fontWeight: '500',
+              lineHeight: 16,
+            }}>
               Already{'\n'}Claimed
             </Text>
           </View>
 
+          {/* Expiring Soon Card */}
           <View style={{
             flex: 1,
             backgroundColor: 'white',
-            borderRadius: 12,
-            padding: 16,
+            borderRadius: 16,
+            padding: 20,
             alignItems: 'center',
             shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 4,
-            elevation: 2,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.1,
+            shadowRadius: 12,
+            elevation: 6,
+            borderWidth: 1,
+            borderColor: '#F1F5F9',
           }}>
-            <Text style={{ fontSize: 24, fontWeight: '700', color: '#EA580C' }}>
+            <View style={{
+              width: 48,
+              height: 48,
+              backgroundColor: '#FEF3C7',
+              borderRadius: 24,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 12,
+            }}>
+              <Clock size={24} color="#D97706" strokeWidth={2} />
+            </View>
+            <Text style={{ 
+              fontSize: 28, 
+              fontWeight: '800', 
+              color: '#D97706',
+              marginBottom: 4,
+            }}>
               {stats.expiringSoon}
             </Text>
-            <Text style={{ fontSize: 12, color: '#6B7280', textAlign: 'center', marginTop: 4 }}>
+            <Text style={{ 
+              fontSize: 13, 
+              color: '#64748B', 
+              textAlign: 'center',
+              fontWeight: '500',
+              lineHeight: 16,
+            }}>
               Expiring{'\n'}Soon
             </Text>
           </View>
