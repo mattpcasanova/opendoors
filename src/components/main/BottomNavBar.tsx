@@ -5,7 +5,7 @@ import React from 'react';
 import { Platform, Text, TouchableOpacity, View } from 'react-native';
 import type { MainStackParamList } from '../../types/navigation';
 
-// Tab config
+// Tab config - removed badge completely
 const NAV_ITEMS = [
   {
     id: 'Home',
@@ -16,7 +16,6 @@ const NAV_ITEMS = [
     id: 'Rewards',
     label: 'Rewards',
     icon: Gift,
-    badge: 2, // Example badge count
   },
   {
     id: 'History',
@@ -37,15 +36,16 @@ type Props = {};
 export default function BottomNavBar({}: Props) {
   const navigation = useNavigation<MainStackNavigationProp>();
   const route = useRoute();
-  // Map route name to tab id
+  
   const currentRoute = route.name;
-  // Normalize route name to tab id
+  
   const getActiveTab = () => {
     if (currentRoute.toLowerCase().includes('reward')) return 'Rewards';
     if (currentRoute.toLowerCase().includes('history')) return 'History';
     if (currentRoute.toLowerCase().includes('profile')) return 'Profile';
     return 'Home';
   };
+  
   const activeTab = getActiveTab();
 
   const navigateTo = (page: string) => {
@@ -61,31 +61,38 @@ export default function BottomNavBar({}: Props) {
   };
 
   return (
-    <View style={{
-      position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      zIndex: 50,
-      backgroundColor: Platform.OS === 'ios' ? 'rgba(255,255,255,0.95)' : 'white',
-      borderTopWidth: 1,
-      borderTopColor: '#F3F4F6',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: -4 },
-      shadowOpacity: 0.08,
-      shadowRadius: 20,
-      elevation: 12,
-      paddingBottom: Platform.OS === 'ios' ? 6 : 4,
-      paddingTop: 0,
-      height: 64,
-      justifyContent: 'center',
-    }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', paddingHorizontal: 0, height: 56 }}>
+    <View
+      style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 50,
+        backgroundColor: Platform.OS === 'ios' ? 'rgba(255,255,255,0.97)' : 'white',
+        borderTopWidth: 0.5,
+        borderTopColor: 'rgba(0,0,0,0.08)',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.06,
+        shadowRadius: 12,
+        elevation: 12,
+        paddingBottom: Platform.OS === 'ios' ? 34 : 16,
+        paddingTop: 16,
+        paddingHorizontal: 12,
+      }}
+    >
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          height: 56,
+        }}
+      >
         {NAV_ITEMS.map((item) => {
           const isActive = activeTab === item.id;
           const IconComponent = item.icon;
-          // Only show badge if item.badge > 0
-          const showBadge = !!item.badge && item.badge > 0;
+
           return (
             <TouchableOpacity
               key={item.id}
@@ -94,53 +101,94 @@ export default function BottomNavBar({}: Props) {
                 flex: 1,
                 alignItems: 'center',
                 justifyContent: 'center',
-                minWidth: 0,
-                height: 48,
-                position: 'relative',
-                overflow: 'visible',
+                paddingVertical: 6,
+                paddingHorizontal: 8,
               }}
-              activeOpacity={0.8}
+              activeOpacity={0.65}
             >
-              <View style={{
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '100%',
-                height: 44,
-                borderRadius: 16,
-                borderWidth: isActive ? 2 : 0,
-                borderColor: isActive ? '#14b8a6' : 'transparent',
-                backgroundColor: isActive ? '#e6fcf7' : 'transparent',
-                paddingHorizontal: 0,
-                paddingVertical: 0,
-                marginBottom: 0,
-                shadowColor: isActive ? '#14b8a6' : 'transparent',
-                shadowOpacity: isActive ? 0.08 : 0,
-                shadowRadius: isActive ? 6 : 0,
-                elevation: isActive ? 2 : 0,
-                overflow: 'visible',
-              }}>
-                <View style={{ position: 'relative', alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
+              <View
+                style={{
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingVertical: 10,
+                  paddingHorizontal: 18,
+                  borderRadius: 24,
+                  backgroundColor: isActive 
+                    ? 'rgba(20, 184, 166, 0.12)' 
+                    : 'transparent',
+                  minWidth: 68,
+                  minHeight: 48,
+                  shadowColor: isActive ? '#14b8a6' : 'transparent',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: isActive ? 0.08 : 0,
+                  shadowRadius: isActive ? 8 : 0,
+                  elevation: isActive ? 3 : 0,
+                  transform: [{ scale: isActive ? 1.05 : 1 }],
+                  borderWidth: isActive ? 1 : 0,
+                  borderColor: isActive ? 'rgba(20, 184, 166, 0.15)' : 'transparent',
+                }}
+              >
+                <View
+                  style={{
+                    marginBottom: 6,
+                    padding: isActive ? 2 : 0,
+                    borderRadius: 8,
+                    backgroundColor: isActive ? 'rgba(20, 184, 166, 0.08)' : 'transparent',
+                  }}
+                >
                   <IconComponent
-                    size={24}
-                    color={isActive ? '#14b8a6' : '#94A3B8'}
+                    size={isActive ? 24 : 22}
+                    color={isActive ? '#14b8a6' : '#6b7280'}
+                    strokeWidth={isActive ? 2.5 : 2}
                   />
-                  {/* Badge */}
-                  {showBadge && (
-                    <View style={{ position: 'absolute', top: -8, right: -14, backgroundColor: '#ef4444', borderRadius: 8, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 2, borderWidth: 2, borderColor: '#fff' }}>
-                      <Text style={{ color: 'white', fontSize: 11, fontWeight: 'bold' }}>{item.badge}</Text>
-                    </View>
-                  )}
                 </View>
-                <Text style={{
-                  fontSize: 13,
-                  fontWeight: isActive ? '700' : '500',
-                  color: isActive ? '#14b8a6' : '#94A3B8',
-                  marginTop: 2,
-                  textAlign: 'center',
-                }}>{item.label}</Text>
-                {/* Active indicator dot (optional, can remove if not needed) */}
-                {/* {isActive && <View style={{ position: 'absolute', bottom: 4, left: '50%', marginLeft: -3, width: 6, height: 6, backgroundColor: '#14b8a6', borderRadius: 3 }} />} */}
+                
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    fontSize: isActive ? 12 : 11,
+                    fontWeight: isActive ? '700' : '600',
+                    color: isActive ? '#14b8a6' : '#6b7280',
+                    letterSpacing: 0.3,
+                    textAlign: 'center',
+                    width: '100%',
+                  }}
+                >
+                  {item.label}
+                </Text>
+                
+                {/* Enhanced active indicator */}
+                {isActive && (
+                  <>
+                    {/* Primary indicator line */}
+                    <View
+                      style={{
+                        position: 'absolute',
+                        bottom: -8,
+                        width: 32,
+                        height: 3,
+                        backgroundColor: '#14b8a6',
+                        borderRadius: 2,
+                        shadowColor: '#14b8a6',
+                        shadowOffset: { width: 0, height: 1 },
+                        shadowOpacity: 0.3,
+                        shadowRadius: 2,
+                      }}
+                    />
+                    {/* Subtle glow effect */}
+                    <View
+                      style={{
+                        position: 'absolute',
+                        bottom: -8,
+                        width: 24,
+                        height: 2,
+                        backgroundColor: '#14b8a6',
+                        borderRadius: 1,
+                        opacity: 0.4,
+                      }}
+                    />
+                  </>
+                )}
               </View>
             </TouchableOpacity>
           );
