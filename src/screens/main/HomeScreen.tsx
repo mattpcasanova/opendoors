@@ -6,7 +6,6 @@ import { Gift, Zap } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
-  Image,
   ScrollView as RNScrollView,
   ScrollView,
   Text,
@@ -17,6 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import GameCard from '../../components/game/GameCard';
 import BottomNavBar from '../../components/main/BottomNavBar';
+import Header from "../../components/main/Header";
 import { useAuth } from '../../hooks/useAuth';
 import { useLocation } from '../../hooks/useLocation';
 import { gamesService, Prize } from '../../services/gameLogic/games';
@@ -538,47 +538,16 @@ export default function HomeScreen() {
     return 'Good evening!';
   };
 
+  // Extract first name from user data
+  const getFirstName = () => {
+    if (!user?.user_metadata?.full_name) return undefined
+    return user.user_metadata.full_name.split(" ")[0]
+  }
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
-      {/* Header */}
-      <LinearGradient colors={['#009688', '#00796B']} style={{ paddingBottom: 20 }}>
-        <View style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: 20,
-          paddingTop: 15,
-          paddingBottom: 20,
-        }}>
-          <View style={{ flexDirection: 'column', justifyContent: 'center', flex: 1 }}>
-            <Text style={{ color: 'white', fontSize: 24, fontWeight: '700', marginBottom: 4 }}>
-              Welcome back!
-            </Text>
-            <Text style={{ color: '#B2DFDB', fontSize: 16 }}>
-              Ready to explore?
-            </Text>
-          </View>
-          <View style={{
-            width: 120,
-            height: 120,
-            backgroundColor: '#E0F7F4',
-            borderRadius: 60,
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginLeft: 16,
-            borderWidth: 3,
-            borderColor: '#009688',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.18,
-            shadowRadius: 8,
-            elevation: 8,
-          }}>
-            <Image source={require('../../../assets/OpenDoorsLogo.png')} style={{ width: 100, height: 100, resizeMode: 'contain' }} />
-          </View>
-        </View>
-      </LinearGradient>
-
+      <Header variant="home" userName={getFirstName()} showLogo={true} />
+      
       {/* Main Content */}
       <ScrollView 
         className="flex-1 px-6"

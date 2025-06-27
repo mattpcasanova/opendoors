@@ -1,4 +1,3 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -11,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PastGameCard from '../../components/PastGameCard';
 import BottomNavBar from '../../components/main/BottomNavBar';
+import Header from '../../components/main/Header';
 import { useAuth } from '../../hooks/useAuth';
 import { GamePlay, historyService, UserStats } from '../../services/historyService';
 
@@ -123,19 +123,7 @@ export default function HistoryScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
-      {/* Header */}
-      <LinearGradient colors={['#009688', '#00796B']} style={{ paddingBottom: 20 }}>
-        <View style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'flex-start',
-          paddingHorizontal: 20,
-          paddingTop: 15,
-          paddingBottom: 20,
-        }}>
-          <Text style={{ color: 'white', fontSize: 24, fontWeight: '700' }}>History</Text>
-        </View>
-      </LinearGradient>
+      <Header variant="page" title="History" subtitle="Your game history" />
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 100 }}>
         {renderStats()}
         {renderGameHistory()}

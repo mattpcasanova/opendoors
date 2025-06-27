@@ -1,27 +1,29 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { StackNavigationProp } from '@react-navigation/stack';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import * as Notifications from 'expo-notifications';
 import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Linking,
-    Modal,
-    Platform,
-    ScrollView,
-    Switch,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  KeyboardAvoidingView,
+  Linking,
+  Modal,
+  Platform,
+  ScrollView,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import BottomNavBar from '../../components/main/BottomNavBar';
+import Header from "../../components/main/Header";
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../services/supabase/client';
+import type { MainStackParamList } from "../../types/navigation";
 
 interface PreferenceItem {
   id: string;
@@ -61,9 +63,11 @@ const CATEGORIES: { key: PreferenceKey; label: string; icon: string }[] = [
   { key: 'beauty_and_wellness', label: 'Beauty & Wellness', icon: 'sparkles' },
 ];
 
+type ProfileScreenNavigationProp = NativeStackNavigationProp<MainStackParamList>;
+
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
-  const navigation = useNavigation<NavigationProp>();
+  const navigation = useNavigation<ProfileScreenNavigationProp>();
   
   // Game Preferences State
   const [preferences, setPreferences] = useState({
@@ -502,29 +506,18 @@ export default function ProfileScreen() {
     setShowGamePrefsEdit(true);
   };
 
+  const handleSettingsPress = () => {
+    console.log("Settings pressed")
+  }
+
   return (
     <View style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
-        {/* Header */}
-        <LinearGradient colors={['#009688', '#00796B']} style={{ paddingBottom: 20 }}>
-          <View style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            paddingHorizontal: 20,
-            paddingTop: 15,
-            paddingBottom: 20,
-          }}>
-            <View>
-              <Text style={{ color: 'white', fontSize: 28, fontWeight: '700', marginBottom: 4 }}>
-                Profile
-              </Text>
-              <Text style={{ color: '#B2DFDB', fontSize: 16 }}>
-                Manage your account and preferences
-              </Text>
-            </View>
-          </View>
-        </LinearGradient>
+        <Header 
+          variant="page" 
+          title="Profile" 
+          subtitle="Manage your account and preferences" 
+        />
 
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20 }}>
           {/* User Info */}

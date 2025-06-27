@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
@@ -14,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import BottomNavBar from '../../components/main/BottomNavBar';
+import Header from '../../components/main/Header';
 import RewardCard, { Reward } from '../../components/main/RewardCard';
 import { useAuth } from '../../hooks/useAuth';
 import { rewardsService } from '../../services/rewardsService';
@@ -57,44 +57,26 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
       {/* Header */}
-      <LinearGradient colors={['#009688', '#00796B']} style={{ paddingBottom: 20 }}>
-        <View style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: 20,
-          paddingTop: 15,
-          paddingBottom: 20,
-        }}>
-          <TouchableOpacity onPress={onBack} style={{ padding: 5 }}>
-            <Ionicons name="arrow-back" size={24} color="white" />
-          </TouchableOpacity>
-          <View style={{ flex: 1, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}>
-            {/* No company name here, only in the row below with logo */}
-          </View>
-          <View style={{ width: 34 }} />
-        </View>
-        
-        <View style={{
-          flexDirection: 'row',
-          justifyContent: 'flex-start',
-          alignItems: 'center',
-          paddingHorizontal: 20,
-        }}>
-          {/* Logo on the left */}
-          {reward.logo_url ? (
-            <Image source={{ uri: reward.logo_url }} style={{ width: 60, height: 60, borderRadius: 30, marginRight: 16, backgroundColor: 'white' }} />
-          ) : null}
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: 'white', fontSize: 24, fontWeight: '700', marginBottom: 4 }}>
-              {reward.company}
-            </Text>
-            <Text style={{ color: '#B2DFDB', fontSize: 16 }}>
-              {reward.reward}
-            </Text>
-          </View>
-        </View>
-      </LinearGradient>
+      <Header 
+        variant="page" 
+        title={reward.company} 
+        subtitle={reward.reward}
+        showBackButton
+        onBackPress={onBack}
+        rightComponent={
+          reward.logo_url ? (
+            <Image 
+              source={{ uri: reward.logo_url }} 
+              style={{ 
+                width: 40, 
+                height: 40, 
+                borderRadius: 20, 
+                backgroundColor: 'white' 
+              }} 
+            />
+          ) : null
+        }
+      />
 
       <ScrollView 
         style={{ flex: 1, padding: 20 }}
@@ -336,8 +318,10 @@ export default function RewardsScreen() {
     totalRewards: rewards.length,
     activeClaimed: rewards.filter(r => r.claimed).length,
     expiringSoon: rewards.filter(r => {
-      const days = getDaysUntilExpiration(r.expirationDate);
-      return days <= 3 && days >= 0 && !r.claimed;
+      const expiryDate = new Date(r.expirationDate);
+      const now = new Date();
+      const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      return daysUntilExpiry <= 7 && !r.claimed;
     }).length
   };
 
@@ -381,26 +365,7 @@ export default function RewardsScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
-      {/* Header */}
-      <LinearGradient colors={['#009688', '#00796B']} style={{ paddingBottom: 20 }}>
-        <View style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          paddingHorizontal: 20,
-          paddingTop: 15,
-          paddingBottom: 20,
-        }}>
-          <View>
-            <Text style={{ color: 'white', fontSize: 28, fontWeight: '700', marginBottom: 4 }}>
-              Rewards
-            </Text>
-            <Text style={{ color: '#B2DFDB', fontSize: 16 }}>
-              Your earned rewards
-            </Text>
-          </View>
-        </View>
-      </LinearGradient>
+      <Header variant="page" title="Rewards" subtitle="Your earned rewards" />
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: 100 }}>
         {/* Stats Cards */}
