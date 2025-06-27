@@ -142,15 +142,9 @@ class GamesService {
         .from('game_plays')
         .insert({
           user_id: gameData.user_id,
-          prize_id: gameData.prize_id,
-          chosen_door: gameData.chosen_door || 1,
-          winning_door: gameData.winning_door || 1,
-          revealed_door: gameData.revealed_door || 2,
-          switched: gameData.switched || false,
+          reward_id: gameData.prize_id,
           win: gameData.won,
-          won: gameData.won,
-          game_duration_seconds: gameData.game_duration_seconds || 0,
-          played_at: new Date().toISOString()
+          created_at: new Date().toISOString()
         })
         .select()
         .single();
@@ -162,13 +156,26 @@ class GamesService {
 
       // If user won, insert into user_rewards table
       if (gameData.won && gameData.prize_id) {
+        // Fetch prize details first
+        const { data: prize } = await supabase
+          .from('prizes')
+          .select('logo_url')
+          .eq('id', gameData.prize_id)
+          .single();
+
+        // Generate expiration date (7 days from now)
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7);
+
         const { data: reward, error: rewardError } = await supabase
           .from('user_rewards')
           .insert({
             user_id: gameData.user_id,
             prize_id: gameData.prize_id,
-            qr_code: `temp_${Date.now()}`,
-            reward_code: `REWARD_${Date.now()}`,
+            qr_code: `QR_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+            reward_code: `REWARD_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+            logo_url: prize?.logo_url || null,
+            expires_at: expiresAt.toISOString().split('T')[0]
           })
           .select()
           .single();
