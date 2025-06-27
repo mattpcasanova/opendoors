@@ -1,3 +1,4 @@
+
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -9,7 +10,6 @@ import {
   ScrollView as RNScrollView,
   ScrollView,
   Text,
-  TextInput,
   TouchableOpacity,
   View
 } from 'react-native';
@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import GameCard from '../../components/game/GameCard';
 import BottomNavBar from '../../components/main/BottomNavBar';
 import Header from "../../components/main/Header";
+import SearchBar from '../../components/main/SearchBar';
 import { useAuth } from '../../hooks/useAuth';
 import { useLocation } from '../../hooks/useLocation';
 import { gamesService, Prize } from '../../services/gameLogic/games';
@@ -555,31 +556,11 @@ export default function HomeScreen() {
         contentContainerStyle={{ paddingBottom: 100 }}
       >
         {/* Search Bar */}
-        <View className="mb-8 mt-4">
-          <View className="bg-white rounded-3xl px-5 py-3 flex-row items-center shadow-sm"
-            style={{
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.08,
-              shadowRadius: 8,
-              elevation: 3,
-            }}
-          >
-            <Ionicons name="search" size={20} color="#999999" />
-            <TextInput
-              className="flex-1 ml-3 text-base text-gray-900"
-              placeholder="Search games by name or description"
-              placeholderTextColor="#999999"
-              value={searchText}
-              onChangeText={setSearchText}
-            />
-            {searchText.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchText('')}>
-                <Ionicons name="close-circle" size={20} color="#999999" />
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
+        <SearchBar
+          value={searchText}
+          onChangeText={setSearchText}
+          containerStyle={{ marginTop: 16 }}
+        />
 
         {/* Search Results Info */}
         {searchText.length > 0 && (

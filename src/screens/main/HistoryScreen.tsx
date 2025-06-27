@@ -1,11 +1,12 @@
+import { GamepadIcon } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PastGameCard from '../../components/PastGameCard';
@@ -60,20 +61,44 @@ export default function HistoryScreen() {
   const renderStats = () => (
     <View style={{
       backgroundColor: 'white',
-      borderRadius: 12,
-      padding: 20,
+      borderRadius: 16,
+      padding: 24,
+      marginHorizontal: 20,
       marginBottom: 20,
       alignItems: 'center',
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.05,
-      shadowRadius: 4,
-      elevation: 2,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 12,
+      elevation: 6,
+      borderWidth: 1,
+      borderColor: '#F1F5F9',
     }}>
-      <Text style={{ fontSize: 32, fontWeight: '700', color: '#009688', marginBottom: 8 }}>
+      <View style={{
+        width: 64,
+        height: 64,
+        backgroundColor: '#E6FFFA',
+        borderRadius: 32,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 16,
+      }}>
+        <GamepadIcon size={32} color="#009688" strokeWidth={2} />
+      </View>
+      <Text style={{ 
+        fontSize: 36, 
+        fontWeight: '800', 
+        color: '#009688',
+        marginBottom: 6,
+      }}>
         {stats?.gamesPlayed || 0}
       </Text>
-      <Text style={{ fontSize: 16, color: '#6B7280', textAlign: 'center' }}>
+      <Text style={{ 
+        fontSize: 16, 
+        color: '#64748B', 
+        textAlign: 'center',
+        fontWeight: '500',
+      }}>
         Games Played
       </Text>
     </View>
