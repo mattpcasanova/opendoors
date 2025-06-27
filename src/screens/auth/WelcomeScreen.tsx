@@ -1,5 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { ArrowRight, Gamepad2, MapPin, Trophy } from 'lucide-react-native';
 import React, { useEffect, useRef } from 'react';
 import {
   Animated,
@@ -94,19 +94,19 @@ export default function WelcomeScreen() {
           <View style={styles.featuresContainer}>
             <View style={styles.featureItem}>
               <View style={styles.featureIcon}>
-                <Ionicons name="game-controller" size={24} color="white" />
+                <Gamepad2 size={24} color="white" />
               </View>
               <Text style={styles.featureText}>Play Games</Text>
             </View>
             <View style={styles.featureItem}>
               <View style={styles.featureIcon}>
-                <Ionicons name="trophy" size={24} color="white" />
+                <Trophy size={24} color="white" />
               </View>
               <Text style={styles.featureText}>Win Prizes</Text>
             </View>
             <View style={styles.featureItem}>
               <View style={styles.featureIcon}>
-                <Ionicons name="location" size={24} color="white" />
+                <MapPin size={24} color="white" />
               </View>
               <Text style={styles.featureText}>Local Deals</Text>
             </View>
@@ -123,7 +123,7 @@ export default function WelcomeScreen() {
               activeOpacity={0.9}
             >
               <Text style={styles.signInButtonText}>Sign In</Text>
-              <Ionicons name="arrow-forward" size={20} color="#0D9488" />
+              <ArrowRight size={20} color="#0D9488" />
             </TouchableOpacity>
 
             {/* Create Account Button */}
