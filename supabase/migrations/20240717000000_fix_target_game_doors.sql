@@ -1,5 +1,10 @@
--- Update Target game to have 5 doors instead of 3
--- First, let's update the active_games view to handle Target games specifically
+-- Update all Target games to have 5 doors
+UPDATE prizes
+SET doors = 5
+WHERE name ILIKE '%target%' 
+   OR description ILIKE '%target%';
+
+-- Update the active_games view to ensure Target games always have 5 doors
 CREATE OR REPLACE VIEW public.active_games AS
 SELECT 
     p.id,
@@ -17,13 +22,10 @@ SELECT
     s.name as company_name,
     s.logo_url as sponsor_logo_url,
     -- Add a doors field with special handling for Target games
-    COALESCE(
-        p.doors,
-        CASE 
-            WHEN p.name ILIKE '%target%' OR p.description ILIKE '%target%' THEN 5
-            ELSE 3
-        END
-    ) as doors,
+    CASE 
+        WHEN p.name ILIKE '%target%' OR p.description ILIKE '%target%' THEN 5
+        ELSE COALESCE(p.doors, 3)
+    END as doors,
     -- Add location fields (you may need to adjust these based on your schema)
     NULL as address,
     s.name as location_name,

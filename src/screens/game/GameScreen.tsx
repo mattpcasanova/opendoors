@@ -1,21 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useRef, useState } from 'react';
-import {
-    Animated,
-    Dimensions,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Animated, Dimensions, SafeAreaView, ScrollView, StyleSheet, Text, TextStyle, TouchableOpacity, View, ViewStyle } from 'react-native';
+import Door from '../../components/Door';
 
 interface GameStats {
   gamesPlayed: number;
   stayWins: number;
   switchWins: number;
 }
+
+type GameStage = 'selection' | 'montyReveal' | 'finalChoice' | 'result';
 
 interface Props {
   prizeName?: string;
@@ -25,8 +19,6 @@ interface Props {
   onGameComplete?: (won: boolean, switched: boolean) => void;
   onBack?: () => void;
 }
-
-type GameStage = 'selection' | 'montyReveal' | 'finalChoice' | 'result';
 
 const { width } = Dimensions.get('window');
 
@@ -40,20 +32,42 @@ export default function GameScreen({
 }: Props) {
   // Calculate door layout based on door count
   const getDoorLayout = () => {
-    switch (doorCount) {
-      case 3:
-        return { rows: [3], doorSize: 100 };
-      case 5:
-        return { rows: [3, 2], doorSize: 90 };
-      case 10:
-        return { rows: [5, 5], doorSize: 60 };
-      default:
-        return { rows: [3], doorSize: 100 };
-    }
+    console.log('🚪 Getting layout for door count:', doorCount);
+    const maxWidth = width - 40; // Account for container padding
+    const gap = 12; // Gap between doors
+
+    const layout = (() => {
+      switch (doorCount) {
+        case 3:
+          const size3 = Math.min(100, (maxWidth - gap * 2) / 3);
+          return { rows: [3], doorSize: size3 };
+        case 5:
+          const size5 = Math.min(90, (maxWidth - gap * 2) / 3); // Size based on first row (3 doors)
+          return { rows: [3, 2], doorSize: size5 };
+        case 10:
+          const size10 = Math.min(60, (maxWidth - gap * 4) / 5);
+          return { rows: [5, 5], doorSize: size10 };
+        default:
+          console.warn('⚠️ Using default layout for unexpected door count:', doorCount);
+          const sizeDefault = Math.min(100, (maxWidth - gap * 2) / 3);
+          return { rows: [3], doorSize: sizeDefault };
+      }
+    })();
+
+    console.log('📐 Calculated layout:', layout);
+    return layout;
   };
 
+  console.log('🎮 GameScreen received props:', {
+    prizeName,
+    prizeDescription,
+    locationName,
+    doorCount,
+    layout: getDoorLayout()
+  });
+  
   const layout = getDoorLayout();
-  const doorSize = Math.min((width - 40) / Math.max(...layout.rows) - 20, layout.doorSize);
+  const doorSize = layout.doorSize;
 
   console.log('🚪 Layout calculated:', layout);
   console.log('📏 Door size calculated:', doorSize);
@@ -87,6 +101,19 @@ export default function GameScreen({
   const [switchPickMode, setSwitchPickMode] = useState(false);
   const [availableSwitchDoors, setAvailableSwitchDoors] = useState<number[]>([]);
 
+  console.log('🎮 Game state:', {
+    doorCount,
+    layout,
+    doorSize,
+    gameStage,
+    selectedDoor,
+    revealedDoors,
+    prizeLocation,
+    switchedChoice,
+    switchPickMode,
+    availableSwitchDoors
+  });
+
   const getInstructions = (): string => {
     switch (gameStage) {
       case 'selection':
@@ -95,7 +122,7 @@ export default function GameScreen({
         if (doorCount === 3) {
           return `You chose Door ${selectedDoor}. Would you like to switch to the other unopened door?`;
         } else {
-          return `You chose Door ${selectedDoor}. Would you like to switch to one of the other unopened doors?`;
+          return `You chose Door ${selectedDoor}. I've revealed one goat. Would you like to switch to one of the other unopened doors?`;
         }
       case 'finalChoice':
         return `You ${switchedChoice ? 'switched to' : 'stayed with'} Door ${selectedDoor}. Click it to see what you won!`;
@@ -110,13 +137,8 @@ export default function GameScreen({
     if (gameStage === 'selection') {
       setSelectedDoor(doorNumber);
       
-      // For different door counts, reveal different numbers of doors
-      let doorsToReveal: number;
-      if (doorCount === 3) {
-        doorsToReveal = 1; // Traditional Monty Hall: reveal 1 door
-      } else {
-        doorsToReveal = 1; // For 5+ doors: also reveal only 1 door to make it harder
-      }
+      // Always reveal just 1 door to make the game more challenging
+      const doorsToReveal = 1;
       
       const availableToReveal = Array.from({ length: doorCount }, (_, i) => i + 1)
         .filter(num => num !== doorNumber && num !== prizeLocation);
@@ -132,19 +154,10 @@ export default function GameScreen({
         doorsToRevealList.forEach(door => openDoor(door));
         setGameStage('montyReveal');
       }, 1000);
-      
     } else if (gameStage === 'finalChoice' && doorNumber === selectedDoor) {
       // Final reveal
       const won = doorNumber === prizeLocation;
       openDoor(doorNumber);
-      
-      // Update statistics
-      setStats(prev => ({
-        ...prev,
-        gamesPlayed: prev.gamesPlayed + 1,
-        stayWins: switchedChoice ? prev.stayWins : prev.stayWins + (won ? 1 : 0),
-        switchWins: switchedChoice ? prev.switchWins + (won ? 1 : 0) : prev.switchWins
-      }));
       
       // Set result
       const message = won ? 
@@ -210,51 +223,7 @@ export default function GameScreen({
   const handleSwitchPick = (doorNumber: number) => {
     setSelectedDoor(doorNumber);
     setSwitchPickMode(false);
-    // Immediately open the door and show result, just like in 3-door games
-    // Final reveal
-    const won = doorNumber === prizeLocation;
-    openDoor(doorNumber);
-    // Update statistics
-    setStats(prev => ({
-      ...prev,
-      gamesPlayed: prev.gamesPlayed + 1,
-      stayWins: switchedChoice ? prev.stayWins : prev.stayWins + (won ? 1 : 0),
-      switchWins: switchedChoice ? prev.switchWins + (won ? 1 : 0) : prev.switchWins
-    }));
-    // Set result
-    const message = won ?
-      `🎉 Congratulations! You won the ${prizeName}!` :
-      '😔 Sorry! Better luck next time!';
-    setGameResult({ won, message });
-    setGameStage('result');
-    // Reveal all remaining doors after a delay
-    setTimeout(() => {
-      const allRemainingDoors: number[] = [];
-      for (let i = 1; i <= doorCount; i++) {
-        if (i !== doorNumber && !revealedDoors.includes(i)) {
-          allRemainingDoors.push(i);
-          openDoor(i);
-        }
-      }
-      // Update revealedDoors state to include all doors
-      setRevealedDoors(prev => [...prev, doorNumber, ...allRemainingDoors]);
-    }, 500);
-    // Call completion callback
-    setTimeout(() => {
-      onGameComplete?.(won, true);
-    }, 1500);
-  };
-
-  const resetGame = () => {
-    setGameStage('selection');
-    setSelectedDoor(null);
-    setRevealedDoors([]);
-    setSwitchedChoice(false);
-    setGameResult(null);
-    
-    // Reset door animations and states
-    doorAnimations.forEach(anim => anim.setValue(0));
-    doorStates.current = Array(doorCount).fill(false);
+    setGameStage('finalChoice');
   };
 
   const getDoorContent = (doorNumber: number): string => {
@@ -285,7 +254,7 @@ export default function GameScreen({
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: '#F8F9FA' }]}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#009688" />
         </TouchableOpacity>
@@ -295,141 +264,118 @@ export default function GameScreen({
 
       {/* Game Content */}
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-      <View style={styles.gameContainer}>
-        <Text style={styles.gameTitle}>{prizeName}</Text>
-        
-        <View style={styles.instructionsContainer}>
-          <Text style={styles.instructions}>{getInstructions()}</Text>
-        </View>
-        
-        {/* Doors */}
-        <View style={styles.doorsContainer}>
-          {layout.rows.map((doorsInRow, rowIndex) => (
-            <View key={rowIndex} style={styles.doorRow}>
-              {Array.from({ length: doorsInRow }, (_, colIndex) => {
-                const doorNumber = layout.rows.slice(0, rowIndex).reduce((sum, row) => sum + row, 0) + colIndex + 1;
-                const selectable = isSwitchSelectable(doorNumber);
-                return (
-                  <View key={doorNumber} style={styles.doorContainer}>
-                    <TouchableOpacity
-                      style={[
-                        styles.doorFrame,
-                        { 
-                          backgroundColor: getDoorColor(doorNumber),
-                          width: doorSize,
-                          height: doorSize * 1.5,
-                          borderColor: selectable ? '#009688' : (selectedDoor === doorNumber && gameStage !== 'selection' ? '#009688' : '#00796B'),
-                          borderWidth: selectable ? 4 : 3,
-                          shadowColor: selectable ? '#009688' : '#000',
-                          shadowOpacity: selectable ? 0.4 : 0.2,
-                        }
-                      ]}
-                      onPress={() => {
-                        if (switchPickMode && selectable) handleSwitchPick(doorNumber);
-                        else handleDoorClick(doorNumber);
-                      }}
-                      activeOpacity={0.8}
-                      disabled={switchPickMode ? !selectable : false}
-                    >
-                      <Animated.View
-                        style={[
-                          styles.door,
-                          {
-                            transform: [{
-                              rotateY: doorAnimations[doorNumber - 1].interpolate({
-                                inputRange: [0, 1],
-                                outputRange: ['0deg', '-90deg'],
-                              }),
-                            }],
-                            transformOrigin: 'left',
-                          },
-                        ]}
-                      >
-                        <View style={styles.doorKnob} />
-                      </Animated.View>
-                      
-                      <View style={styles.doorContent}>
-                        <Text style={[styles.doorContentText, { fontSize: doorSize * 0.3 }]}>
-                          {getDoorContent(doorNumber)}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                    <Text style={styles.doorLabel}>Door {doorNumber}</Text>
-                  </View>
-                );
-              })}
-            </View>
-          ))}
-        </View>
-        
-        {/* Buttons */}
-        <View style={styles.buttonsContainer}>
-          {gameStage === 'montyReveal' && !switchPickMode && (
-            <>
-              <TouchableOpacity
-                style={[styles.gameButton, styles.stayButton]}
-                onPress={() => finalChoice(false)}
-              >
-                <Text style={styles.buttonText}>Stay with Choice</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.gameButton, styles.switchButton]}
-                onPress={() => finalChoice(true)}
-              >
-                <Text style={styles.buttonText}>Switch Doors</Text>
-              </TouchableOpacity>
-            </>
-          )}
-          {gameStage === 'montyReveal' && switchPickMode && (
-            <View style={{ width: '100%', alignItems: 'center', flex: 1 }}>
-              <Text style={{ fontSize: 16, color: '#333', marginBottom: 16, fontWeight: '600' }}>
-                Pick a door to switch to:
-              </Text>
-              <ScrollView
-                style={{ maxHeight: 220, width: '100%' }}
-                contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 12 }}
-                showsVerticalScrollIndicator={false}
-              >
-                {availableSwitchDoors.map(doorNum => (
-                  <TouchableOpacity
-                    key={doorNum}
-                    style={{
-                      backgroundColor: '#009688',
-                      borderRadius: 12,
-                      paddingVertical: 18,
-                      paddingHorizontal: 28,
-                      margin: 8,
-                      shadowColor: '#009688',
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.18,
-                      shadowRadius: 6,
-                      elevation: 4,
-                    }}
-                    onPress={() => handleSwitchPick(doorNum)}
-                  >
-                    <Text style={{ color: 'white', fontSize: 18, fontWeight: '700' }}>Door {doorNum}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          )}
-        </View>
-        
-        {/* Result Message */}
-        {gameResult && (
-          <View style={[
-            styles.resultMessage,
-            gameResult.won ? styles.success : styles.failure
-          ]}>
-            <Text style={[
-              styles.resultText,
-              { color: gameResult.won ? '#4CAF50' : '#F44336' }
-            ]}>
-              {gameResult.message}
-            </Text>
+        <View style={styles.gameContainer}>
+          <Text style={styles.gameTitle}>{prizeName}</Text>
+          
+          <View style={styles.instructionsContainer}>
+            <Text style={styles.instructions}>{getInstructions()}</Text>
           </View>
-        )}
-      </View>
+          
+          {/* Doors */}
+          <View style={styles.doorsContainer}>
+            {layout.rows.map((doorsInRow, rowIndex) => (
+              <View key={rowIndex} style={[
+                styles.doorRow,
+                rowIndex === layout.rows.length - 1 && { marginBottom: 0 }
+              ]}>
+                {Array.from({ length: doorsInRow }, (_, colIndex) => {
+                  const doorNumber = layout.rows.slice(0, rowIndex).reduce((sum, row) => sum + row, 0) + colIndex + 1;
+                  const selectable = isSwitchSelectable(doorNumber);
+                  return (
+                    <View key={doorNumber} style={[
+                      styles.doorContainer,
+                      doorsInRow === 2 && { maxWidth: '40%' } // Adjust max width for 2-door row
+                    ]}>
+                      <Door
+                        doorNumber={doorNumber}
+                        isOpen={revealedDoors.includes(doorNumber)}
+                        content={getDoorContent(doorNumber)}
+                        isSelected={selectedDoor === doorNumber}
+                        onPress={() => {
+                          if (switchPickMode && selectable) handleSwitchPick(doorNumber);
+                          else handleDoorClick(doorNumber);
+                        }}
+                        disabled={switchPickMode ? !selectable : false}
+                        width={doorSize}
+                        height={doorSize * 1.5}
+                      />
+                    </View>
+                  );
+                })}
+              </View>
+            ))}
+          </View>
+          
+          {/* Buttons */}
+          <View style={styles.buttonsContainer}>
+            {gameStage === 'montyReveal' && !switchPickMode && (
+              <>
+                <TouchableOpacity
+                  style={[styles.gameButton, styles.stayButton]}
+                  onPress={() => finalChoice(false)}
+                >
+                  <Text style={styles.buttonText}>Stay with Choice</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.gameButton, styles.switchButton]}
+                  onPress={() => finalChoice(true)}
+                >
+                  <Text style={styles.buttonText}>Switch Doors</Text>
+                </TouchableOpacity>
+              </>
+            )}
+            {gameStage === 'montyReveal' && switchPickMode && (
+              <View style={{ width: '100%', alignItems: 'center', flex: 1 }}>
+                <Text style={{ fontSize: 16, color: '#333', marginBottom: 16, fontWeight: '600' }}>
+                  Pick a door to switch to:
+                </Text>
+                <ScrollView
+                  style={{ maxHeight: 220, width: '100%' }}
+                  contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 12 }}
+                  showsVerticalScrollIndicator={false}
+                >
+                  {availableSwitchDoors.map(doorNum => (
+                    <TouchableOpacity
+                      key={doorNum}
+                      style={{
+                        backgroundColor: '#009688',
+                        borderRadius: 12,
+                        paddingVertical: 18,
+                        paddingHorizontal: 28,
+                        margin: 8,
+                        shadowColor: '#009688',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.18,
+                        shadowRadius: 6,
+                        elevation: 4,
+                      }}
+                      onPress={() => handleSwitchPick(doorNum)}
+                    >
+                      <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
+                        Door {doorNum}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+          </View>
+          
+          {/* Result Message */}
+          {gameResult && (
+            <View style={[
+              styles.resultMessage,
+              gameResult.won ? styles.success : styles.failure
+            ]}>
+              <Text style={[
+                styles.resultText,
+                { color: gameResult.won ? '#4CAF50' : '#F44336' }
+              ]}>
+                {gameResult.message}
+              </Text>
+            </View>
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -439,42 +385,38 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
-  },
+  } as ViewStyle,
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'space-between' as const,
     paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: 'white',
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
+    borderBottomColor: '#E1E1E1',
+  } as ViewStyle,
   backButton: {
-    padding: 5,
-  },
+    padding: 8,
+  } as ViewStyle,
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     color: '#333',
-    flex: 1,
-    textAlign: 'center',
-  },
+  } as TextStyle,
   headerSpacer: {
-    width: 34, // Same width as back button to center title
-  },
+    width: 40,
+  } as ViewStyle,
   gameContainer: {
     flex: 1,
     padding: 20,
-    alignItems: 'center',
-  },
+  } as ViewStyle,
   gameTitle: {
     fontSize: 24,
-    fontWeight: '700',
-    color: '#009688',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
+    fontWeight: '700' as const,
+    color: '#333',
+    textAlign: 'center' as const,
+    marginBottom: 16,
+  } as TextStyle,
   instructionsContainer: {
     backgroundColor: '#F8F9FA',
     padding: 16,
@@ -482,132 +424,79 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: '#009688',
     marginBottom: 30,
-    width: '100%',
-  },
+  } as ViewStyle,
   instructions: {
-    fontSize: 16,
-    color: '#333',
-    textAlign: 'center',
-  },
-  doorsContainer: {
-    alignItems: 'center',
-    marginVertical: 25,
-  },
-  doorRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 12,
-    marginBottom: 15,
-  },
-  doorContainer: {
-    alignItems: 'center',
-  },
-  doorFrame: {
-    borderRadius: 12,
-    position: 'relative',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  door: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#8D6E63',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-    paddingRight: 15,
-    transformOrigin: 'left center',
-  },
-  doorKnob: {
-    width: 12,
-    height: 12,
-    backgroundColor: '#FFB74D',
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#F57C00',
-  },
-  doorContent: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: -1,
-  },
-  doorContentText: {
-    // fontSize is now set dynamically based on door size
-  },
-  doorLabel: {
-    marginTop: 10,
     fontSize: 14,
-    fontWeight: '600',
     color: '#333',
-  },
+    textAlign: 'center' as const,
+  } as TextStyle,
+  doorsContainer: {
+    alignItems: 'center' as const,
+    marginVertical: 25,
+    width: '100%',
+  } as ViewStyle,
+  doorRow: {
+    flexDirection: 'row' as const,
+    justifyContent: 'center' as const,
+    gap: 12,
+    marginBottom: 20,
+    width: '100%',
+    paddingHorizontal: 10,
+  } as ViewStyle,
+  doorContainer: {
+    alignItems: 'center' as const,
+    flex: 1,
+    maxWidth: '33.33%',
+  } as ViewStyle,
   buttonsContainer: {
-    flexDirection: 'row',
-    gap: 15,
-    marginVertical: 20,
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
+    flexDirection: 'row' as const,
+    justifyContent: 'center' as const,
+    gap: 16,
+    marginTop: 30,
+  } as ViewStyle,
   gameButton: {
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 25,
     minWidth: 120,
-    alignItems: 'center',
-  },
-  switchButton: {
-    backgroundColor: '#009688',
-    marginLeft: 0,
-    marginRight: 0,
-    shadowColor: '#009688',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
-    elevation: 4,
-  },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  } as ViewStyle,
   stayButton: {
     backgroundColor: '#FF9800',
-    marginLeft: 0,
-    marginRight: 0,
-    shadowColor: '#FF9800',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
-    elevation: 4,
-  },
+  } as ViewStyle,
+  switchButton: {
+    backgroundColor: '#3F51B5',
+  } as ViewStyle,
   buttonText: {
     color: 'white',
     fontSize: 14,
-    fontWeight: '600',
-  },
+    fontWeight: '600' as const,
+    textAlign: 'center' as const,
+  } as TextStyle,
   resultMessage: {
     padding: 20,
     borderRadius: 12,
     marginVertical: 20,
     width: '100%',
     alignItems: 'center',
-  },
+  } as ViewStyle,
   success: {
     backgroundColor: 'rgba(76, 175, 80, 0.1)',
     borderWidth: 2,
     borderColor: '#4CAF50',
-  },
+  } as ViewStyle,
   failure: {
     backgroundColor: 'rgba(244, 67, 54, 0.1)',
     borderWidth: 2,
     borderColor: '#F44336',
-  },
+  } as ViewStyle,
   resultText: {
     fontSize: 18,
     fontWeight: '600',
     textAlign: 'center',
-  },
+  } as TextStyle,
 });

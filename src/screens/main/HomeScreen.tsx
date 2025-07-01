@@ -22,10 +22,10 @@ import { useAuth } from '../../hooks/useAuth';
 import { useLocation } from '../../hooks/useLocation';
 import { gamesService, Prize } from '../../services/gameLogic/games';
 import { UserProgress, userProgressService } from '../../services/userProgressService';
-import type { MainStackParamList } from '../../types/navigation';
+import type { MainTabParamList } from '../../types/navigation';
 import GameScreen from '../game/GameScreen';
 
-type MainStackNavigationProp = NativeStackNavigationProp<MainStackParamList>;
+type MainStackNavigationProp = NativeStackNavigationProp<MainTabParamList>;
 
 interface NavItemProps {
   icon: string;
@@ -419,7 +419,45 @@ export default function HomeScreen() {
       // return;
     }
     
-    // Navigate to game screen instead of showing alert
+    // Use featured game if available, otherwise use fallback game
+    console.log('🎮 Featured game data:', {
+      featuredGame: JSON.stringify(featuredGame, null, 2),
+      usingFeaturedGame: !!featuredGame
+    });
+
+    let dailyGame = featuredGame;
+    
+    // If we have a featured game that's a Target game, ensure it has 5 doors
+    if (dailyGame && (
+      dailyGame.name.toLowerCase().includes('target') ||
+      dailyGame.description.toLowerCase().includes('target') ||
+      dailyGame.location_name?.toLowerCase().includes('target')
+    )) {
+      dailyGame = {
+        ...dailyGame,
+        doors: 5
+      };
+    }
+    
+    // If no featured game, use the fallback Target game
+    if (!dailyGame) {
+      dailyGame = {
+        id: 'target-gift-card',
+        name: 'Target Gift Card',
+        description: 'Win a $25 gift card',
+        value: 25,
+        prize_type: 'gift_card',
+        doors: 5,
+        created_at: new Date().toISOString(),
+        location_name: 'Target',
+        address: 'Online',
+        stock_quantity: 10
+      };
+    }
+    
+    console.log('🎮 Using daily game:', JSON.stringify(dailyGame, null, 2));
+    
+    setCurrentGame(dailyGame);
     setShowGameScreen(true);
   };
 
@@ -494,12 +532,30 @@ export default function HomeScreen() {
 
   // If showing game screen, render that instead
   if (showGameScreen && currentGame) {
+    console.log('🎮 Starting game with:', {
+      name: currentGame.name,
+      description: currentGame.description,
+      locationName: currentGame.location_name,
+      doorCount:
+        currentGame.name.toLowerCase().includes('target') || 
+        currentGame.description.toLowerCase().includes('target') ||
+        currentGame.location_name?.toLowerCase().includes('target')
+          ? 5
+          : typeof currentGame.doors === 'number' ? currentGame.doors : 3,
+      currentGame: JSON.stringify(currentGame, null, 2)
+    });
     return (
       <GameScreen
         prizeName={currentGame.name}
         prizeDescription={currentGame.description}
         locationName={currentGame.location_name || 'Game Store'}
-        doorCount={currentGame.doors || 3}
+        doorCount={
+          currentGame.name.toLowerCase().includes('target') || 
+          currentGame.description.toLowerCase().includes('target') ||
+          currentGame.location_name?.toLowerCase().includes('target')
+            ? 5
+            : typeof currentGame.doors === 'number' ? currentGame.doors : 3
+        }
         onGameComplete={handleGameComplete}
         onBack={handleBackFromGame}
       />
@@ -628,7 +684,10 @@ export default function HomeScreen() {
                 value: 25,
                 prize_type: 'gift_card',
                 doors: 5,
-                created_at: new Date().toISOString()
+                created_at: new Date().toISOString(),
+                location_name: 'Target',
+                address: 'Online',
+                stock_quantity: 10
               })}
             />
           </>

@@ -1,5 +1,6 @@
 import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { Reward } from '../components/main/RewardCard';
 
 export type AuthStackParamList = {
   Welcome: undefined;
@@ -8,9 +9,8 @@ export type AuthStackParamList = {
   ForgotPassword: undefined;
 };
 
-export type MainStackParamList = {
+export type MainTabParamList = {
   Home: undefined;
-  Game: { gameType: string; gameTitle: string };
   Rewards: undefined;
   History: undefined;
   Profile: undefined;
@@ -20,12 +20,13 @@ export type RootStackParamList = {
   AuthStack: undefined;
   MainStack: undefined;
   Survey: undefined;
-  GameScreen: undefined;
+  MainTabs: undefined;
+  PrizeDetails: { reward: Reward };
 };
 
 export type AuthNavigationProp = NativeStackNavigationProp<AuthStackParamList>;
-export type MainNavigationProp = NativeStackNavigationProp<MainStackParamList>;
+export type MainTabNavigationProp = NativeStackNavigationProp<MainTabParamList>;
 export type RootNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 // Game Flow
-export type GameScreenRouteProp = RouteProp<MainStackParamList, 'Game'>;
+export type GameScreenRouteProp = RouteProp<RootStackParamList, 'PrizeDetails'>;

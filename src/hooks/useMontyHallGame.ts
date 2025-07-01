@@ -1,119 +1,114 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
-export interface GameState {
-  stage: 'selection' | 'montyReveal' | 'finalChoice' | 'result';
-  selectedDoor: number | null;
-  revealedDoor: number | null;
-  prizeLocation: number;
-  switchedChoice: boolean;
-  gameResult: 'win' | 'lose' | null;
+type GameState = 'initial' | 'reveal' | 'decision' | 'final';
+
+export interface Door {
+  content: string;
+  isOpen: boolean;
+  isSelected: boolean;
 }
 
-export interface GameStats {
-  gamesPlayed: number;
-  stayWins: number;
-  switchWins: number;
+interface Props {
+  numDoors?: number;
 }
 
-export function useMontyHallGame() {
-  const [gameState, setGameState] = useState<GameState>({
-    stage: 'selection',
-    selectedDoor: null,
-    revealedDoor: null,
-    prizeLocation: Math.floor(Math.random() * 3) + 1,
-    switchedChoice: false,
-    gameResult: null,
-  });
-  
-  const [gameStats, setGameStats] = useState<GameStats>({
-    gamesPlayed: 0,
-    stayWins: 0,
-    switchWins: 0,
-  });
+export const useMontyHallGame = ({ numDoors = 3 }: Props = {}) => {
+  const [doors, setDoors] = useState<Door[]>(Array(numDoors).fill({
+    content: '🎁',
+    isOpen: false,
+    isSelected: false,
+  }));
+  const [gameState, setGameState] = useState<GameState>('initial');
+  const [winningDoorIndex, setWinningDoorIndex] = useState<number>(-1);
+  const [initialChoice, setInitialChoice] = useState<number>(-1);
+  const [revealedDoorIndices, setRevealedDoorIndices] = useState<number[]>([]);
 
-  const resetGame = () => {
-    setGameState({
-      stage: 'selection',
-      selectedDoor: null,
-      revealedDoor: null,
-      prizeLocation: Math.floor(Math.random() * 3) + 1,
-      switchedChoice: false,
-      gameResult: null,
-    });
-  };
+  const resetGame = useCallback(() => {
+    setDoors(Array(numDoors).fill({
+      content: '🎁',
+      isOpen: false,
+      isSelected: false,
+    }));
+    setGameState('initial');
+    setWinningDoorIndex(-1);
+    setInitialChoice(-1);
+    setRevealedDoorIndices([]);
+  }, [numDoors]);
 
-  const handleDoorClick = (doorNumber: number) => {
-    if (gameState.stage === 'selection') {
-      const newGameState = { ...gameState };
-      newGameState.selectedDoor = doorNumber;
+  const initializeGame = useCallback(() => {
+    // Set winning door
+    const winningDoor = Math.floor(Math.random() * numDoors);
+    setWinningDoorIndex(winningDoor);
+    
+    // Update door contents
+    setDoors(prev => prev.map((door, index) => ({
+      ...door,
+      content: index === winningDoor ? '🏆' : '❌'
+    })));
+  }, [numDoors]);
+
+  const handleDoorClick = useCallback((doorIndex: number) => {
+    if (gameState === 'initial') {
+      // First door selection
+      setInitialChoice(doorIndex);
+      setDoors(prev => prev.map((door, i) => ({
+        ...door,
+        isSelected: i === doorIndex
+      })));
       
-      let revealedDoor;
-      do {
-        revealedDoor = Math.floor(Math.random() * 3) + 1;
-      } while (revealedDoor === doorNumber || revealedDoor === gameState.prizeLocation);
+      // Find doors to reveal (not the selected one and not the winning one)
+      const availableDoors = Array.from({ length: numDoors }, (_, i) => i)
+        .filter(i => i !== doorIndex && i !== winningDoorIndex);
       
-      newGameState.revealedDoor = revealedDoor;
-      newGameState.stage = 'montyReveal';
+      // Reveal all but one door (leaving the winning door and one other door)
+      const numDoorsToReveal = numDoors - 2; // Leave selected door and one other
+      const doorsToReveal: number[] = [];
       
-      setGameState(newGameState);
-    } else if (gameState.stage === 'finalChoice' && doorNumber === gameState.selectedDoor) {
-      const won = doorNumber === gameState.prizeLocation;
-      const newGameState = { ...gameState };
-      newGameState.stage = 'result';
-      newGameState.gameResult = won ? 'win' : 'lose';
-      
-      const newStats = { ...gameStats };
-      newStats.gamesPlayed++;
-      if (won) {
-        if (gameState.switchedChoice) {
-          newStats.switchWins++;
-        } else {
-          newStats.stayWins++;
-        }
+      // Randomly select doors to reveal
+      while (doorsToReveal.length < numDoorsToReveal) {
+        const randomIndex = Math.floor(Math.random() * availableDoors.length);
+        const doorToReveal = availableDoors[randomIndex];
+        doorsToReveal.push(doorToReveal);
+        availableDoors.splice(randomIndex, 1);
       }
       
-      setGameState(newGameState);
-      setGameStats(newStats);
+      setRevealedDoorIndices(doorsToReveal);
+      setDoors(prev => prev.map((door, i) => ({
+        ...door,
+        isOpen: doorsToReveal.includes(i)
+      })));
+      
+      setGameState('decision');
+    } else if (gameState === 'decision') {
+      // Handle door click during decision phase
+      if (revealedDoorIndices.includes(doorIndex)) {
+        return; // Can't select a revealed door
+      }
+      
+      // Update selection and open all doors immediately
+      setDoors(prev => prev.map((door, i) => ({
+        ...door,
+        isOpen: true, // Open all doors
+        isSelected: i === doorIndex // Update selection to the clicked door
+      })));
+      
+      // Move to final state immediately
+      setGameState('final');
     }
-  };
+  }, [gameState, winningDoorIndex, revealedDoorIndices, numDoors]);
 
-  const handleDecision = (shouldSwitch: boolean) => {
-    const newGameState = { ...gameState };
-    newGameState.switchedChoice = shouldSwitch;
-    
-    if (shouldSwitch) {
-      const newChoice = [1, 2, 3].find(num => 
-        num !== gameState.selectedDoor && num !== gameState.revealedDoor);
-      newGameState.selectedDoor = newChoice!;
-    }
-    
-    newGameState.stage = 'finalChoice';
-    setGameState(newGameState);
-  };
-
-  const getInstructions = () => {
-    switch (gameState.stage) {
-      case 'selection':
-        return 'Choose a door to start your journey';
-      case 'montyReveal':
-        return `You chose Door ${gameState.selectedDoor}. Would you like to switch to the other unopened door?`;
-      case 'finalChoice':
-        return `You ${gameState.switchedChoice ? 'switched to' : 'stayed with'} Door ${gameState.selectedDoor}. Click it to see what you won!`;
-      case 'result':
-        return gameState.gameResult === 'win' 
-          ? '🎉 Congratulations! You won the Chick-fil-A Sandwich!' 
-          : '😔 Sorry! Better luck next time!';
-      default:
-        return '';
-    }
-  };
+  const getResult = useCallback(() => {
+    if (gameState !== 'final') return null;
+    const finalChoice = doors.findIndex(door => door.isSelected);
+    return finalChoice === winningDoorIndex;
+  }, [doors, gameState, winningDoorIndex]);
 
   return {
+    doors,
     gameState,
-    gameStats,
     handleDoorClick,
-    handleDecision,
+    initializeGame,
     resetGame,
-    getInstructions
+    getResult,
   };
-}
+};

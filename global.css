@@ -1,3 +1,89 @@
 @tailwind base;
 @tailwind components;
-@tailwind utilities; 
+@tailwind utilities;
+
+/* Custom cursor rules */
+@layer utilities {
+  /* Interactive elements */
+  .cursor-interactive {
+    @apply cursor-pointer;
+  }
+
+  /* Game elements */
+  .cursor-game {
+    @apply cursor-pointer;
+  }
+
+  /* Disabled states */
+  .cursor-disabled {
+    @apply cursor-not-allowed;
+  }
+
+  /* Text selection */
+  .cursor-text-select {
+    @apply cursor-text;
+  }
+
+  /* Draggable elements */
+  .cursor-drag {
+    @apply cursor-grab;
+  }
+  .cursor-dragging {
+    @apply cursor-grabbing;
+  }
+
+  /* Loading states */
+  .cursor-loading {
+    @apply cursor-wait;
+  }
+
+  /* Help elements */
+  .cursor-help {
+    @apply cursor-help;
+  }
+
+  /* Resizable elements */
+  .cursor-resize-ns {
+    @apply cursor-ns-resize;
+  }
+  .cursor-resize-ew {
+    @apply cursor-ew-resize;
+  }
+}
+
+/* Base element cursor styles */
+@layer base {
+  /* Default cursor */
+  html, body {
+    @apply cursor-default;
+  }
+
+  /* Interactive elements */
+  button, 
+  [role="button"],
+  .touchable-opacity,
+  a {
+    @apply cursor-pointer;
+  }
+
+  /* Form elements */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  textarea {
+    @apply cursor-text;
+  }
+
+  /* Disabled elements */
+  button:disabled,
+  [role="button"][aria-disabled="true"],
+  .touchable-opacity[aria-disabled="true"] {
+    @apply cursor-not-allowed;
+  }
+
+  /* Loading states */
+  button[aria-busy="true"],
+  [role="button"][aria-busy="true"] {
+    @apply cursor-wait;
+  }
+} 

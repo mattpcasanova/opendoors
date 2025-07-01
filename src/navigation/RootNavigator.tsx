@@ -7,6 +7,7 @@ import { RootStackParamList } from '../types/navigation';
 
 // Navigators
 import SurveyScreen from '../screens/auth/SurveyScreen';
+import PrizeDetailsScreen from '../screens/rewards/PrizeDetailsScreen';
 import AuthNavigator from './AuthNavigator';
 import MainTabNavigator from './MainTabNavigator';
 
@@ -93,6 +94,11 @@ export default function RootNavigator() {
   }
 
   // If user is authenticated and has completed survey, show main app
-  console.log('🔍 User authenticated and survey completed, showing MainTabNavigator');
-  return <MainTabNavigator />;
+  console.log('🔍 User authenticated and survey completed, showing MainTabNavigator and other screens');
+  return (
+    <RootStack.Navigator screenOptions={{ headerShown: false }}>
+      <RootStack.Screen name="MainTabs" component={MainTabNavigator} />
+      <RootStack.Screen name="PrizeDetails" component={PrizeDetailsScreen} />
+    </RootStack.Navigator>
+  );
 }
