@@ -26,16 +26,22 @@ export default function MontyHallGame({ onGameComplete, numDoors = 3 }: Props) {
   }, [gameState, getResult, doors, onGameComplete]);
 
   const handleDoorPress = useCallback((doorIndex: number) => {
-    // Prevent multiple rapid clicks
+    // Prevent multiple rapid clicks during reveal phase
+    if (gameState === 'reveal') {
+      return;
+    }
+    
     requestAnimationFrame(() => {
       handleDoorClick(doorIndex);
     });
-  }, [handleDoorClick]);
+  }, [handleDoorClick, gameState]);
 
   const getMessage = () => {
     switch (gameState) {
       case 'initial':
         return 'Choose a door to start!';
+      case 'reveal':
+        return 'Watch as some doors are revealed...';
       case 'decision':
         return 'Would you like to switch your choice? Click any unopened door.';
       case 'final':
@@ -44,6 +50,13 @@ export default function MontyHallGame({ onGameComplete, numDoors = 3 }: Props) {
       default:
         return '';
     }
+  };
+
+  const isDoorDisabled = (doorIndex: number) => {
+    if (gameState === 'final') return true;
+    if (gameState === 'reveal') return true;
+    if (gameState === 'decision' && doors[doorIndex].isOpen) return true;
+    return false;
   };
 
   return (
@@ -64,7 +77,7 @@ export default function MontyHallGame({ onGameComplete, numDoors = 3 }: Props) {
               content={door.content}
               isSelected={door.isSelected}
               onPress={() => handleDoorPress(index)}
-              disabled={gameState === 'final' || (gameState === 'decision' && door.isOpen)}
+              disabled={isDoorDisabled(index)}
             />
           ))}
         </View>
@@ -93,6 +106,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     textAlign: 'center',
     color: '#333',
+    minHeight: 25, // Prevent layout jump during state changes
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -105,10 +119,10 @@ const styles = StyleSheet.create({
   },
   resetButton: {
     backgroundColor: '#009688',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
     borderRadius: 8,
     marginTop: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
   },
   resetButtonText: {
     color: 'white',

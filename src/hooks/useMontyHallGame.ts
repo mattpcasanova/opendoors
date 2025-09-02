@@ -47,6 +47,17 @@ export const useMontyHallGame = ({ numDoors = 3 }: Props = {}) => {
     })));
   }, [numDoors]);
 
+  // Enhanced door opening with staggered animation
+  const openDoorsWithDelay = useCallback((doorIndices: number[], delay: number = 200) => {
+    doorIndices.forEach((doorIndex, i) => {
+      setTimeout(() => {
+        setDoors(prev => prev.map((door, idx) => 
+          idx === doorIndex ? { ...door, isOpen: true } : door
+        ));
+      }, i * delay);
+    });
+  }, []);
+
   const handleDoorClick = useCallback((doorIndex: number) => {
     if (gameState === 'initial') {
       // First door selection
@@ -73,29 +84,40 @@ export const useMontyHallGame = ({ numDoors = 3 }: Props = {}) => {
       }
       
       setRevealedDoorIndices(doorsToReveal);
-      setDoors(prev => prev.map((door, i) => ({
-        ...door,
-        isOpen: doorsToReveal.includes(i)
-      })));
       
-      setGameState('decision');
+      // Change to reveal state first
+      setGameState('reveal');
+      
+      // Open doors with staggered animation for more natural feel
+      openDoorsWithDelay(doorsToReveal, 250);
+      
+      // Move to decision state after all doors are revealed
+      setTimeout(() => {
+        setGameState('decision');
+      }, doorsToReveal.length * 250 + 300);
+      
     } else if (gameState === 'decision') {
       // Handle door click during decision phase
       if (revealedDoorIndices.includes(doorIndex)) {
         return; // Can't select a revealed door
       }
       
-      // Update selection and open all doors immediately
+      // Update selection first
       setDoors(prev => prev.map((door, i) => ({
         ...door,
-        isOpen: true, // Open all doors
-        isSelected: i === doorIndex // Update selection to the clicked door
+        isSelected: i === doorIndex
       })));
       
-      // Move to final state immediately
+      // Move to final state
       setGameState('final');
+      
+      // Open remaining doors with staggered animation
+      const remainingDoors = Array.from({ length: numDoors }, (_, i) => i)
+        .filter(i => !revealedDoorIndices.includes(i) && !doors[i].isOpen);
+      
+      openDoorsWithDelay(remainingDoors, 300);
     }
-  }, [gameState, winningDoorIndex, revealedDoorIndices, numDoors]);
+  }, [gameState, winningDoorIndex, revealedDoorIndices, numDoors, doors, openDoorsWithDelay]);
 
   const getResult = useCallback(() => {
     if (gameState !== 'final') return null;
