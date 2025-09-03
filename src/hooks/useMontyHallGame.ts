@@ -6,6 +6,7 @@ export interface Door {
   content: string;
   isOpen: boolean;
   isSelected: boolean;
+  isWinningDoor?: boolean;
 }
 
 interface Props {
@@ -13,22 +14,24 @@ interface Props {
 }
 
 export const useMontyHallGame = ({ numDoors = 3 }: Props = {}) => {
-  const [doors, setDoors] = useState<Door[]>(Array(numDoors).fill({
+  const [doors, setDoors] = useState<Door[]>(Array.from({ length: numDoors }, () => ({
     content: '🎁',
     isOpen: false,
     isSelected: false,
-  }));
+    isWinningDoor: false,
+  })));
   const [gameState, setGameState] = useState<GameState>('initial');
   const [winningDoorIndex, setWinningDoorIndex] = useState<number>(-1);
   const [initialChoice, setInitialChoice] = useState<number>(-1);
   const [revealedDoorIndices, setRevealedDoorIndices] = useState<number[]>([]);
 
   const resetGame = useCallback(() => {
-    setDoors(Array(numDoors).fill({
+    setDoors(Array.from({ length: numDoors }, () => ({
       content: '🎁',
       isOpen: false,
       isSelected: false,
-    }));
+      isWinningDoor: false,
+    })));
     setGameState('initial');
     setWinningDoorIndex(-1);
     setInitialChoice(-1);
@@ -40,10 +43,11 @@ export const useMontyHallGame = ({ numDoors = 3 }: Props = {}) => {
     const winningDoor = Math.floor(Math.random() * numDoors);
     setWinningDoorIndex(winningDoor);
     
-    // Update door contents
+    // Update door contents and mark winning door
     setDoors(prev => prev.map((door, index) => ({
       ...door,
-      content: index === winningDoor ? '🏆' : '❌'
+      content: index === winningDoor ? '🏆' : '❌',
+      isWinningDoor: index === winningDoor
     })));
   }, [numDoors]);
 

@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
 import { Animated, Text, TouchableOpacity, View } from 'react-native';
+import { soundService } from '../services/soundService';
+import SparkleEffect from './SparkleParticles';
 
 interface Props {
   doorNumber: number;
@@ -8,17 +10,45 @@ interface Props {
   isSelected: boolean;
   onPress: () => void;
   disabled: boolean;
+  isWinningDoor?: boolean;
 }
 
-export default function Door({ doorNumber, isOpen, content, isSelected, onPress, disabled }: Props) {
+export default function Door({ doorNumber, isOpen, content, isSelected, onPress, disabled, isWinningDoor = false }: Props) {
   const openAnim = React.useRef(new Animated.Value(0)).current;
   const contentAnim = React.useRef(new Animated.Value(0)).current;
   const doorShakeAnim = React.useRef(new Animated.Value(0)).current;
+  const selectionGlowAnim = React.useRef(new Animated.Value(0)).current;
+  const celebrationAnim = React.useRef(new Animated.Value(0)).current;
   const [isOpening, setIsOpening] = React.useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setIsOpening(true);
+      soundService.playDoorCreak();
+      
+      // Play appropriate sound based on content
+      if (isWinningDoor) {
+        soundService.playWinningChime();
+        // Start celebration animation for winning door
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(celebrationAnim, {
+              toValue: 1,
+              duration: 800,
+              useNativeDriver: true,
+            }),
+            Animated.timing(celebrationAnim, {
+              toValue: 0,
+              duration: 800,
+              useNativeDriver: true,
+            }),
+          ]),
+          { iterations: 3 }
+        ).start();
+      } else {
+        soundService.playLosingDoor();
+      }
+
       // Enhanced door opening sequence
       Animated.sequence([
         // Small shake before opening (reduced intensity)
@@ -46,14 +76,42 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
       openAnim.setValue(0);
       contentAnim.setValue(0);
       doorShakeAnim.setValue(0);
+      celebrationAnim.setValue(0);
       setIsOpening(false);
     }
-  }, [isOpen]);
+  }, [isOpen, isWinningDoor]);
+
+  // Handle selection glow
+  useEffect(() => {
+    Animated.spring(selectionGlowAnim, {
+      toValue: isSelected ? 1 : 0,
+      damping: 12,
+      stiffness: 100,
+      useNativeDriver: true,
+    }).start();
+  }, [isSelected]);
 
   // Door shake effect (reduced intensity)
   const shakeRotation = doorShakeAnim.interpolate({
     inputRange: [0, 0.25, 0.5, 0.75, 1],
     outputRange: ['0deg', '-1deg', '1deg', '-0.5deg', '0deg']
+  });
+
+  // Selection glow effect
+  const selectionGlow = selectionGlowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1]
+  });
+
+  // Celebration effect for winning doors
+  const celebrationScale = celebrationAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.2]
+  });
+
+  const celebrationGlow = celebrationAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1]
   });
 
   // Enhanced 3D depth effect
@@ -92,10 +150,49 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
             })
           }]
         }}>
-          <Text style={{ fontSize: 48 }}>{content}</Text>
-        </Animated.View>
+                      <Text style={{ fontSize: 48 }}>{content}</Text>
+          </Animated.View>
 
-        {/* Door */}
+          {/* Selection Glow Effect - only show when door is closed and selected */}
+          {isSelected && !isOpen && (
+            <Animated.View style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              borderRadius: 12,
+              borderWidth: 6,
+              borderColor: '#FFD700',
+              opacity: selectionGlow,
+              shadowColor: '#FFD700',
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 1,
+              shadowRadius: 12,
+              elevation: 15,
+            }} />
+          )}
+
+          {/* Celebration Effect for Winning Doors */}
+          {isWinningDoor && isOpen && (
+            <Animated.View style={{
+              position: 'absolute',
+              width: '120%',
+              height: '120%',
+              top: '-10%',
+              left: '-10%',
+              borderRadius: 16,
+              borderWidth: 8,
+              borderColor: '#FFD700',
+              opacity: celebrationGlow,
+              shadowColor: '#FFD700',
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 1,
+              shadowRadius: 20,
+              elevation: 20,
+              transform: [{ scale: celebrationScale }],
+            }} />
+          )}
+
+          {/* Door */}
         <Animated.View style={{
           position: 'absolute',
           width: '100%',
@@ -184,10 +281,21 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
             height: '100%',
             backgroundColor: 'transparent',
           }}
-          onPress={onPress}
-          disabled={disabled}
-        />
-      </View>
+                      onPress={() => {
+              soundService.playDoorClick();
+              onPress();
+            }}
+            disabled={disabled}
+          />
+
+          {/* Sparkle Effect for Winning Doors */}
+          <SparkleEffect 
+            isActive={isWinningDoor && isOpen}
+            particleCount={12}
+            duration={1500}
+            size={6}
+          />
+        </View>
       <Text style={{ 
         marginTop: 8, 
         fontSize: 14, 

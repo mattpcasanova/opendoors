@@ -78,6 +78,7 @@ export default function MontyHallGame({ onGameComplete, numDoors = 3 }: Props) {
               isSelected={door.isSelected}
               onPress={() => handleDoorPress(index)}
               disabled={isDoorDisabled(index)}
+              isWinningDoor={door.isWinningDoor}
             />
           ))}
         </View>
