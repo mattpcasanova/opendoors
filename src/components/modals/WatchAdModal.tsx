@@ -39,12 +39,7 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
     }
   }, [visible]);
 
-  useEffect(() => {
-    if (timeRemaining === 0 && isWatching) {
-      setIsWatching(false);
-      setCanClose(true);
-    }
-  }, [timeRemaining, isWatching]);
+  // Remove this useEffect - it was causing the modal to reset
 
   const startAd = () => {
     setIsWatching(true);
