@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     SafeAreaView,
     ScrollView,
@@ -12,21 +12,40 @@ import {
 } from 'react-native';
 import EarnRewardModal from '../../components/modals/EarnRewardModal';
 import WatchAdModal from '../../components/modals/WatchAdModal';
-
-interface EarnedReward {
-  id: string;
-  doors: number;
-  from: string;
-  reason: string;
-  date: string;
-  type: 'lesson' | 'ad' | 'referral' | 'achievement';
-}
+import { useAuth } from '../../hooks/useAuth';
+import { EarnedReward, earnedRewardsService } from '../../services/earnedRewardsService';
 
 const EarnedRewardsScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { user } = useAuth();
   const [earnedRewards, setEarnedRewards] = useState<EarnedReward[]>([]);
   const [showEarnModal, setShowEarnModal] = useState(false);
   const [showWatchAdModal, setShowWatchAdModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Load earned rewards from database
+  const loadEarnedRewards = async () => {
+    if (!user?.id) return;
+    
+    setLoading(true);
+    try {
+      const { data, error } = await earnedRewardsService.getUserEarnedRewards(user.id);
+      if (error) {
+        console.error('Error loading earned rewards:', error);
+        return;
+      }
+      setEarnedRewards(data || []);
+    } catch (error) {
+      console.error('Error in loadEarnedRewards:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load rewards when component mounts
+  useEffect(() => {
+    loadEarnedRewards();
+  }, [user?.id]);
 
   const handleEarnReward = () => {
     setShowEarnModal(true);
@@ -42,20 +61,23 @@ const EarnedRewardsScreen: React.FC = () => {
     // Refer friend functionality is handled in the modal
   };
 
-  const handleAdComplete = () => {
+  const handleAdComplete = async () => {
     setShowWatchAdModal(false);
-    // TODO: Add +1 door to user's earned rewards
-    console.log('Ad completed - user earned +1 door');
-    // For now, just add a mock reward
-    const newReward: EarnedReward = {
-      id: Date.now().toString(),
-      doors: 1,
-      from: 'Ad Watch',
-      reason: 'Watched 30-second advertisement',
-      date: new Date().toLocaleDateString(),
-      type: 'ad'
-    };
-    setEarnedRewards(prev => [newReward, ...prev]);
+    
+    if (!user?.id) return;
+    
+    try {
+      const { data, error } = await earnedRewardsService.addAdWatchReward(user.id);
+      if (error) {
+        console.error('Error adding ad watch reward:', error);
+        return;
+      }
+      
+      // Reload rewards to show the new one
+      await loadEarnedRewards();
+    } catch (error) {
+      console.error('Error in handleAdComplete:', error);
+    }
   };
 
   const getRewardIcon = (type: string) => {
@@ -91,25 +113,28 @@ const EarnedRewardsScreen: React.FC = () => {
   const RewardCard: React.FC<{ reward: EarnedReward }> = ({ reward }) => (
     <View style={styles.rewardCard}>
       <View style={styles.rewardHeader}>
-        <View style={[styles.iconContainer, { backgroundColor: getRewardColor(reward.type) + '20' }]}>
+        <View style={[styles.iconContainer, { backgroundColor: getRewardColor(reward.source_type) + '20' }]}>
           <Ionicons 
-            name={getRewardIcon(reward.type) as any} 
+            name={getRewardIcon(reward.source_type) as any} 
             size={24} 
-            color={getRewardColor(reward.type)} 
+            color={getRewardColor(reward.source_type)} 
           />
         </View>
         <View style={styles.rewardInfo}>
           <Text style={styles.rewardTitle}>
-            +{reward.doors} Door{reward.doors > 1 ? 's' : ''}
+            +{reward.doors_earned} Door{reward.doors_earned > 1 ? 's' : ''}
           </Text>
-          <Text style={styles.rewardFrom}>From: {reward.from}</Text>
-          <Text style={styles.rewardReason}>{reward.reason}</Text>
+          <Text style={styles.rewardFrom}>From: {reward.source_name}</Text>
+          <Text style={styles.rewardReason}>{reward.description}</Text>
         </View>
         <View style={styles.doorCount}>
-          <Text style={styles.doorCountText}>+{reward.doors}</Text>
+          <Text style={styles.doorCountText}>+{reward.doors_earned}</Text>
         </View>
       </View>
-      <Text style={styles.rewardDate}>{reward.date}</Text>
+      <Text style={styles.rewardDate}>
+        {new Date(reward.created_at).toLocaleDateString()}
+        {reward.claimed && ' • Claimed'}
+      </Text>
     </View>
   );
 
@@ -149,7 +174,12 @@ const EarnedRewardsScreen: React.FC = () => {
         <View style={styles.rewardsSection}>
           <Text style={styles.sectionTitle}>Your Rewards</Text>
           
-          {earnedRewards.length === 0 ? (
+          {loading ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="refresh" size={48} color="#9CA3AF" />
+              <Text style={styles.emptyTitle}>Loading rewards...</Text>
+            </View>
+          ) : earnedRewards.length === 0 ? (
             <View style={styles.emptyState}>
               <Ionicons name="gift-outline" size={48} color="#9CA3AF" />
               <Text style={styles.emptyTitle}>No rewards yet</Text>

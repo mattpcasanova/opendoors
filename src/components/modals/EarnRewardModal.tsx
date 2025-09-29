@@ -11,6 +11,8 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import { useAuth } from '../../hooks/useAuth';
+import { earnedRewardsService } from '../../services/earnedRewardsService';
 
 interface EarnRewardModalProps {
   visible: boolean;
@@ -27,6 +29,8 @@ const EarnRewardModal: React.FC<EarnRewardModalProps> = ({
   onWatchAd,
   onReferFriend
 }) => {
+  const { user } = useAuth();
+
   const handleReferFriend = async () => {
     const referralMessage = "Hey! I'm using OpenDoors - a fun game where you can win real prizes! Join me and we'll both get extra doors to play with. Download here: [APP_STORE_LINK]";
     
@@ -37,7 +41,19 @@ const EarnRewardModal: React.FC<EarnRewardModalProps> = ({
       });
 
       if (result.action === Share.sharedAction) {
-        // User shared successfully
+        // User shared successfully - add referral reward
+        if (user?.id) {
+          try {
+            const { data, error } = await earnedRewardsService.addReferralReward(user.id);
+            if (error) {
+              console.error('Error adding referral reward:', error);
+              return;
+            }
+          } catch (error) {
+            console.error('Error in referral reward:', error);
+            return;
+          }
+        }
         onReferFriend();
       }
     } catch (error) {
@@ -50,8 +66,21 @@ const EarnRewardModal: React.FC<EarnRewardModalProps> = ({
           { text: "Cancel", style: "cancel" },
           { 
             text: "Copy Link", 
-            onPress: () => {
+            onPress: async () => {
               console.log("Copy referral link to clipboard");
+              // Add referral reward even for copy action
+              if (user?.id) {
+                try {
+                  const { data, error } = await earnedRewardsService.addReferralReward(user.id);
+                  if (error) {
+                    console.error('Error adding referral reward:', error);
+                    return;
+                  }
+                } catch (error) {
+                  console.error('Error in referral reward:', error);
+                  return;
+                }
+              }
               onReferFriend();
             }
           }

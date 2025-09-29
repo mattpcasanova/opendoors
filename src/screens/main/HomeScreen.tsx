@@ -20,6 +20,7 @@ import BottomNavBar from '../../components/main/BottomNavBar';
 import Header from "../../components/main/Header";
 import { useAuth } from '../../hooks/useAuth';
 import { useLocation } from '../../hooks/useLocation';
+import { EarnedReward, earnedRewardsService } from '../../services/earnedRewardsService';
 import { gamesService, Prize } from '../../services/gameLogic/games';
 import { UserProgress, userProgressService } from '../../services/userProgressService';
 import type { MainTabParamList } from '../../types/navigation';
@@ -362,6 +363,7 @@ export default function HomeScreen() {
   const [lastPlayDate, setLastPlayDate] = useState<string | null>(null);
   const [bonusPlaysAvailable, setBonusPlaysAvailable] = useState(0);
   const [earnedDoors, setEarnedDoors] = useState(0);
+  const [earnedRewards, setEarnedRewards] = useState<EarnedReward[]>([]);
   const { user, session } = useAuth();
 
   // Filter/sort state
@@ -377,10 +379,40 @@ export default function HomeScreen() {
 
   const currentGameIsBonus = useRef(false);
 
+  // Load earned rewards and update count
+  const loadEarnedRewards = async () => {
+    if (!user?.id) return;
+    
+    try {
+      const { data: rewards, error: rewardsError } = await earnedRewardsService.getUserEarnedRewards(user.id);
+      if (rewardsError) {
+        console.error('Error loading earned rewards:', rewardsError);
+        return;
+      }
+      setEarnedRewards(rewards || []);
+
+      const { count, error: countError } = await earnedRewardsService.getUnclaimedDoorsCount(user.id);
+      if (countError) {
+        console.error('Error loading earned doors count:', countError);
+        return;
+      }
+      setEarnedDoors(count);
+    } catch (error) {
+      console.error('Error in loadEarnedRewards:', error);
+    }
+  };
+
   // Debug log filter/sort state
   useEffect(() => {
     // Filter state logging removed for cleaner console
   }, [selectedCategories, distance, sortBy, showOnlyFavorites]);
+
+  // Load earned rewards when user changes
+  useEffect(() => {
+    if (user?.id) {
+      loadEarnedRewards();
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     const fetchGames = async () => {
@@ -549,6 +581,34 @@ export default function HomeScreen() {
     if (!user || !currentGame) return;
     
     try {
+      // Determine which type of door was used based on priority system
+      let doorType = 'daily';
+      let usedEarnedRewardId: string | null = null;
+
+      // Priority 1: Daily Play (if available)
+      if (userProgress?.dailyPlaysRemaining && userProgress.dailyPlaysRemaining > 0) {
+        doorType = 'daily';
+      }
+      // Priority 2: Bonus Door (if daily not available but bonus is)
+      else if (userProgress?.bonusPlaysAvailable && userProgress.bonusPlaysAvailable > 0) {
+        doorType = 'bonus';
+      }
+      // Priority 3: Earned Door (if neither daily nor bonus available)
+      else if (earnedDoors > 0) {
+        doorType = 'earned';
+        // Get the next unclaimed reward
+        const { data: nextReward, error: rewardError } = await earnedRewardsService.getNextUnclaimedReward(user.id);
+        if (rewardError || !nextReward) {
+          console.error('❌ Error getting next earned reward:', rewardError);
+          Alert.alert('Error', 'No earned doors available. Please earn more doors first.');
+          return;
+        }
+        usedEarnedRewardId = nextReward.id;
+      } else {
+        Alert.alert('No Doors Available', 'You have no doors available to play. Please wait for your daily reset or earn more doors.');
+        return;
+      }
+
       // Record the game result
       const { error: gameError } = await gamesService.recordGame({
         user_id: user.id,
@@ -579,9 +639,9 @@ export default function HomeScreen() {
         }]
       );
       
-      // Update user progress in database
+      // Update user progress in database based on door type used
       if (user) {
-        const usedBonus = bonusPlaysAvailable > 0;
+        const usedBonus = doorType === 'bonus';
         const { error: progressError } = await userProgressService.updateProgressAfterGame(user.id, won, usedBonus);
         
         if (progressError) {
@@ -595,7 +655,20 @@ export default function HomeScreen() {
             setBonusPlaysAvailable(updatedProgress.bonusPlaysAvailable);
           }
         }
+
+        // If used earned door, claim it
+        if (doorType === 'earned' && usedEarnedRewardId) {
+          const { success, error: claimError } = await earnedRewardsService.claimEarnedReward(usedEarnedRewardId);
+          if (!success || claimError) {
+            console.error('❌ Error claiming earned reward:', claimError);
+            Alert.alert('Error', 'Failed to use earned door. Please try again.');
+            return;
+          }
+        }
       }
+
+      // Reload earned rewards to update count
+      await loadEarnedRewards();
 
       // Emit events to refresh History and Rewards screens
       DeviceEventEmitter.emit('REFRESH_HISTORY');

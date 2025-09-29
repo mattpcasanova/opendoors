@@ -9,6 +9,8 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import { useAuth } from '../../hooks/useAuth';
+import { earnedRewardsService } from '../../services/earnedRewardsService';
 
 interface WatchAdModalProps {
   visible: boolean;
@@ -23,6 +25,7 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
   onClose,
   onAdComplete
 }) => {
+  const { user } = useAuth();
   const [isWatching, setIsWatching] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(30);
   const [canClose, setCanClose] = useState(false);
@@ -35,6 +38,13 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
     }
   }, [visible]);
 
+  useEffect(() => {
+    if (timeRemaining === 0 && isWatching) {
+      setIsWatching(false);
+      setCanClose(true);
+    }
+  }, [timeRemaining, isWatching]);
+
   const startAd = () => {
     setIsWatching(true);
     setCanClose(false);
@@ -44,9 +54,6 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
       setTimeRemaining((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
-          setIsWatching(false);
-          setCanClose(true);
-          onAdComplete();
           return 0;
         }
         return prev - 1;
@@ -117,7 +124,22 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
                 ) : (
                   <TouchableOpacity 
                     style={styles.earnRewardButton}
-                    onPress={onAdComplete}
+                    onPress={async () => {
+                      if (user?.id) {
+                        try {
+                          const { data, error } = await earnedRewardsService.addAdWatchReward(user.id);
+                          if (error) {
+                            console.error('Error adding ad watch reward:', error);
+                            return;
+                          }
+                        } catch (error) {
+                          console.error('Error in earn reward:', error);
+                          return;
+                        }
+                      }
+                      onAdComplete();
+                      onClose();
+                    }}
                   >
                     <Text style={styles.earnRewardButtonText}>Earn Reward</Text>
                   </TouchableOpacity>
