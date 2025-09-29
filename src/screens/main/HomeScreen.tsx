@@ -5,14 +5,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Gift, Zap } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Alert,
-  DeviceEventEmitter,
-  ScrollView as RNScrollView,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Alert,
+    DeviceEventEmitter,
+    ScrollView as RNScrollView,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import GameCard from '../../components/game/GameCard';
@@ -138,6 +138,80 @@ const DailyGameButton: React.FC<DailyGameButtonProps> = ({ hasPlayedToday, onPre
   );
 };
 
+interface EarnedRewardsSectionProps {
+  earnedDoors?: number;
+}
+
+const EarnedRewardsSection: React.FC<EarnedRewardsSectionProps> = ({ 
+  earnedDoors = 0 
+}) => {
+  const navigation = useNavigation<MainStackNavigationProp>();
+
+  const handlePress = () => {
+    navigation.navigate('EarnedRewards' as any);
+  };
+
+  return (
+    <TouchableOpacity 
+      style={{ 
+        marginBottom: 24,
+        backgroundColor: 'white',
+        borderRadius: 16,
+        padding: 20,
+        shadowColor: '#000',
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: 2,
+      }}
+      onPress={handlePress}
+      activeOpacity={0.7}
+    >
+      <View style={{ 
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        justifyContent: 'space-between' 
+      }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ 
+            fontSize: 18, 
+            fontWeight: '600', 
+            color: '#1F2937',
+            marginBottom: 4 
+          }}>
+            Earned Rewards
+          </Text>
+          <Text style={{ 
+            fontSize: 14, 
+            color: '#6B7280' 
+          }}>
+            Extra doors available
+          </Text>
+        </View>
+        
+        <View style={{
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          borderWidth: 2,
+          borderColor: '#009688',
+          backgroundColor: 'transparent',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <Text style={{
+            fontSize: 16,
+            fontWeight: '700',
+            color: '#009688',
+          }}>
+            {earnedDoors}
+          </Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
 interface ProgressSectionProps {
   gamesUntilBonus: number;
   bonusPlaysAvailable: number;
@@ -193,8 +267,17 @@ const ProgressSection: React.FC<ProgressSectionProps> = ({
               {gamesUntilBonus} more game{gamesUntilBonus !== 1 ? 's' : ''} to unlock
             </Text>
           </View>
-          <View style={{ width: 48, height: 48, backgroundColor: '#CCFBF1', borderRadius: 24, alignItems: 'center', justifyContent: 'center' }}>
-            <Gift size={28} color="#14B8A6" />
+          <View style={{ 
+            width: 48, 
+            height: 48, 
+            borderRadius: 24, 
+            borderWidth: 2,
+            borderColor: '#009688',
+            backgroundColor: 'transparent',
+            alignItems: 'center', 
+            justifyContent: 'center' 
+          }}>
+            <Gift size={28} color="#009688" />
           </View>
         </View>
         {/* Progress Bar */}
@@ -278,6 +361,7 @@ export default function HomeScreen() {
   const [currentGame, setCurrentGame] = useState<Prize | null>(null);
   const [lastPlayDate, setLastPlayDate] = useState<string | null>(null);
   const [bonusPlaysAvailable, setBonusPlaysAvailable] = useState(0);
+  const [earnedDoors, setEarnedDoors] = useState(0);
   const { user, session } = useAuth();
 
   // Filter/sort state
@@ -644,6 +728,9 @@ export default function HomeScreen() {
           gamesUntilBonus={gamesUntilBonus}
           bonusPlaysAvailable={bonusPlaysAvailable}
         />
+
+        {/* Earned Rewards Section */}
+        <EarnedRewardsSection earnedDoors={earnedDoors} />
 
         {/* Today's Special - Only show when not searching */}
         {!searchText && featuredGame && (

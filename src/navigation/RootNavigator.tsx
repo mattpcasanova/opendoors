@@ -7,6 +7,7 @@ import { RootStackParamList } from '../types/navigation';
 
 // Navigators
 import SurveyScreen from '../screens/auth/SurveyScreen';
+import EarnedRewardsScreen from '../screens/rewards/EarnedRewardsScreen';
 import PrizeDetailsScreen from '../screens/rewards/PrizeDetailsScreen';
 import AuthNavigator from './AuthNavigator';
 import MainTabNavigator from './MainTabNavigator';
@@ -99,6 +100,7 @@ export default function RootNavigator() {
     <RootStack.Navigator screenOptions={{ headerShown: false }}>
       <RootStack.Screen name="MainTabs" component={MainTabNavigator} />
       <RootStack.Screen name="PrizeDetails" component={PrizeDetailsScreen} />
+      <RootStack.Screen name="EarnedRewards" component={EarnedRewardsScreen} />
     </RootStack.Navigator>
   );
 }

@@ -22,6 +22,7 @@ export type RootStackParamList = {
   Survey: undefined;
   MainTabs: undefined;
   PrizeDetails: { reward: Reward };
+  EarnedRewards: undefined;
 };
 
 export type AuthNavigationProp = NativeStackNavigationProp<AuthStackParamList>;

@@ -10,6 +10,7 @@ interface Props {
 
 export default function MontyHallGame({ onGameComplete, numDoors = 3 }: Props) {
   const { doors, gameState, handleDoorClick, initializeGame, resetGame, getResult } = useMontyHallGame({ numDoors });
+  const [showFinalMessage, setShowFinalMessage] = React.useState(false);
 
   useEffect(() => {
     initializeGame();
@@ -17,11 +18,17 @@ export default function MontyHallGame({ onGameComplete, numDoors = 3 }: Props) {
 
   useEffect(() => {
     if (gameState === 'final') {
-      const result = getResult();
-      if (result !== null) {
-        const switched = doors.findIndex(door => door.isSelected) !== doors.findIndex((door, i) => door.isSelected && i === 0);
-        onGameComplete?.(result, switched);
-      }
+      // Delay showing the final message to allow door opening animation to complete
+      setTimeout(() => {
+        setShowFinalMessage(true);
+        const result = getResult();
+        if (result !== null) {
+          const switched = doors.findIndex(door => door.isSelected) !== doors.findIndex((door, i) => door.isSelected && i === 0);
+          onGameComplete?.(result, switched);
+        }
+      }, 2000); // 2 second delay for door opening animation
+    } else {
+      setShowFinalMessage(false);
     }
   }, [gameState, getResult, doors, onGameComplete]);
 
@@ -45,8 +52,11 @@ export default function MontyHallGame({ onGameComplete, numDoors = 3 }: Props) {
       case 'decision':
         return 'Would you like to switch your choice? Click any unopened door.';
       case 'final':
-        const result = getResult();
-        return result ? '🎉 Congratulations! You won!' : '😔 Better luck next time!';
+        if (showFinalMessage) {
+          const result = getResult();
+          return result ? '🎉 Congratulations! You won!' : '😔 Better luck next time!';
+        }
+        return 'Opening doors...';
       default:
         return '';
     }
