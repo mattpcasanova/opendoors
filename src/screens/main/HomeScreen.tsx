@@ -414,6 +414,17 @@ export default function HomeScreen() {
     }
   }, [user?.id]);
 
+  // Listen for earned doors refresh events
+  useEffect(() => {
+    const refreshListener = DeviceEventEmitter.addListener('REFRESH_EARNED_DOORS', () => {
+      loadEarnedRewards();
+    });
+
+    return () => {
+      refreshListener.remove();
+    };
+  }, []);
+
   useEffect(() => {
     const fetchGames = async () => {
       setLoading(true);

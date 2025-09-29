@@ -3,6 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import {
+    DeviceEventEmitter,
     SafeAreaView,
     ScrollView,
     StyleSheet,
@@ -56,28 +57,24 @@ const EarnedRewardsScreen: React.FC = () => {
     setShowWatchAdModal(true);
   };
 
-  const handleReferFriend = () => {
+  const handleReferFriend = async () => {
     setShowEarnModal(false);
     // Refer friend functionality is handled in the modal
+    // Reload rewards to show the new one that was added by the modal
+    await loadEarnedRewards();
+    
+    // Notify HomeScreen to refresh its earned doors count
+    DeviceEventEmitter.emit('REFRESH_EARNED_DOORS');
   };
 
   const handleAdComplete = async () => {
     setShowWatchAdModal(false);
     
-    if (!user?.id) return;
+    // Reload rewards to show the new one that was added by the modal
+    await loadEarnedRewards();
     
-    try {
-      const { data, error } = await earnedRewardsService.addAdWatchReward(user.id);
-      if (error) {
-        console.error('Error adding ad watch reward:', error);
-        return;
-      }
-      
-      // Reload rewards to show the new one
-      await loadEarnedRewards();
-    } catch (error) {
-      console.error('Error in handleAdComplete:', error);
-    }
+    // Notify HomeScreen to refresh its earned doors count
+    DeviceEventEmitter.emit('REFRESH_EARNED_DOORS');
   };
 
   const getRewardIcon = (type: string) => {

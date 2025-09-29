@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
+    Alert,
     Dimensions,
     Modal,
     StyleSheet,
@@ -62,9 +63,7 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
   };
 
   const handleClose = () => {
-    if (canClose) {
-      onClose();
-    }
+    onClose();
   };
 
   return (
@@ -130,10 +129,13 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
                           const { data, error } = await earnedRewardsService.addAdWatchReward(user.id);
                           if (error) {
                             console.error('Error adding ad watch reward:', error);
+                            Alert.alert('Error', 'Failed to add reward. Please try again.');
                             return;
                           }
+                          console.log('✅ Ad watch reward added successfully');
                         } catch (error) {
                           console.error('Error in earn reward:', error);
+                          Alert.alert('Error', 'Failed to add reward. Please try again.');
                           return;
                         }
                       }
@@ -141,7 +143,7 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
                       onClose();
                     }}
                   >
-                    <Text style={styles.earnRewardButtonText}>Earn Reward</Text>
+                    <Text style={styles.earnRewardButtonText}>Claim Earned Reward</Text>
                   </TouchableOpacity>
                 )}
               </View>
