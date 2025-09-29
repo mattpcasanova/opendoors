@@ -597,11 +597,11 @@ export default function HomeScreen() {
       let usedEarnedRewardId: string | null = null;
 
       // Priority 1: Daily Play (if available)
-      if (userProgress?.dailyPlaysRemaining && userProgress.dailyPlaysRemaining > 0) {
+      if (!hasPlayedAnyGameToday) {
         doorType = 'daily';
       }
       // Priority 2: Bonus Door (if daily not available but bonus is)
-      else if (userProgress?.bonusPlaysAvailable && userProgress.bonusPlaysAvailable > 0) {
+      else if (bonusPlaysAvailable > 0) {
         doorType = 'bonus';
       }
       // Priority 3: Earned Door (if neither daily nor bonus available)
