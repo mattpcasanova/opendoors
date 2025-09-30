@@ -765,7 +765,27 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 }}
       >
-        {/* Search Bar */}
+        {/* Only show these sections when NOT searching */}
+        {!searchText && (
+          <>
+            {/* Daily Free Game Button - Updated */}
+            <DailyGameButton 
+              hasPlayedToday={hasPlayedAnyGameToday}
+              onPress={playDailyGame}
+            />
+
+            {/* Progress Section */}
+            <ProgressSection 
+              gamesUntilBonus={gamesUntilBonus}
+              bonusPlaysAvailable={bonusPlaysAvailable}
+            />
+
+            {/* Earned Rewards Section */}
+            <EarnedRewardsSection earnedDoors={earnedDoors} />
+          </>
+        )}
+
+        {/* Search Bar - Now positioned after Earned Rewards */}
         <View className="mb-8 mt-4">
           <View className="bg-white rounded-3xl px-5 py-3 flex-row items-center shadow-sm"
             style={{
@@ -800,21 +820,6 @@ export default function HomeScreen() {
             </Text>
           </View>
         )}
-
-        {/* Daily Free Game Button - Updated */}
-        <DailyGameButton 
-          hasPlayedToday={hasPlayedAnyGameToday}
-          onPress={playDailyGame}
-        />
-
-        {/* Progress Section */}
-        <ProgressSection 
-          gamesUntilBonus={gamesUntilBonus}
-          bonusPlaysAvailable={bonusPlaysAvailable}
-        />
-
-        {/* Earned Rewards Section */}
-        <EarnedRewardsSection earnedDoors={earnedDoors} />
 
         {/* Today's Special - Only show when not searching */}
         {!searchText && featuredGame && (
@@ -864,37 +869,48 @@ export default function HomeScreen() {
           </>
         )}
 
-        {/* Available Games header and Filter button row */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, marginTop: 8 }}>
-          <Text className="text-gray-900 text-xl font-semibold" style={{ marginBottom: 0, textAlign: 'left', flex: 1, paddingLeft: 0, marginLeft: 0 }}>
-            {searchText ? 'Search Results' : 'Available games'}
-          </Text>
-          <TouchableOpacity
-            style={{
-              backgroundColor: '#E0F7F4',
-              paddingHorizontal: 14,
-              paddingVertical: 12,
-              borderRadius: 20,
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginLeft: 12,
-              shadowColor: '#009688',
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.08,
-              shadowRadius: 4,
-              elevation: 2,
-              alignSelf: 'flex-end',
-            }}
-            onPress={() => setShowFilters(f => !f)}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="filter" size={18} color="#009688" style={{ marginRight: 6 }} />
-            <Text style={{ color: '#009688', fontWeight: '600', fontSize: 15 }}>Filter</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Available Games header and Filter button row - Only show when not searching */}
+        {!searchText && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, marginTop: 8 }}>
+            <Text className="text-gray-900 text-xl font-semibold" style={{ marginBottom: 0, textAlign: 'left', flex: 1, paddingLeft: 0, marginLeft: 0 }}>
+              Available games
+            </Text>
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#E0F7F4',
+                paddingHorizontal: 14,
+                paddingVertical: 12,
+                borderRadius: 20,
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginLeft: 12,
+                shadowColor: '#009688',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.08,
+                shadowRadius: 4,
+                elevation: 2,
+                alignSelf: 'flex-end',
+              }}
+              onPress={() => setShowFilters(f => !f)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="filter" size={18} color="#009688" style={{ marginRight: 6 }} />
+              <Text style={{ color: '#009688', fontWeight: '600', fontSize: 15 }}>Filter</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
-        {/* Collapsible Filter/Sort Bar */}
-        {showFilters && (
+        {/* Search Results header - Only show when searching */}
+        {searchText && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, marginTop: 8 }}>
+            <Text className="text-gray-900 text-xl font-semibold" style={{ marginBottom: 0, textAlign: 'left', flex: 1, paddingLeft: 0, marginLeft: 0 }}>
+              Search Results
+            </Text>
+          </View>
+        )}
+
+        {/* Collapsible Filter/Sort Bar - Only show when not searching */}
+        {!searchText && showFilters && (
           <View style={{ backgroundColor: '#F8F9FA', borderRadius: 18, padding: 12, marginBottom: 18, marginHorizontal: 12, paddingHorizontal: 12 }}>
             {/* Row 1: Category chips + Favorites toggle */}
             <RNScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }} contentContainerStyle={{ paddingHorizontal: 12 }}>
