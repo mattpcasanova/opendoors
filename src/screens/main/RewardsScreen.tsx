@@ -498,6 +498,12 @@ export default function RewardsScreen() {
                 reward.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 reward.reward.toLowerCase().includes(searchQuery.toLowerCase())
               )
+              .sort((a, b) => {
+                // Sort by creation date, newest first
+                const dateA = new Date(a.created_at || a.expirationDate);
+                const dateB = new Date(b.created_at || b.expirationDate);
+                return dateB.getTime() - dateA.getTime();
+              })
               .map(reward => (
                 <RewardCard
                   key={reward.id}

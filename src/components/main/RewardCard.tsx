@@ -80,8 +80,8 @@ export default function RewardCard({ reward, onPress }: Props) {
         shadowOpacity: 0.06,
         shadowRadius: 8,
         elevation: 2,
-        borderWidth: 1,
-        borderColor: '#F3F4F6',
+        borderWidth: isExpired ? 2 : 1,
+        borderColor: isExpired ? '#DC2626' : '#F3F4F6',
       }}
       onPress={() => onPress(reward)}
       activeOpacity={0.85}
@@ -124,8 +124,13 @@ export default function RewardCard({ reward, onPress }: Props) {
           {reward.reward}
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Calendar size={16} color="#9CA3AF" />
-          <Text style={{ fontSize: 13, color: isExpiringSoon ? '#DC2626' : '#6B7280', fontWeight: isExpiringSoon ? '600' : '400', marginLeft: 4 }}>
+          <Calendar size={16} color={isExpired ? '#DC2626' : '#9CA3AF'} />
+          <Text style={{ 
+            fontSize: 13, 
+            color: isExpired ? '#DC2626' : (isExpiringSoon ? '#DC2626' : '#6B7280'), 
+            fontWeight: (isExpired || isExpiringSoon) ? '600' : '400', 
+            marginLeft: 4 
+          }}>
             {formatExpirationText(reward.expirationDate)}
           </Text>
         </View>
