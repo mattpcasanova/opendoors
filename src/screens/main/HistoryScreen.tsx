@@ -13,7 +13,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import PastGameCard from '../../components/PastGameCard';
 import BottomNavBar from '../../components/main/BottomNavBar';
 import Header from '../../components/main/Header';
+import AdminHistoryView from '../../components/organization/AdminHistoryView';
+import DistributorHistoryView from '../../components/organization/DistributorHistoryView';
 import { useAuth } from '../../hooks/useAuth';
+import { supabase } from '../../lib/supabase';
 import { GamePlay, historyService, UserStats } from '../../services/historyService';
 
 export default function HistoryScreen() {
@@ -22,6 +25,10 @@ export default function HistoryScreen() {
   const [error, setError] = useState<string | null>(null);
   const [gamePlays, setGamePlays] = useState<GamePlay[]>([]);
   const [stats, setStats] = useState<UserStats | null>(null);
+  const [userType, setUserType] = useState<'user' | 'distributor' | 'admin'>('user');
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const [doorsAvailable, setDoorsAvailable] = useState(0);
+  const [doorsDistributed, setDoorsDistributed] = useState(0);
 
   useEffect(() => {
     if (user) {
@@ -43,18 +50,55 @@ export default function HistoryScreen() {
       setLoading(true);
       setError(null);
       console.log('🎮 Fetching history for user:', user?.id);
-      // Fetch both game plays and stats in parallel
+      
+      // Fetch user profile to get user type and organization
+      console.log('👤 Fetching profile for user:', user!.id);
+      
+      const { data: profile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('*')  // Select all columns to debug
+        .eq('id', user!.id)
+        .maybeSingle();
+
+      console.log('👤 Profile query result:', { profile, error: profileError });
+
+      if (profileError) {
+        console.error('❌ Error fetching user profile:', profileError);
+        // Set defaults even on error to prevent crashes
+        setUserType('user');
+        setOrganizationId(null);
+        setDoorsAvailable(0);
+        setDoorsDistributed(0);
+      } else if (profile) {
+        console.log('✅ User profile loaded successfully:', {
+          user_type: profile.user_type,
+          organization_id: profile.organization_id,
+          doors_available: profile.doors_available,
+          doors_distributed: profile.doors_distributed
+        });
+        setUserType(profile.user_type || 'user');
+        setOrganizationId(profile.organization_id);
+        setDoorsAvailable(profile.doors_available || 0);
+        setDoorsDistributed(profile.doors_distributed || 0);
+      } else {
+        // No profile found, use defaults
+        console.log('⚠️ No profile data returned, using defaults');
+        setUserType('user');
+        setOrganizationId(null);
+        setDoorsAvailable(0);
+        setDoorsDistributed(0);
+      }
+
+      // Fetch both game plays and stats in parallel (for regular users)
       const [gamePlaysResult, statsResult] = await Promise.all([
         historyService.getUserGamePlays(user!.id),
         historyService.getUserStats(user!.id)
       ]);
       if (gamePlaysResult.error) throw new Error(gamePlaysResult.error);
       if (statsResult.error) throw statsResult.error;
-      console.log('🎮 Raw game plays data:', JSON.stringify(gamePlaysResult.data, null, 2));
       
       // Map the game plays data correctly
       const mappedGamePlays = (gamePlaysResult.data || []).map(gp => {
-        console.log('🎮 Mapping game play:', gp);
         return {
           id: gp.id,
           created_at: gp.created_at,
@@ -67,7 +111,7 @@ export default function HistoryScreen() {
         };
       });
 
-      console.log('🎮 Mapped game plays:', JSON.stringify(mappedGamePlays, null, 2));
+      console.log('🎮 Loaded', mappedGamePlays.length, 'game plays');
       setGamePlays(mappedGamePlays);
       setStats(statsResult.data || null);
     } catch (err: any) {
@@ -166,6 +210,38 @@ export default function HistoryScreen() {
     );
   }
 
+  // Render appropriate view based on user type
+  console.log('📊 Rendering History Screen:', { userType, organizationId, loading });
+
+  if (userType === 'distributor' && organizationId) {
+    console.log('✅ Showing Distributor Dashboard');
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
+        <Header variant="page" title="Distributor Dashboard" subtitle="Manage door distributions" />
+        <DistributorHistoryView 
+          organizationId={organizationId}
+          doorsAvailable={doorsAvailable}
+          doorsDistributed={doorsDistributed}
+          onRefresh={fetchHistory}
+        />
+        <BottomNavBar />
+      </SafeAreaView>
+    );
+  }
+
+  if (userType === 'admin' && organizationId) {
+    console.log('✅ Showing Admin Dashboard');
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
+        <Header variant="page" title="Admin Dashboard" subtitle="Manage distributors and view activity" />
+        <AdminHistoryView organizationId={organizationId} />
+        <BottomNavBar />
+      </SafeAreaView>
+    );
+  }
+
+  // Default: Regular user view
+  console.log('✅ Showing Regular User History');
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
       <Header variant="page" title="History" subtitle="Your game history" />
