@@ -18,6 +18,7 @@ import DistributorHistoryView from '../../components/organization/DistributorHis
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 import { GamePlay, historyService, UserStats } from '../../services/historyService';
+import { getUserProfileWithRetry, testSupabaseConnection } from '../../utils/supabaseHelpers';
 
 export default function HistoryScreen() {
   const { user } = useAuth();
@@ -51,14 +52,20 @@ export default function HistoryScreen() {
       setError(null);
       console.log('🎮 Fetching history for user:', user?.id);
       
-      // Fetch user profile to get user type and organization
+      // Test connection first with retry logic
+      console.log('🔍 Testing Supabase connection...');
+      const connectionOk = await testSupabaseConnection();
+      
+      if (!connectionOk) {
+        setError('Connection failed. Please check your internet connection and try again.');
+        setLoading(false);
+        return;
+      }
+
+      // Fetch user profile to get user type and organization with retry logic
       console.log('👤 Fetching profile for user:', user!.id);
       
-      const { data: profile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('*')  // Select all columns to debug
-        .eq('id', user!.id)
-        .maybeSingle();
+      const { data: profile, error: profileError } = await getUserProfileWithRetry(user!.id);
 
       console.log('👤 Profile query result:', { profile, error: profileError });
 
