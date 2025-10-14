@@ -18,7 +18,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import GameCard from '../../components/game/GameCard';
 import BottomNavBar from '../../components/main/BottomNavBar';
 import Header from "../../components/main/Header";
-import ConnectionStatus from '../../components/ConnectionStatus';
 import { useAuth } from '../../hooks/useAuth';
 import { useLocation } from '../../hooks/useLocation';
 import { EarnedReward, earnedRewardsService } from '../../services/earnedRewardsService';
@@ -760,9 +759,6 @@ export default function HomeScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
       <Header variant="home" userName={getFirstName()} showLogo={true} />
       
-      {/* Connection Status */}
-      <ConnectionStatus />
-
       {/* Main Content */}
       <ScrollView 
         className="flex-1 px-6"
