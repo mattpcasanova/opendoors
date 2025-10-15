@@ -1,22 +1,20 @@
 import { GamepadIcon } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  DeviceEventEmitter,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    DeviceEventEmitter,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PastGameCard from '../../components/PastGameCard';
 import BottomNavBar from '../../components/main/BottomNavBar';
 import Header from '../../components/main/Header';
-import AdminHistoryView from '../../components/organization/AdminHistoryView';
 import DistributorHistoryView from '../../components/organization/DistributorHistoryView';
 import { useAuth } from '../../hooks/useAuth';
-import { supabase } from '../../lib/supabase';
 import { GamePlay, historyService, UserStats } from '../../services/historyService';
 import { getUserProfileWithRetry, testSupabaseConnection } from '../../utils/supabaseHelpers';
 
@@ -236,16 +234,6 @@ export default function HistoryScreen() {
     );
   }
 
-  if (userType === 'admin' && organizationId) {
-    console.log('✅ Showing Admin Dashboard');
-    return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
-        <Header variant="page" title="Admin Dashboard" subtitle="Manage distributors and view activity" />
-        <AdminHistoryView organizationId={organizationId} />
-        <BottomNavBar />
-      </SafeAreaView>
-    );
-  }
 
   // Default: Regular user view
   console.log('✅ Showing Regular User History');

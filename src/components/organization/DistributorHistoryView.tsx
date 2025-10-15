@@ -32,6 +32,7 @@ export default function DistributorHistoryView({
 }: DistributorHistoryViewProps) {
   const { user } = useAuth();
   const [members, setMembers] = useState<OrganizationMember[]>([]);
+  const [filteredMembers, setFilteredMembers] = useState<OrganizationMember[]>([]);
   const [history, setHistory] = useState<DoorDistribution[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSendModal, setShowSendModal] = useState(false);
@@ -39,23 +40,43 @@ export default function DistributorHistoryView({
   const [doorsToSend, setDoorsToSend] = useState('1');
   const [reason, setReason] = useState('');
   const [sending, setSending] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     loadData();
   }, [organizationId]);
+
+  // Filter members based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredMembers([]); // Show no users by default
+    } else {
+      const filtered = members.filter(member => {
+        const fullName = member.first_name && member.last_name 
+          ? `${member.first_name} ${member.last_name}`.toLowerCase()
+          : '';
+        const email = member.email.toLowerCase();
+        const query = searchQuery.toLowerCase();
+        
+        return fullName.includes(query) || email.includes(query);
+      }).slice(0, 5); // Limit to 5 results
+      setFilteredMembers(filtered);
+    }
+  }, [searchQuery, members]);
 
   const loadData = async () => {
     if (!user?.id) return;
     
     setLoading(true);
     try {
-      const [membersResult, historyResult] = await Promise.all([
-        organizationService.getDistributorMembers(user.id, organizationId),
+      const [allUsersResult, historyResult] = await Promise.all([
+        organizationService.getAllUsers(),
         organizationService.getDistributorHistory(user.id)
       ]);
 
-      if (membersResult.data) {
-        setMembers(membersResult.data);
+      if (allUsersResult.data) {
+        setMembers(allUsersResult.data);
+        setFilteredMembers(allUsersResult.data);
       }
       if (historyResult.data) {
         setHistory(historyResult.data);
@@ -91,7 +112,6 @@ export default function DistributorHistoryView({
       const result = await organizationService.sendDoors(
         user.id,
         selectedMember.id,
-        organizationId,
         doorsNum,
         reason
       );
@@ -157,17 +177,50 @@ export default function DistributorHistoryView({
         </View>
       </View>
 
-      {/* Members List */}
+      {/* Send Doors Section */}
       <View style={{ padding: 16, backgroundColor: 'white', marginBottom: 16 }}>
         <Text style={{ fontSize: 20, fontWeight: '600', color: '#111827', marginBottom: 16 }}>
-          Send Doors to Members
+          Send Doors to Users
         </Text>
-        {members.length === 0 ? (
+        
+        {/* Search Bar */}
+        <View style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: '#F9FAFB',
+          borderRadius: 12,
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          marginBottom: 16,
+          borderWidth: 1,
+          borderColor: '#E5E7EB'
+        }}>
+          <Ionicons name="search" size={20} color="#6B7280" style={{ marginRight: 12 }} />
+          <TextInput
+            style={{
+              flex: 1,
+              fontSize: 16,
+              color: '#111827'
+            }}
+            placeholder="Search by name or email..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor="#9CA3AF"
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={20} color="#6B7280" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Members List */}
+        {filteredMembers.length === 0 ? (
           <Text style={{ color: '#6B7280', textAlign: 'center', padding: 20 }}>
-            No members available
+            {searchQuery ? 'No users found matching your search' : 'Start typing to search for users...'}
           </Text>
         ) : (
-          members.map((member) => (
+          filteredMembers.map((member) => (
             <TouchableOpacity
               key={member.id}
               style={{
@@ -175,9 +228,16 @@ export default function DistributorHistoryView({
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: 16,
-                backgroundColor: '#F9FAFB',
+                backgroundColor: 'white',
                 borderRadius: 12,
-                marginBottom: 8
+                marginBottom: 8,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 3,
+                borderWidth: 1,
+                borderColor: '#F3F4F6'
               }}
               onPress={() => {
                 setSelectedMember(member);
@@ -212,14 +272,21 @@ export default function DistributorHistoryView({
             No distributions yet
           </Text>
         ) : (
-          history.map((dist) => (
+          history.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map((dist) => (
             <View
               key={dist.id}
               style={{
                 padding: 16,
-                backgroundColor: '#F9FAFB',
+                backgroundColor: 'white',
                 borderRadius: 12,
-                marginBottom: 8
+                marginBottom: 8,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 3,
+                borderWidth: 1,
+                borderColor: '#F3F4F6'
               }}
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>

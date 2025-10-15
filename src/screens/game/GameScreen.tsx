@@ -157,7 +157,7 @@ export default function GameScreen({
           '😔 Sorry! Better luck next time!';
         
         setGameResult({ won, message });
-      }, 1500);
+      }, 2100);
       
       // Call completion callback
       setTimeout(() => {

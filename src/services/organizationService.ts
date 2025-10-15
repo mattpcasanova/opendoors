@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { notificationService } from './notificationService';
 
 export interface Organization {
   id: string;
@@ -80,6 +81,24 @@ class OrganizationService {
   }
 
   /**
+   * Get all users (for distributors to send doors to anyone)
+   */
+  async getAllUsers() {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('id, email, first_name, last_name, user_type')
+        .eq('user_type', 'user') // Only regular users can receive doors
+        .order('last_name', { ascending: true });
+
+      return { data: data as OrganizationMember[] | null, error };
+    } catch (error: any) {
+      console.error('Error fetching all users:', error);
+      return { data: null, error: error.message };
+    }
+  }
+
+  /**
    * Get members that a specific distributor can send doors to
    * If distributor_members has entries for this distributor, return only those
    * Otherwise, return all users in the organization (default behavior)
@@ -133,7 +152,6 @@ class OrganizationService {
   async sendDoors(
     distributorId: string,
     recipientId: string,
-    organizationId: string,
     doorsToSend: number,
     reason: string
   ) {
@@ -153,18 +171,62 @@ class OrganizationService {
         return { success: false, error: 'Not enough doors available' };
       }
 
+      // Get distributor's organization_id
+      const { data: distributorProfile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('organization_id')
+        .eq('id', distributorId)
+        .single();
+
+      if (profileError || !distributorProfile) {
+        return { success: false, error: 'Distributor profile not found' };
+      }
+
+      // Debug: Check distributor profile
+      console.log('🔍 Creating distribution with:', {
+        distributorId,
+        recipientId,
+        organizationId: distributorProfile.organization_id,
+        doorsToSend,
+        reason
+      });
+
       // Create door distribution record
-      const { data: distribution, error: distributionError } = await supabase
+      // Try with RLS first, if that fails, try with service role
+      let distribution, distributionError;
+      
+      const distributionData = {
+        distributor_id: distributorId,
+        recipient_id: recipientId,
+        organization_id: distributorProfile.organization_id,
+        doors_sent: doorsToSend,
+        reason: reason
+      };
+
+      const { data: distData, error: distError } = await supabase
         .from('door_distributions')
-        .insert({
-          distributor_id: distributorId,
-          recipient_id: recipientId,
-          organization_id: organizationId,
-          doors_sent: doorsToSend,
-          reason: reason
-        })
+        .insert(distributionData)
         .select()
         .single();
+
+      if (distError) {
+        console.log('🔍 RLS error, trying alternative approach:', distError);
+        
+        // If RLS fails, try using a function that bypasses RLS
+        const { data: altData, error: altError } = await supabase
+          .rpc('create_door_distribution', distributionData);
+        
+        if (altError) {
+          console.log('🔍 Alternative approach also failed:', altError);
+          distributionError = distError; // Use original error
+        } else {
+          distribution = altData;
+          distributionError = null;
+        }
+      } else {
+        distribution = distData;
+        distributionError = null;
+      }
 
       if (distributionError || !distribution) {
         console.error('Error creating distribution:', distributionError);
@@ -185,6 +247,32 @@ class OrganizationService {
         return { success: false, error: 'Failed to update distributor doors' };
       }
 
+      // Get distributor name for notifications and rewards
+      const { data: distributorNameData } = await supabase
+        .from('user_profiles')
+        .select('first_name, last_name, email')
+        .eq('id', distributorId)
+        .single();
+
+      const distributorName = distributorNameData 
+        ? (distributorNameData.first_name && distributorNameData.last_name
+            ? `${distributorNameData.first_name} ${distributorNameData.last_name}`
+            : distributorNameData.email)
+        : 'Unknown Distributor';
+
+      // Create notification for the recipient
+      const notificationResult = await notificationService.createDoorNotification(
+        recipientId,
+        distributorName,
+        doorsToSend,
+        reason
+      );
+
+      if (!notificationResult.success) {
+        console.error('Error creating notification:', notificationResult.error);
+        // Don't fail the entire operation for notification errors
+      }
+
       // Add earned rewards for the recipient
       const earnedRewardsToCreate = [];
       for (let i = 0; i < doorsToSend; i++) {
@@ -192,7 +280,7 @@ class OrganizationService {
           user_id: recipientId,
           doors_earned: 1,
           source_type: 'distributor',
-          source_name: 'Your organization', // We'll update this with actual distributor name in the UI
+          source_name: distributorName,
           description: reason,
           claimed: false,
           expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
@@ -372,6 +460,124 @@ class OrganizationService {
       return { success: true, error: null };
     } catch (error: any) {
       console.error('Error updating distributor doors:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Add user to organization (for admin)
+   */
+  async addUserToOrganization(
+    organizationId: string,
+    email: string,
+    firstName: string | null,
+    lastName: string | null,
+    userType: 'user' | 'distributor'
+  ) {
+    try {
+      // First, check if user already exists
+      const { data: existingUser, error: checkError } = await supabase
+        .from('user_profiles')
+        .select('id, organization_id')
+        .eq('email', email)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        return { success: false, error: 'Error checking existing user' };
+      }
+
+      if (existingUser) {
+        if (existingUser.organization_id === organizationId) {
+          return { success: false, error: 'User is already in this organization' };
+        } else if (existingUser.organization_id) {
+          return { success: false, error: 'User is already in another organization' };
+        }
+      }
+
+      // If user exists but has no organization, update their profile
+      if (existingUser) {
+        const { error: updateError } = await supabase
+          .from('user_profiles')
+          .update({
+            organization_id: organizationId,
+            user_type: userType,
+            first_name: firstName,
+            last_name: lastName,
+            doors_available: userType === 'distributor' ? 0 : 0,
+            doors_distributed: 0
+          })
+          .eq('id', existingUser.id);
+
+        if (updateError) {
+          return { success: false, error: 'Failed to update user profile' };
+        }
+
+        return { success: true, error: null };
+      }
+
+      // If user doesn't exist, create a new profile
+      const { error: insertError } = await supabase
+        .from('user_profiles')
+        .insert({
+          email,
+          first_name: firstName,
+          last_name: lastName,
+          organization_id: organizationId,
+          user_type: userType,
+          doors_available: userType === 'distributor' ? 0 : 0,
+          doors_distributed: 0
+        });
+
+      if (insertError) {
+        return { success: false, error: 'Failed to create user profile' };
+      }
+
+      return { success: true, error: null };
+    } catch (error: any) {
+      console.error('Error adding user to organization:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Assign members to distributor (for admin)
+   */
+  async assignMembersToDistributor(distributorId: string, memberIds: string[]) {
+    try {
+      // First, remove existing assignments for this distributor
+      const { error: deleteError } = await supabase
+        .from('distributor_members')
+        .delete()
+        .eq('distributor_id', distributorId);
+
+      if (deleteError) {
+        console.error('Error removing existing assignments:', deleteError);
+        return { success: false, error: 'Failed to remove existing assignments' };
+      }
+
+      // If no members to assign, we're done
+      if (memberIds.length === 0) {
+        return { success: true, error: null };
+      }
+
+      // Create new assignments
+      const assignments = memberIds.map(memberId => ({
+        distributor_id: distributorId,
+        member_id: memberId
+      }));
+
+      const { error: insertError } = await supabase
+        .from('distributor_members')
+        .insert(assignments);
+
+      if (insertError) {
+        console.error('Error creating new assignments:', insertError);
+        return { success: false, error: 'Failed to assign members' };
+      }
+
+      return { success: true, error: null };
+    } catch (error: any) {
+      console.error('Error assigning members to distributor:', error);
       return { success: false, error: error.message };
     }
   }

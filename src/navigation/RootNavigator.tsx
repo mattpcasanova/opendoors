@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import DoorNotificationComponent from '../components/DoorNotification';
 import TutorialOverlay from '../components/TutorialOverlay';
 import { useAuth } from '../hooks/useAuth';
 import { useTutorial } from '../hooks/useTutorial';
@@ -24,6 +25,7 @@ export default function RootNavigator() {
   const { showTutorial, isLoading: tutorialLoading, completeTutorial, skipTutorial } = useTutorial();
   const [surveyCompleted, setSurveyCompleted] = useState<boolean | null>(null);
   const [checkingSurvey, setCheckingSurvey] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   // Debug logs
   console.log('🔍 RootNavigator state:', {
@@ -65,6 +67,28 @@ export default function RootNavigator() {
       setSurveyCompleted(null);
     }
   }, [user?.id]);
+
+  // Check for notifications when user is authenticated and survey is completed
+  useEffect(() => {
+    const checkNotifications = async () => {
+      if (user?.id && surveyCompleted && !showTutorial) {
+        try {
+          const { notificationService } = await import('../services/notificationService');
+          const result = await notificationService.getUnreadNotifications(user.id);
+          if (result.data && result.data.length > 0) {
+            setShowNotifications(true);
+          }
+        } catch (error) {
+          console.error('Error checking notifications:', error);
+        }
+      }
+    };
+
+    if (user?.id && surveyCompleted && !showTutorial) {
+      const timer = setTimeout(checkNotifications, 1000); // Small delay to ensure app is ready
+      return () => clearTimeout(timer);
+    }
+  }, [user?.id, surveyCompleted, showTutorial]);
 
   // Handle survey completion
   const handleSurveyComplete = () => {
@@ -114,6 +138,12 @@ export default function RootNavigator() {
         isVisible={showTutorial}
         onComplete={completeTutorial}
         onSkip={skipTutorial}
+      />
+      
+      {/* Door Notifications */}
+      <DoorNotificationComponent
+        isVisible={showNotifications}
+        onClose={() => setShowNotifications(false)}
       />
     </>
   );

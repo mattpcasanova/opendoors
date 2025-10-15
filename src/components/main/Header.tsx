@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons"
 import { LinearGradient } from "expo-linear-gradient"
+import { Gift, History, Settings, Shield, Users } from "lucide-react-native"
 import type React from "react"
 import { Dimensions, Image, Text, TouchableOpacity, View } from "react-native"
 
@@ -584,15 +585,12 @@ export default function Header({
             justifyContent: "center",
           }}
         >
-          <View
-            style={{
-              width: 10,
-              height: 10,
-              borderRadius: 5,
-              backgroundColor: "#009688",
-              marginRight: 16,
-            }}
-          />
+          {(title === "Rewards" || title === "My Rewards") && <Gift size={20} color="#009688" style={{ marginRight: 12 }} />}
+          {title === "History" && <History size={20} color="#009688" style={{ marginRight: 12 }} />}
+          {title === "Distributor Dashboard" && <Users size={20} color="#009688" style={{ marginRight: 12 }} />}
+          {title === "Admin Dashboard" && <Shield size={20} color="#009688" style={{ marginRight: 12 }} />}
+          {title === "Profile" && <Settings size={20} color="#009688" style={{ marginRight: 12 }} />}
+          {!["Rewards", "My Rewards", "History", "Distributor Dashboard", "Admin Dashboard", "Profile"].includes(title || "") && <Ionicons name="sparkles" size={20} color="#009688" style={{ marginRight: 12 }} />}
           <Text
             style={{
               color: "#009688",
@@ -601,10 +599,12 @@ export default function Header({
               letterSpacing: 0.5,
             }}
           >
-            {title === "Rewards" && "🏆 Your Achievements"}
-            {title === "History" && "📊 Game Statistics"}
-            {title === "Profile" && "⚙️ Account Settings"}
-            {!["Rewards", "History", "Profile"].includes(title || "") && "✨ Explore More"}
+            {(title === "Rewards" || title === "My Rewards") && "View and manage your earned rewards"}
+            {title === "History" && "Track your game history and statistics"}
+            {title === "Distributor Dashboard" && "Manage door distributions and track activity"}
+            {title === "Admin Dashboard" && "Oversee distributors and monitor system activity"}
+            {title === "Profile" && "Manage your account and preferences"}
+            {!["Rewards", "My Rewards", "History", "Distributor Dashboard", "Admin Dashboard", "Profile"].includes(title || "") && "✨ Explore More"}
           </Text>
         </View>
       </View>
