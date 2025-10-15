@@ -26,9 +26,21 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
       setIsOpening(true);
       soundService.playDoorCreak();
       
+      // Play door opening sound after creak
+      setTimeout(() => {
+        soundService.playDoorOpen();
+      }, 200);
+      
       // Play appropriate sound based on content
       if (isWinningDoor) {
-        soundService.playWinningChime();
+        // Play winning sounds with delay to sync with animation
+        setTimeout(() => {
+          soundService.playWinningChime();
+        }, 800);
+        setTimeout(() => {
+          soundService.playCelebration();
+        }, 1200);
+        
         // Start celebration animation for winning door
         Animated.loop(
           Animated.sequence([
@@ -47,6 +59,10 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
         ).start();
       } else {
         soundService.playLosingDoor();
+        // Play loss sound after door opens
+        setTimeout(() => {
+          soundService.playLoss();
+        }, 1000);
       }
 
       // Enhanced door opening sequence
@@ -288,12 +304,13 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
             disabled={disabled}
           />
 
-          {/* Sparkle Effect for Winning Doors */}
+          {/* Enhanced Sparkle Effect for Winning Doors */}
           <SparkleEffect 
             isActive={isWinningDoor && isOpen}
-            particleCount={12}
-            duration={1500}
-            size={6}
+            particleCount={25}
+            duration={2500}
+            size={12}
+            colors={['#FFD700', '#FFA500', '#FF8C00', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7']}
           />
         </View>
       <Text style={{ 

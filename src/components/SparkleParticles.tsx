@@ -21,10 +21,10 @@ interface SparkleEffectProps {
 
 const SparkleEffect: React.FC<SparkleEffectProps> = ({
   isActive,
-  particleCount = 12,
-  duration = 1500,
-  colors = ['#FFD700', '#FFA500', '#FF8C00'],
-  size = 8
+  particleCount = 20,
+  duration = 2000,
+  colors = ['#FFD700', '#FFA500', '#FF8C00', '#FF6B6B', '#4ECDC4', '#45B7D1'],
+  size = 10
 }) => {
   const [particles, setParticles] = useState<SparkleParticle[]>([]);
   const animationRef = useRef<Animated.CompositeAnimation | null>(null);
@@ -63,16 +63,16 @@ const SparkleEffect: React.FC<SparkleEffectProps> = ({
 
   const animateParticles = (particlesToAnimate: SparkleParticle[]) => {
     const animations = particlesToAnimate.map((particle, index) => {
-      // Random direction and distance
-      const angle = (Math.PI * 2 * index) / particleCount + (Math.random() - 0.5) * 0.5;
-      const distance = 30 + Math.random() * 40;
+      // More dramatic spread for celebration
+      const angle = (Math.PI * 2 * index) / particleCount + (Math.random() - 0.5) * 1.0;
+      const distance = 50 + Math.random() * 80; // Increased distance
       const endX = Math.cos(angle) * distance;
-      const endY = Math.sin(angle) * distance - Math.random() * 20; // Slight upward bias
+      const endY = Math.sin(angle) * distance - Math.random() * 40; // More upward bias for confetti effect
 
       return Animated.sequence([
         Animated.delay(particle.startDelay),
         Animated.parallel([
-          // Movement animation
+          // Movement animation with more dramatic curve
           Animated.timing(particle.x, {
             toValue: endX,
             duration: duration,
@@ -83,20 +83,21 @@ const SparkleEffect: React.FC<SparkleEffectProps> = ({
             duration: duration,
             useNativeDriver: true,
           }),
-          // Scale animation (grow then shrink)
+          // Scale animation (grow then shrink with more dramatic effect)
           Animated.sequence([
-            Animated.timing(particle.scale, {
-              toValue: 1,
-              duration: duration * 0.3,
+            Animated.spring(particle.scale, {
+              toValue: 1.2,
+              tension: 100,
+              friction: 8,
               useNativeDriver: true,
             }),
             Animated.timing(particle.scale, {
               toValue: 0,
-              duration: duration * 0.7,
+              duration: duration * 0.6,
               useNativeDriver: true,
             }),
           ]),
-          // Opacity animation (fade out)
+          // Opacity animation with fade out
           Animated.timing(particle.opacity, {
             toValue: 0,
             duration: duration,

@@ -127,7 +127,7 @@ export default function GameScreen({
       case 'finalChoice':
         return `You ${switchedChoice ? 'switched to' : 'stayed with'} Door ${selectedDoor}. Click it to see what you won!`;
       case 'result':
-        return gameResult?.message || '';
+        return gameResult?.message || 'Opening doors...';
       default:
         return '';
     }
@@ -159,12 +159,7 @@ export default function GameScreen({
       const won = doorNumber === prizeLocation;
       openDoor(doorNumber);
       
-      // Set result
-      const message = won ? 
-        `🎉 Congratulations! You won the ${prizeName}!` : 
-        '😔 Sorry! Better luck next time!';
-      
-      setGameResult({ won, message });
+      // Set game stage to result but don't show message yet
       setGameStage('result');
       
       // Reveal all remaining doors after a delay
@@ -180,10 +175,19 @@ export default function GameScreen({
         setRevealedDoors(prev => [...prev, doorNumber, ...allRemainingDoors]);
       }, 500);
       
+      // Show result message after door animation completes (1.5 seconds)
+      setTimeout(() => {
+        const message = won ? 
+          `🎉 Congratulations! You won the ${prizeName}!` : 
+          '😔 Sorry! Better luck next time!';
+        
+        setGameResult({ won, message });
+      }, 1500);
+      
       // Call completion callback
       setTimeout(() => {
         onGameComplete?.(won, switchedChoice);
-      }, 1500);
+      }, 2000);
     }
   };
 
