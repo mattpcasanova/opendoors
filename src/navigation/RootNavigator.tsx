@@ -1,7 +1,9 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import TutorialOverlay from '../components/TutorialOverlay';
 import { useAuth } from '../hooks/useAuth';
+import { useTutorial } from '../hooks/useTutorial';
 import { userPreferencesService } from '../services/userPreferencesService';
 import { RootStackParamList } from '../types/navigation';
 
@@ -19,6 +21,7 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
   const { user, loading } = useAuth();
+  const { showTutorial, isLoading: tutorialLoading, completeTutorial, skipTutorial } = useTutorial();
   const [surveyCompleted, setSurveyCompleted] = useState<boolean | null>(null);
   const [checkingSurvey, setCheckingSurvey] = useState(false);
 
@@ -29,7 +32,9 @@ export default function RootNavigator() {
     loading,
     surveyCompleted,
     checkingSurvey,
-    hasUser: !!user
+    hasUser: !!user,
+    showTutorial,
+    tutorialLoading
   });
 
   useEffect(() => {
@@ -67,7 +72,7 @@ export default function RootNavigator() {
     setSurveyCompleted(true);
   };
 
-  if (loading || checkingSurvey) {
+  if (loading || checkingSurvey || tutorialLoading) {
     console.log('🔍 Showing loading screen');
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -97,10 +102,19 @@ export default function RootNavigator() {
   // If user is authenticated and has completed survey, show main app
   console.log('🔍 User authenticated and survey completed, showing MainTabNavigator and other screens');
   return (
-    <RootStack.Navigator screenOptions={{ headerShown: false }}>
-      <RootStack.Screen name="MainTabs" component={MainTabNavigator} />
-      <RootStack.Screen name="PrizeDetails" component={PrizeDetailsScreen} />
-      <RootStack.Screen name="EarnedRewards" component={EarnedRewardsScreen} />
-    </RootStack.Navigator>
+    <>
+      <RootStack.Navigator screenOptions={{ headerShown: false }}>
+        <RootStack.Screen name="MainTabs" component={MainTabNavigator} />
+        <RootStack.Screen name="PrizeDetails" component={PrizeDetailsScreen} />
+        <RootStack.Screen name="EarnedRewards" component={EarnedRewardsScreen} />
+      </RootStack.Navigator>
+      
+      {/* Tutorial Overlay */}
+      <TutorialOverlay
+        isVisible={showTutorial}
+        onComplete={completeTutorial}
+        onSkip={skipTutorial}
+      />
+    </>
   );
 }

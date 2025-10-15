@@ -1,0 +1,375 @@
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useEffect, useState } from 'react';
+import {
+    Animated,
+    Dimensions,
+    Image,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from 'react-native';
+import MiniGame from './MiniGame';
+import TutorialVisuals from './TutorialVisuals';
+
+const { width, height } = Dimensions.get('window');
+
+interface TutorialStep {
+  id: number;
+  title: string;
+  description: string;
+  icon: string;
+  highlight?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+}
+
+interface TutorialOverlayProps {
+  isVisible: boolean;
+  onComplete: () => void;
+  onSkip: () => void;
+}
+
+const tutorialSteps: TutorialStep[] = [
+  {
+    id: 1,
+    title: "Welcome to OpenDoors!",
+    description: "Let's take a quick tour to show you how to win amazing prizes in your neighborhood.",
+    icon: "logo" // Special case for OpenDoors logo
+  },
+  {
+    id: 2,
+    title: "Check Your Plays",
+    description: "You get 1 free play per day. Here's what the play counter looks like when you have plays available:",
+    icon: "play-circle-outline"
+  },
+  {
+    id: 3,
+    title: "Browse Available Games",
+    description: "Scroll through the list of games from local businesses. Each game shows the prize you can win:",
+    icon: "list-outline"
+  },
+  {
+    id: 4,
+    title: "How the Game Works",
+    description: "Try this mini-game to see how it works! Choose a door and follow the steps.",
+    icon: "game-controller-outline"
+  },
+  {
+    id: 5,
+    title: "Claim Your Rewards",
+    description: "If you win, your reward will appear in the Rewards tab with a QR code to show the business:",
+    icon: "gift-outline"
+  },
+  {
+    id: 6,
+    title: "Get More Plays",
+    description: "Watch ads, refer friends, or receive gifted plays to get more chances to win:",
+    icon: "add-circle-outline"
+  },
+  {
+    id: 7,
+    title: "You're All Set!",
+    description: "Now you know how to play! Start exploring games and winning prizes. Good luck!",
+    icon: "checkmark-circle-outline"
+  }
+];
+
+export default function TutorialOverlay({ isVisible, onComplete, onSkip }: TutorialOverlayProps) {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [slideAnim] = useState(new Animated.Value(50));
+
+  useEffect(() => {
+    if (isVisible) {
+      setCurrentStep(0);
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 50,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [isVisible]);
+
+  const handleNext = () => {
+    if (currentStep < tutorialSteps.length - 1) {
+      setCurrentStep(currentStep + 1);
+    } else {
+      onComplete();
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleSkip = () => {
+    onSkip();
+  };
+
+  if (!isVisible) return null;
+
+  const step = tutorialSteps[currentStep];
+  const progress = (currentStep + 1) / tutorialSteps.length;
+
+  return (
+    <View style={styles.overlay}>
+      <StatusBar barStyle="light-content" backgroundColor="rgba(0,0,0,0.8)" />
+      
+      {/* Skip Button */}
+      <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+        <Text style={styles.skipText}>Skip Tutorial</Text>
+      </TouchableOpacity>
+
+      {/* Tutorial Content */}
+      <Animated.View 
+        style={[
+          styles.tutorialContainer,
+          {
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }]
+          }
+        ]}
+      >
+        <LinearGradient
+          colors={['#14B8A6', '#0D9488', '#059669']}
+          style={styles.tutorialCard}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          {/* Progress Bar */}
+          <View style={styles.progressContainer}>
+            <View style={styles.progressBar}>
+              <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+            </View>
+            <Text style={styles.progressText}>
+              {currentStep + 1} of {tutorialSteps.length}
+            </Text>
+          </View>
+
+          {/* Step Content */}
+          <View style={styles.stepContent}>
+            <View style={styles.iconContainer}>
+              {step.icon === 'logo' ? (
+                <Image 
+                  source={require('../../assets/OpenDoorsLogo.png')} 
+                  style={styles.logoImage}
+                />
+              ) : (
+                <Ionicons name={step.icon as any} size={60} color="white" />
+              )}
+            </View>
+            
+            <Text style={styles.stepTitle}>{step.title}</Text>
+            <Text style={styles.stepDescription}>{step.description}</Text>
+            
+            {/* Mini Game for Step 4 */}
+            {step.id === 4 && (
+              <View style={styles.miniGameContainer}>
+                <MiniGame onComplete={() => setCurrentStep(currentStep + 1)} />
+              </View>
+            )}
+            
+            {/* Visual Components for Steps 2, 3, 5, 6 */}
+            {(step.id === 2 || step.id === 3 || step.id === 5 || step.id === 6) && (
+              <TutorialVisuals stepId={step.id} />
+            )}
+          </View>
+
+          {/* Navigation Buttons */}
+          <View style={styles.navigationContainer}>
+            {currentStep > 0 && (
+              <TouchableOpacity style={styles.previousButton} onPress={handlePrevious}>
+                <Ionicons name="chevron-back" size={20} color="#14B8A6" />
+                <Text style={styles.previousText}>Previous</Text>
+              </TouchableOpacity>
+            )}
+            
+            <View style={styles.nextButtonContainer}>
+              <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+                <Text style={styles.nextText}>
+                  {currentStep === tutorialSteps.length - 1 ? 'Get Started!' : 'Next'}
+                </Text>
+                <Ionicons 
+                  name={currentStep === tutorialSteps.length - 1 ? "checkmark" : "chevron-forward"} 
+                  size={20} 
+                  color="white" 
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </LinearGradient>
+      </Animated.View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    zIndex: 1000,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  skipButton: {
+    position: 'absolute',
+    top: 60,
+    right: 20,
+    zIndex: 1001,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    borderRadius: 25,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  skipText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  tutorialContainer: {
+    width: width * 0.9,
+    maxWidth: 400,
+  },
+  tutorialCard: {
+    borderRadius: 24,
+    padding: 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.3,
+    shadowRadius: 40,
+    elevation: 20,
+  },
+  progressContainer: {
+    marginBottom: 32,
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 2,
+    marginBottom: 8,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: 'white',
+    borderRadius: 2,
+  },
+  progressText: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 12,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  stepContent: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  iconContainer: {
+    width: 100,
+    height: 100,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  stepTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  stepDescription: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.9)',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  navigationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  previousButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: 'white',
+    borderRadius: 25,
+    gap: 8,
+  },
+  previousText: {
+    color: '#14B8A6',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  nextButtonContainer: {
+    flex: 1,
+    alignItems: 'flex-end',
+  },
+  nextButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 25,
+    borderWidth: 2,
+    borderColor: 'white',
+    gap: 8,
+  },
+  nextText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  logoImage: {
+    width: 80,
+    height: 80,
+    resizeMode: 'contain',
+  },
+  miniGameContainer: {
+    marginTop: 20,
+    width: '100%',
+  },
+});
