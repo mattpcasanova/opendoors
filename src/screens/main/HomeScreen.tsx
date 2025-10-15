@@ -1026,22 +1026,6 @@ export default function HomeScreen() {
           );
         })()}
 
-        {/* Debug Info - Only show when not searching */}
-        {!searchText && (
-          <View className="mt-8 p-4 bg-gray-100 rounded-xl">
-            <Text className="text-gray-700 text-sm font-semibold mb-2">Debug Info:</Text>
-            <Text className="text-gray-600 text-xs">Games until bonus: {gamesUntilBonus}</Text>
-            <Text className="text-gray-600 text-xs">Bonus plays available: {bonusPlaysAvailable}</Text>
-            <Text className="text-gray-600 text-xs">Any game played today: {hasPlayedAnyGameToday ? 'Yes' : 'No'}</Text>
-            <Text className="text-gray-600 text-xs">Last play date: {lastPlayDate || 'Never'}</Text>
-            <Text className="text-gray-600 text-xs">Current game: {currentGame?.name || 'None'}</Text>
-            <Text className="text-gray-600 text-xs">Current game doors: {currentGame?.doors || 'N/A'}</Text>
-            <Text className="text-gray-600 text-xs">Show game screen: {showGameScreen ? 'Yes' : 'No'}</Text>
-            {featuredGame && (
-              <Text className="text-gray-600 text-xs">Featured game doors: {featuredGame.doors}</Text>
-            )}
-          </View>
-        )}
       </ScrollView>
 
       <BottomNavBar />

@@ -54,23 +54,11 @@ export default function GameScreen({
       }
     })();
 
-    console.log('📐 Calculated layout:', layout);
-    return layout;
+      return layout;
   };
 
-  console.log('🎮 GameScreen received props:', {
-    prizeName,
-    prizeDescription,
-    locationName,
-    doorCount,
-    layout: getDoorLayout()
-  });
-  
   const layout = getDoorLayout();
   const doorSize = layout.doorSize;
-
-  console.log('🚪 Layout calculated:', layout);
-  console.log('📏 Door size calculated:', doorSize);
 
   // Game state
   const [gameStage, setGameStage] = useState<GameStage>('selection');
@@ -78,7 +66,6 @@ export default function GameScreen({
   const [revealedDoors, setRevealedDoors] = useState<number[]>([]);
   const [prizeLocation] = useState<number>(() => {
     const location = Math.floor(Math.random() * doorCount) + 1;
-    console.log('🎁 Prize location set to door:', location, 'out of', doorCount, 'doors');
     return location;
   });
   const [switchedChoice, setSwitchedChoice] = useState<boolean>(false);
@@ -101,18 +88,6 @@ export default function GameScreen({
   const [switchPickMode, setSwitchPickMode] = useState(false);
   const [availableSwitchDoors, setAvailableSwitchDoors] = useState<number[]>([]);
 
-  console.log('🎮 Game state:', {
-    doorCount,
-    layout,
-    doorSize,
-    gameStage,
-    selectedDoor,
-    revealedDoors,
-    prizeLocation,
-    switchedChoice,
-    switchPickMode,
-    availableSwitchDoors
-  });
 
   const getInstructions = (): string => {
     switch (gameStage) {

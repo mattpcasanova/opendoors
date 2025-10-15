@@ -2,13 +2,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowRight, Gamepad2, MapPin, Trophy } from 'lucide-react-native';
 import React, { useEffect, useRef } from 'react';
 import {
-  Animated,
-  Dimensions,
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    Animated,
+    Dimensions,
+    Image,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthNavigation } from '../../hooks/useNavigation';
@@ -79,13 +79,11 @@ export default function WelcomeScreen() {
                 { transform: [{ translateY: logoLift }] }
               ]}
             >
-              <View style={styles.liquidGlassContainer}>
+              <View style={styles.logoGlowContainer}>
                 <Image 
                   source={require('../../../assets/OpenDoorsLogo.png')} 
                   style={styles.logoImage}
                 />
-                {/* Subtle highlight overlay */}
-                <View style={styles.highlightOverlay} />
               </View>
             </Animated.View>
           </View>
@@ -200,7 +198,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   brandAccent: {
-    color: '#FCD34D',
+    color: 'white',
   },
   headerSubtitle: {
     fontSize: 18,
@@ -221,34 +219,25 @@ const styles = StyleSheet.create({
     width: 180,
     height: 180,
   },
-  liquidGlassContainer: {
+  logoGlowContainer: {
     width: '100%',
     height: '100%',
     borderRadius: 90,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.1,
-    shadowRadius: 40,
-    elevation: 15,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    shadowColor: '#14B8A6',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 30,
+    elevation: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   logoImage: {
     width: 120,
     height: 120,
     resizeMode: 'contain',
-  },
-  highlightOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 90,
-    backgroundColor: 'transparent',
   },
   featuresContainer: {
     flexDirection: 'row',

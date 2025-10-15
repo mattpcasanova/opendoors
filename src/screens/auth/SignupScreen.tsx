@@ -5,18 +5,18 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowRight, Eye, EyeOff, Gift, Heart, Lock, Mail, Trophy, User } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Alert,
-  Animated,
-  Dimensions,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Alert,
+    Animated,
+    Dimensions,
+    Image,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
@@ -233,12 +233,11 @@ export default function SignupScreen() {
                     { transform: [{ translateY: logoLift }] }
                   ]}
                 >
-                  <View style={styles.liquidGlassContainer}>
+                  <View style={styles.logoGlowContainer}>
                     <Image 
                       source={require('../../../assets/OpenDoorsLogo.png')} 
                       style={styles.logoImage}
                     />
-                    <View style={styles.highlightOverlay} />
                   </View>
                 </Animated.View>
               </View>
@@ -420,25 +419,6 @@ export default function SignupScreen() {
                   {!loading && <ArrowRight size={20} color="white" />}
                 </TouchableOpacity>
 
-                {/* Divider */}
-                <View style={styles.divider}>
-                  <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>or continue with</Text>
-                  <View style={styles.dividerLine} />
-                </View>
-
-                {/* Social Login Buttons */}
-                <View style={styles.socialButtonsContainer}>
-                  <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
-                    <Text style={styles.socialIcon}>🔍</Text>
-                    <Text style={styles.socialButtonText}>Continue with Google</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity style={[styles.socialButton, styles.appleSocialButton]} activeOpacity={0.7}>
-                    <Text style={styles.socialIcon}>🍎</Text>
-                    <Text style={[styles.socialButtonText, { color: 'white' }]}>Continue with Apple</Text>
-                  </TouchableOpacity>
-                </View>
 
                 {/* Sign In Link */}
                 <View style={styles.signInLinkContainer}>
@@ -506,15 +486,15 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   header: {
-    paddingTop: 64,
-    paddingBottom: 32,
+    paddingTop: 20,
+    paddingBottom: 20,
     paddingHorizontal: 24,
   },
   headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 32,
+    marginBottom: 20,
   },
   backButton: {
     padding: 12,
@@ -526,44 +506,35 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 20,
   },
   logoWrapper: {
-    width: 160,
-    height: 160,
+    width: 120,
+    height: 120,
   },
-  liquidGlassContainer: {
+  logoGlowContainer: {
     width: '100%',
     height: '100%',
-    borderRadius: 80,
+    borderRadius: 60,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.1,
-    shadowRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    shadowColor: '#14B8A6',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
     elevation: 15,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   logoImage: {
-    width: 100,
-    height: 100,
+    width: 80,
+    height: 80,
     resizeMode: 'contain',
-  },
-  highlightOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 80,
-    backgroundColor: 'transparent',
   },
   titleContainer: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 20,
   },
   title: {
     fontSize: 32,
@@ -573,7 +544,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   titleAccent: {
-    color: '#FCD34D',
+    color: 'white',
   },
   titleUnderline: {
     width: 64,
@@ -713,55 +684,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: 'white',
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E5E7EB',
-  },
-  dividerText: {
-    marginHorizontal: 16,
-    color: '#9CA3AF',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  socialButtonsContainer: {
-    gap: 16,
-    marginBottom: 24,
-  },
-  socialButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'white',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
-    gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  appleSocialButton: {
-    backgroundColor: '#000',
-    borderColor: '#000',
-  },
-  socialIcon: {
-    fontSize: 20,
-  },
-  socialButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
   },
   signInLinkContainer: {
     flexDirection: 'row',
