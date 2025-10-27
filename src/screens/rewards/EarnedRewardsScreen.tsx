@@ -110,28 +110,26 @@ const EarnedRewardsScreen: React.FC = () => {
   const RewardCard: React.FC<{ reward: EarnedReward }> = ({ reward }) => (
     <View style={styles.rewardCard}>
       <View style={styles.rewardHeader}>
-        <View style={[styles.iconContainer, { backgroundColor: getRewardColor(reward.source_type) + '20' }]}>
+        <View style={styles.iconContainer}>
           <Ionicons 
             name={getRewardIcon(reward.source_type) as any} 
-            size={24} 
-            color={getRewardColor(reward.source_type)} 
+            size={32} 
+            color="#10B981" 
           />
         </View>
         <View style={styles.rewardInfo}>
-          <Text style={styles.rewardTitle}>
-            +{reward.doors_earned} Door{reward.doors_earned > 1 ? 's' : ''}
-          </Text>
-          <Text style={styles.rewardFrom}>From: {reward.source_name}</Text>
+          <Text style={styles.rewardTitle}>From: {reward.source_name}</Text>
           <Text style={styles.rewardReason}>{reward.description}</Text>
         </View>
-        <View style={styles.doorCount}>
-          <Text style={styles.doorCountText}>+{reward.doors_earned}</Text>
+        <View style={styles.dateContainer}>
+          <Text style={styles.rewardDate}>
+            {new Date(reward.created_at).toLocaleDateString()}
+          </Text>
+          {reward.claimed && (
+            <Text style={styles.claimedText}>Claimed</Text>
+          )}
         </View>
       </View>
-      <Text style={styles.rewardDate}>
-        {new Date(reward.created_at).toLocaleDateString()}
-        {reward.claimed && ' • Claimed'}
-      </Text>
     </View>
   );
 
@@ -285,14 +283,21 @@ const styles = StyleSheet.create({
   rewardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#f0fdf4',
+    borderWidth: 2,
+    borderColor: 'rgba(16, 185, 129, 0.2)',
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
     marginRight: 12,
   },
   rewardInfo: {
@@ -304,29 +309,24 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     marginBottom: 2,
   },
-  rewardFrom: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 2,
-  },
   rewardReason: {
     fontSize: 14,
     color: '#374151',
   },
-  doorCount: {
-    backgroundColor: '#10B981',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  doorCountText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '700',
+  dateContainer: {
+    alignItems: 'flex-end',
   },
   rewardDate: {
     fontSize: 12,
     color: '#9CA3AF',
+    textAlign: 'right',
+  },
+  claimedText: {
+    fontSize: 11,
+    color: '#10B981',
+    fontWeight: '600',
+    marginTop: 2,
+    textAlign: 'right',
   },
   emptyState: {
     alignItems: 'center',
