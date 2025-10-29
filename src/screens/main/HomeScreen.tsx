@@ -359,38 +359,75 @@ export default function HomeScreen() {
 
   // Filter/sort state
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [distance, setDistance] = useState('Any');
-  const [sortBy, setSortBy] = useState('Closest');
-  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
+  const [excludedCategories, setExcludedCategories] = useState<string[]>([]); // Categories to hide (opposite of selected)
+  const [distance, setDistance] = useState<string | null>(null); // null = not loaded yet
+  const [sortBy, setSortBy] = useState<string | null>(null); // null = not loaded yet
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false); // Default to OFF
+  
+  // Get user preference categories for emphasis
+  const [userPreferenceCategories, setUserPreferenceCategories] = useState<string[]>([]);
 
   const categories = ['Food', 'Drinks', 'Activities', 'Wellness', 'Retail', 'Entertainment', 'Other'];
 
-  // Load user preferences to pre-select categories
+  // Load user preferences to pre-select categories and load filter settings
   useEffect(() => {
     if (!user?.id) return;
     
     const loadUserPreferences = async () => {
       try {
-        const { data, error } = await supabase
+        // Load category preferences
+        const { data: prefData, error: prefError } = await supabase
           .from('user_preferences')
           .select('*')
           .eq('user_id', user.id)
           .single();
         
-        if (error || !data) return;
+        if (!prefError && prefData) {
+          // Map database categories to filter categories
+          const prefCategories: string[] = [];
+          if (prefData.food_and_dining) prefCategories.push('Food');
+          if (prefData.coffee_and_drinks) prefCategories.push('Drinks');
+          if (prefData.entertainment) prefCategories.push('Entertainment');
+          if (prefData.fitness_and_health) prefCategories.push('Activities');
+          if (prefData.beauty_and_wellness) prefCategories.push('Wellness');
+          if (prefData.shopping) prefCategories.push('Retail');
+          
+          if (prefCategories.length > 0) {
+            setUserPreferenceCategories(prefCategories); // Store for emphasis (used for visual emphasis only)
+            // Don't auto-exclude any categories - show all by default
+            console.log('✅ Loaded user preference categories for emphasis:', prefCategories);
+          }
+        }
         
-        // Map database categories to filter categories
-        const prefCategories: string[] = [];
-        if (data.food_and_dining) prefCategories.push('Food');
-        if (data.coffee_and_drinks) prefCategories.push('Drinks');
-        if (data.entertainment) prefCategories.push('Entertainment');
-        if (data.fitness_and_health) prefCategories.push('Activities');
-        if (data.beauty_and_wellness) prefCategories.push('Wellness');
-        if (data.shopping) prefCategories.push('Retail');
+        // Load filter settings (distance, sort_by)
+        const { data: settingsData, error: settingsError } = await supabase
+          .from('user_settings')
+          .select('distance_filter, sort_by, excluded_categories')
+          .eq('user_id', user.id)
+          .single();
         
-        if (prefCategories.length > 0) {
-          setSelectedCategories(prefCategories);
+        if (!settingsError && settingsData) {
+          // Set distance - use saved or default to 'Any'
+          setDistance(settingsData.distance_filter || 'Any');
+          
+          // Set sort_by - use saved or default to 'Closest'
+          setSortBy(settingsData.sort_by || 'Closest');
+          
+          // Load excluded categories (categories user wants to hide)
+          if (settingsData.excluded_categories && Array.isArray(settingsData.excluded_categories)) {
+            setExcludedCategories(settingsData.excluded_categories);
+          }
+          
+          console.log('✅ Loaded filter preferences:', {
+            distance: settingsData.distance_filter || 'Any',
+            sortBy: settingsData.sort_by || 'Closest',
+            excludedCategories: settingsData.excluded_categories || []
+          });
+        } else {
+          // No saved preferences - use defaults
+          setDistance('Any');
+          setSortBy('Closest');
+          console.log('✅ Using default filter preferences');
         }
       } catch (error) {
         console.error('Error loading user preferences:', error);
@@ -430,7 +467,7 @@ export default function HomeScreen() {
   // Debug log filter/sort state
   useEffect(() => {
     // Filter state logging removed for cleaner console
-  }, [selectedCategories, distance, sortBy, showOnlyFavorites]);
+  }, [excludedCategories, distance, sortBy, showOnlyFavorites]);
 
   // Load earned rewards when user changes
   useEffect(() => {
@@ -472,8 +509,11 @@ export default function HomeScreen() {
 
         if (regularResult.error) {
           console.error('❌ Error fetching regular games:', regularResult.error);
+          setError('Failed to load games. Please try again.');
         } else {
-          setRegularGames(regularResult.data || []);
+          const games = regularResult.data || [];
+          console.log('✅ Loaded regular games:', games.length);
+          setRegularGames(games);
         }
 
       } catch (err) {
@@ -542,25 +582,118 @@ export default function HomeScreen() {
     }
   }, [user, gamesUntilBonus, hasPlayedAnyGameToday, lastPlayDate, bonusPlaysAvailable]);
 
-  // Add this effect to filter games based on search text
-  useEffect(() => {
-    if (!regularGames) return;
-    
-    const filtered = regularGames.filter(game => {
-      const searchLower = searchText.toLowerCase();
-      const nameMatch = game.name.toLowerCase().includes(searchLower);
-      const descriptionMatch = game.description.toLowerCase().includes(searchLower);
-      const locationMatch = (game.location_name || '').toLowerCase().includes(searchLower);
-      
-      return nameMatch || descriptionMatch || locationMatch;
-    });
-    
-    setFilteredGames(filtered);
-  }, [searchText, regularGames]);
+  // Helper function to map category string to database category format
+  const mapCategoryToDBFormat = (category: string): string => {
+    switch (category) {
+      case 'Food': return 'food_and_dining';
+      case 'Drinks': return 'coffee_and_drinks';
+      case 'Activities': return 'fitness_and_health';
+      case 'Wellness': return 'beauty_and_wellness';
+      case 'Retail': return 'shopping';
+      case 'Entertainment': return 'entertainment';
+      default: return category.toLowerCase();
+    }
+  };
 
-  // Calculate distances for sorting
+  // Get favorites list for filtering
+  const [favoritePrizeIds, setFavoritePrizeIds] = useState<string[]>([]);
+  
   useEffect(() => {
-    if (!location || !filteredGames.length) {
+    if (!user?.id) {
+      setFavoritePrizeIds([]);
+      return;
+    }
+    
+    const loadFavorites = async () => {
+      const { favoritesService } = await import('../../services/favoritesService');
+      const { ids } = await favoritesService.getFavoritePrizeIds(user.id);
+      setFavoritePrizeIds(ids);
+    };
+    
+    loadFavorites();
+  }, [user?.id]);
+
+  // Filter games based on search text, categories, and favorites
+  useEffect(() => {
+    if (!regularGames || regularGames.length === 0) {
+      setFilteredGames([]);
+      return;
+    }
+    
+    let filtered = [...regularGames];
+    const initialCount = filtered.length;
+    
+    // Filter by search text
+    if (searchText.length > 0) {
+      const searchLower = searchText.toLowerCase();
+      filtered = filtered.filter(game => {
+        const nameMatch = game.name.toLowerCase().includes(searchLower);
+        const descriptionMatch = game.description.toLowerCase().includes(searchLower);
+        const locationMatch = (game.location_name || '').toLowerCase().includes(searchLower);
+        return nameMatch || descriptionMatch || locationMatch;
+      });
+      console.log(`🔍 After search filter: ${filtered.length} games`);
+    }
+    
+    // Filter by favorites if enabled (showOnlyFavorites defaults to true)
+    if (showOnlyFavorites && favoritePrizeIds.length > 0) {
+      // Only show favorites
+      filtered = filtered.filter(game => favoritePrizeIds.includes(game.id));
+      console.log(`⭐ After favorites filter (ON): ${filtered.length} games`);
+    } else if (showOnlyFavorites && favoritePrizeIds.length === 0) {
+      // Favorites ON but no favorites - show all games (fallback)
+      console.log(`⭐ Favorites filter ON but no favorites - showing all games`);
+    } else {
+      console.log(`⭐ Favorites filter OFF: showing all games`);
+    }
+    
+    // Filter by excluded categories (hide games in these categories)
+    if (excludedCategories.length > 0) {
+      const dbExcludedCategories = excludedCategories.map(mapCategoryToDBFormat);
+      filtered = filtered.filter(game => {
+        if (!game.category) return true; // Show games without categories
+        return !dbExcludedCategories.includes(game.category); // Hide if in excluded list
+      });
+      console.log(`🏷️ After excluding categories (${excludedCategories.join(', ')}): ${filtered.length} games`);
+      console.log('🏷️ Available game categories:', [...new Set(regularGames.map(g => g.category))]);
+    }
+    
+    console.log(`📊 Total games: ${initialCount}, Filtered to: ${filtered.length}`);
+    setFilteredGames(filtered);
+  }, [searchText, regularGames, showOnlyFavorites, excludedCategories, favoritePrizeIds]);
+
+  // Save filter preferences when they change
+  useEffect(() => {
+    if (!user?.id || distance === null || sortBy === null) {
+      // Don't save if preferences haven't loaded yet
+      return;
+    }
+    
+    const saveFilterPreferences = async () => {
+      try {
+        await supabase
+          .from('user_settings')
+          .upsert({
+            user_id: user.id,
+            distance_filter: distance,
+            sort_by: sortBy,
+            excluded_categories: excludedCategories,
+          }, { onConflict: 'user_id' });
+        console.log('💾 Saved filter preferences:', { distance, sortBy, excludedCategories });
+      } catch (error) {
+        console.error('Error saving filter preferences:', error);
+      }
+    };
+    
+    // Debounce saves to avoid too many database calls
+    const timeoutId = setTimeout(saveFilterPreferences, 500);
+    return () => clearTimeout(timeoutId);
+  }, [user?.id, distance, sortBy, excludedCategories]);
+
+  // Calculate distances for sorting and filtering
+  useEffect(() => {
+    if (!filteredGames.length || distance === null || sortBy === null) {
+      // Don't calculate if preferences haven't loaded yet
       setGamesWithDistances([]);
       return;
     }
@@ -579,20 +712,24 @@ export default function HomeScreen() {
             return { prize, distance: Infinity };
           }
 
+          if (!location) {
+            return { prize, distance: Infinity }; // No location = show at bottom
+          }
+
           try {
             const addressCoords = await geocodeAddress(prize.address);
             if (!addressCoords) {
               return { prize, distance: Infinity };
             }
 
-            const distance = calculateDistanceInMiles(
+            const calculatedDistance = calculateDistanceInMiles(
               location.latitude,
               location.longitude,
               addressCoords.latitude,
               addressCoords.longitude
             );
 
-            return { prize, distance };
+            return { prize, distance: calculatedDistance };
           } catch (error) {
             console.error('Error calculating distance for prize:', prize.id, error);
             return { prize, distance: Infinity };
@@ -600,13 +737,36 @@ export default function HomeScreen() {
         })
       );
 
-      // Sort by distance (closest first)
-      distances.sort((a, b) => a.distance - b.distance);
-      setGamesWithDistances(distances);
+      // Apply distance filtering
+      const maxDistance = distance === 'Any' ? Infinity : parseFloat(distance.replace(' mi', ''));
+      const filteredByDistance = distances.filter(item => 
+        item.distance <= maxDistance || item.distance === Infinity // Keep games without addresses
+      );
+
+      // Apply sorting based on sortBy
+      const sorted = filteredByDistance.sort((a, b) => {
+        if (sortBy === 'Closest') {
+          return a.distance - b.distance;
+        } else if (sortBy === 'Highest Value') {
+          return (b.prize.value || 0) - (a.prize.value || 0);
+        } else if (sortBy === 'Most Popular') {
+          const playsA = a.prize.plays || 0;
+          const playsB = b.prize.plays || 0;
+          return playsB - playsA;
+        } else if (sortBy === 'Suggested') {
+          // Suggested = closest first, but weighted by value
+          const scoreA = (a.prize.value || 0) / Math.max(a.distance, 0.1); // Avoid division by zero
+          const scoreB = (b.prize.value || 0) / Math.max(b.distance, 0.1);
+          return scoreB - scoreA;
+        }
+        return 0;
+      });
+
+      setGamesWithDistances(sorted);
     };
 
     calculateDistances();
-  }, [location, filteredGames]);
+  }, [location, filteredGames, distance, sortBy]);
 
   const playGame = (prize: Prize) => {
     // Check if user has already played today
@@ -1009,68 +1169,98 @@ export default function HomeScreen() {
                 <Ionicons name={showOnlyFavorites ? 'star' : 'star-outline'} size={18} color={showOnlyFavorites ? '#FFD700' : '#B0B0B0'} style={{ marginRight: 4 }} />
                 <Text style={{ color: showOnlyFavorites ? 'white' : '#009688', fontWeight: '600' }}>Favorites</Text>
               </TouchableOpacity>
-              {categories.map(cat => (
-                <TouchableOpacity
-                  key={cat}
-                  style={{
-                    backgroundColor: selectedCategories.includes(cat) ? '#009688' : '#E0F7F4',
-                    paddingHorizontal: 16,
-                    paddingVertical: 8,
-                    borderRadius: 16,
-                    marginRight: 8,
-                    borderWidth: selectedCategories.includes(cat) ? 2 : 0,
-                    borderColor: '#009688',
-                  }}
-                  onPress={() => setSelectedCategories(selectedCategories.includes(cat)
-                    ? selectedCategories.filter(c => c !== cat)
-                    : [...selectedCategories, cat])}
-                >
-                  <Text style={{ color: selectedCategories.includes(cat) ? 'white' : '#009688', fontWeight: '600' }}>{cat}</Text>
-                </TouchableOpacity>
-              ))}
+              {categories.map(cat => {
+                const isExcluded = excludedCategories.includes(cat); // Category is hidden/off
+                const isUserPreference = userPreferenceCategories.includes(cat);
+                
+                return (
+                  <TouchableOpacity
+                    key={cat}
+                    style={{
+                      backgroundColor: isExcluded ? '#F3F4F6' : (isUserPreference ? '#E0F7F4' : '#E0F7F4'),
+                      paddingHorizontal: 16,
+                      paddingVertical: 8,
+                      borderRadius: 16,
+                      marginRight: 8,
+                      borderWidth: isExcluded ? 1 : (isUserPreference ? 2 : 0),
+                      borderColor: isExcluded ? '#D1D5DB' : (isUserPreference ? '#10B981' : '#009688'),
+                      opacity: isExcluded ? 0.5 : 1,
+                    }}
+                    onPress={() => setExcludedCategories(excludedCategories.includes(cat)
+                      ? excludedCategories.filter(c => c !== cat) // Remove from excluded (show it)
+                      : [...excludedCategories, cat])} // Add to excluded (hide it)
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      {isUserPreference && (
+                        <Ionicons 
+                          name="star" 
+                          size={14} 
+                          color={isExcluded ? '#9CA3AF' : '#10B981'} 
+                          style={{ marginRight: 4 }} 
+                        />
+                      )}
+                      <Text style={{ 
+                        color: isExcluded ? '#9CA3AF' : '#009688', 
+                        fontWeight: isUserPreference ? '700' : '600',
+                        textDecorationLine: isExcluded ? 'line-through' : 'none',
+                      }}>
+                        {cat}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
             </RNScrollView>
 
             {/* Row 2: Distance segmented control */}
             <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 10, paddingHorizontal: 12 }}>
-              {distanceOptions.map(opt => (
-                <TouchableOpacity
-                  key={opt}
-                  style={{
-                    backgroundColor: distance === opt ? '#009688' : '#E0F7F4',
-                    paddingHorizontal: 16,
-                    paddingVertical: 8,
-                    borderRadius: 16,
-                    marginRight: 8,
-                    borderWidth: distance === opt ? 2 : 0,
-                    borderColor: '#009688',
-                  }}
-                  onPress={() => setDistance(opt)}
-                >
-                  <Text style={{ color: distance === opt ? 'white' : '#009688', fontWeight: '600' }}>{opt}</Text>
-                </TouchableOpacity>
-              ))}
+              {distanceOptions.map(opt => {
+                const isSelected = distance === opt;
+                return (
+                  <TouchableOpacity
+                    key={opt}
+                    style={{
+                      backgroundColor: isSelected ? '#009688' : '#E0F7F4',
+                      paddingHorizontal: 16,
+                      paddingVertical: 8,
+                      borderRadius: 16,
+                      marginRight: 8,
+                      borderWidth: isSelected ? 2 : 0,
+                      borderColor: '#009688',
+                    }}
+                    onPress={() => setDistance(opt)}
+                    disabled={distance === null}
+                  >
+                    <Text style={{ color: isSelected ? 'white' : '#009688', fontWeight: '600' }}>{opt}</Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
 
             {/* Row 3: Sorting segmented control (horizontal scroll) */}
             <RNScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 12 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'flex-start' }}>
-                {sortOptions.map(opt => (
-                  <TouchableOpacity
-                    key={opt}
-                    style={{
-                      backgroundColor: sortBy === opt ? '#009688' : '#E0F7F4',
-                      paddingHorizontal: 16,
-                      paddingVertical: 8,
-                      borderRadius: 16,
-                      marginRight: 8,
-                      borderWidth: sortBy === opt ? 2 : 0,
-                      borderColor: '#009688',
-                    }}
-                    onPress={() => setSortBy(opt)}
-                  >
-                    <Text style={{ color: sortBy === opt ? 'white' : '#009688', fontWeight: '600' }}>{opt}</Text>
-                  </TouchableOpacity>
-                ))}
+                {sortOptions.map(opt => {
+                  const isSelected = sortBy === opt;
+                  return (
+                    <TouchableOpacity
+                      key={opt}
+                      style={{
+                        backgroundColor: isSelected ? '#009688' : '#E0F7F4',
+                        paddingHorizontal: 16,
+                        paddingVertical: 8,
+                        borderRadius: 16,
+                        marginRight: 8,
+                        borderWidth: isSelected ? 2 : 0,
+                        borderColor: '#009688',
+                      }}
+                      onPress={() => setSortBy(opt)}
+                      disabled={sortBy === null}
+                    >
+                      <Text style={{ color: isSelected ? 'white' : '#009688', fontWeight: '600' }}>{opt}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </RNScrollView>
           </View>
