@@ -1,10 +1,11 @@
 // src/components/game/GameCard.tsx
-import { Heart, MapPin, Star } from 'lucide-react-native';
+import { DoorOpen, Heart, MapPin, Star } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../hooks/useAuth';
 import { favoritesService } from '../../services/favoritesService';
 import { Prize } from '../../services/gameLogic/games';
+import { supabase } from '../../services/supabase/client';
 
 interface Coordinates {
   latitude: number;
@@ -109,7 +110,15 @@ const CompanyLogo = ({ prize }: { prize: Prize }) => {
 };
 
 // Simple distance calculation - replace with real geocoding later
-const calculateDistance = (userLocation: Coordinates | null, address: string | undefined): string => {
+const calculateDistance = (
+  userLocation: Coordinates | null, 
+  address: string | undefined,
+  locationEnabled: boolean = true
+): string => {
+  if (!locationEnabled) {
+    return 'N/A';
+  }
+  
   if (!userLocation || !address) {
     return 'N/A';
   }
@@ -128,11 +137,42 @@ const calculateDistance = (userLocation: Coordinates | null, address: string | u
 };
 
 export default function GameCard({ prize, onPress, userLocation, variant = "default" }: Props) {
-  const distance = calculateDistance(userLocation || null, prize.address);
   const { user } = useAuth();
   const [favorited, setFavorited] = useState(false);
   const [loadingFavorite, setLoadingFavorite] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
+  const [locationEnabled, setLocationEnabled] = useState(true);
+  const [distance, setDistance] = useState<string>('N/A');
+
+  // Get door count directly from the database (prize.doors)
+  // Defaults to 3 if not specified
+  const doorCount = typeof prize.doors === 'number' ? prize.doors : 3;
+
+  // Load location enabled status
+  useEffect(() => {
+    if (!user?.id) return;
+    
+    const loadLocationSetting = async () => {
+      const { data, error } = await supabase
+        .from('user_settings')
+        .select('location_enabled')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (!error && data) {
+        const enabled = data.location_enabled ?? true; // Default to true if not set
+        setLocationEnabled(enabled);
+        const calculatedDistance = calculateDistance(userLocation || null, prize.address, enabled);
+        setDistance(calculatedDistance);
+      } else {
+        // Default to enabled if no setting found
+        const calculatedDistance = calculateDistance(userLocation || null, prize.address, true);
+        setDistance(calculatedDistance);
+      }
+    };
+    
+    loadLocationSetting();
+  }, [user?.id, userLocation, prize.address]);
 
   useEffect(() => {
     let mounted = true;
@@ -276,12 +316,20 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
               </View>
             </View>
 
-            {/* Location */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 18 }}>
-              <MapPin size={18} color="white" style={{ marginRight: 6 }} />
-              <Text style={{ color: 'white', fontSize: 15, fontWeight: '500' }}>
-                {distance}
-              </Text>
+            {/* Location and Door Count */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                <MapPin size={18} color="white" style={{ marginRight: 6 }} />
+                <Text style={{ color: 'white', fontSize: 15, fontWeight: '500' }}>
+                  {distance}
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <DoorOpen size={16} color="rgba(255,255,255,0.8)" style={{ marginRight: 4 }} />
+                <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, fontWeight: '500' }}>
+                  {doorCount} door{doorCount !== 1 ? 's' : ''}
+                </Text>
+              </View>
             </View>
 
             {/* Play button */}
@@ -410,12 +458,20 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
             </TouchableOpacity>
           </View>
 
-          {/* Location */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 18 }}>
-            <MapPin size={18} color="#6b7280" style={{ marginRight: 6 }} />
-            <Text style={{ color: '#6b7280', fontSize: 15, fontWeight: '500' }}>
-              {distance}
-            </Text>
+          {/* Location and Door Count */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+              <MapPin size={18} color="#6b7280" style={{ marginRight: 6 }} />
+              <Text style={{ color: '#6b7280', fontSize: 15, fontWeight: '500' }}>
+                {distance}
+              </Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <DoorOpen size={16} color="#6b7280" style={{ marginRight: 4 }} />
+              <Text style={{ color: '#6b7280', fontSize: 14, fontWeight: '500' }}>
+                {doorCount} door{doorCount !== 1 ? 's' : ''}
+              </Text>
+            </View>
           </View>
 
           {/* Play button */}

@@ -18,10 +18,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import GameCard from '../../components/game/GameCard';
 import BottomNavBar from '../../components/main/BottomNavBar';
 import Header from "../../components/main/Header";
+import EarnRewardModal from '../../components/modals/EarnRewardModal';
+import WatchAdModal from '../../components/modals/WatchAdModal';
 import { useAuth } from '../../hooks/useAuth';
 import { useLocation } from '../../hooks/useLocation';
 import { EarnedReward, earnedRewardsService } from '../../services/earnedRewardsService';
 import { gamesService, Prize } from '../../services/gameLogic/games';
+import { supabase } from '../../services/supabase/client';
 import { UserProgress, userProgressService } from '../../services/userProgressService';
 import type { MainTabParamList } from '../../types/navigation';
 import GameScreen from '../game/GameScreen';
@@ -102,9 +105,7 @@ const DailyGameButton: React.FC<DailyGameButtonProps> = ({ hasPlayedToday, onPre
 
   return (
     <View style={{ alignItems: 'center', marginBottom: 24 }}>
-      <TouchableOpacity
-        onPress={onPress}
-        activeOpacity={0.85}
+      <View
         style={{
           width: '100%',
           maxWidth: 480,
@@ -134,7 +135,7 @@ const DailyGameButton: React.FC<DailyGameButtonProps> = ({ hasPlayedToday, onPre
           <View style={{ position: 'absolute', bottom: 12, left: 32, width: 6, height: 6, backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 3 }} />
           <View style={{ position: 'absolute', top: '50%', right: 48, width: 10, height: 10, backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: 5 }} />
         </LinearGradient>
-      </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -364,6 +365,8 @@ export default function HomeScreen() {
   const [bonusPlaysAvailable, setBonusPlaysAvailable] = useState(0);
   const [earnedDoors, setEarnedDoors] = useState(0);
   const [earnedRewards, setEarnedRewards] = useState<EarnedReward[]>([]);
+  const [showEarnRewardModal, setShowEarnRewardModal] = useState(false);
+  const [showWatchAdModal, setShowWatchAdModal] = useState(false);
   const { user, session } = useAuth();
 
   // Filter/sort state
@@ -374,6 +377,40 @@ export default function HomeScreen() {
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
 
   const categories = ['Food', 'Drinks', 'Activities', 'Wellness', 'Retail', 'Entertainment', 'Other'];
+
+  // Load user preferences to pre-select categories
+  useEffect(() => {
+    if (!user?.id) return;
+    
+    const loadUserPreferences = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('user_preferences')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (error || !data) return;
+        
+        // Map database categories to filter categories
+        const prefCategories: string[] = [];
+        if (data.food_and_dining) prefCategories.push('Food');
+        if (data.coffee_and_drinks) prefCategories.push('Drinks');
+        if (data.entertainment) prefCategories.push('Entertainment');
+        if (data.fitness_and_health) prefCategories.push('Activities');
+        if (data.beauty_and_wellness) prefCategories.push('Wellness');
+        if (data.shopping) prefCategories.push('Retail');
+        
+        if (prefCategories.length > 0) {
+          setSelectedCategories(prefCategories);
+        }
+      } catch (error) {
+        console.error('Error loading user preferences:', error);
+      }
+    };
+    
+    loadUserPreferences();
+  }, [user?.id]);
   const distanceOptions = ['5 mi', '10 mi', '25 mi', '50 mi', 'Any'];
   const sortOptions = ['Closest', 'Suggested', 'Highest Value', 'Most Popular'];
 
@@ -534,6 +571,13 @@ export default function HomeScreen() {
   }, [searchText, regularGames]);
 
   const playGame = (prize: Prize) => {
+    // Check if user has already played today
+    if (hasPlayedAnyGameToday && bonusPlaysAvailable === 0 && earnedDoors === 0) {
+      // Show popup to watch ad or refer friend
+      setShowEarnRewardModal(true);
+      return;
+    }
+    
     setCurrentGame(prize);
     setShowGameScreen(true);
   };
@@ -553,18 +597,6 @@ export default function HomeScreen() {
     });
 
     let dailyGame = featuredGame;
-    
-    // If we have a featured game that's a Target game, ensure it has 5 doors
-    if (dailyGame && (
-      dailyGame.name.toLowerCase().includes('target') ||
-      dailyGame.description.toLowerCase().includes('target') ||
-      dailyGame.location_name?.toLowerCase().includes('target')
-    )) {
-      dailyGame = {
-        ...dailyGame,
-        doors: 5
-      };
-    }
     
     // If no featured game, use the fallback Target game
     if (!dailyGame) {
@@ -698,18 +730,31 @@ export default function HomeScreen() {
     setShowGameScreen(false);
   };
 
+  const handleWatchAd = () => {
+    setShowEarnRewardModal(false);
+    setShowWatchAdModal(true);
+  };
+
+  const handleAdComplete = async () => {
+    setShowWatchAdModal(false);
+    // Reload earned rewards to update count
+    await loadEarnedRewards();
+  };
+
+  const handleReferFriend = async () => {
+    setShowEarnRewardModal(false);
+    // The referral logic is handled in EarnRewardModal
+    // Reload earned rewards to update count after referral
+    await loadEarnedRewards();
+  };
+
   // If showing game screen, render that instead
   if (showGameScreen && currentGame) {
     console.log('🎮 Starting game with:', {
       name: currentGame.name,
       description: currentGame.description,
       locationName: currentGame.location_name,
-      doorCount:
-        currentGame.name.toLowerCase().includes('target') || 
-        currentGame.description.toLowerCase().includes('target') ||
-        currentGame.location_name?.toLowerCase().includes('target')
-          ? 5
-          : typeof currentGame.doors === 'number' ? currentGame.doors : 3,
+      doorCount: typeof currentGame.doors === 'number' ? currentGame.doors : 3,
       currentGame: JSON.stringify(currentGame, null, 2)
     });
     return (
@@ -717,13 +762,7 @@ export default function HomeScreen() {
         prizeName={currentGame.name}
         prizeDescription={currentGame.description}
         locationName={currentGame.location_name || 'Game Store'}
-        doorCount={
-          currentGame.name.toLowerCase().includes('target') || 
-          currentGame.description.toLowerCase().includes('target') ||
-          currentGame.location_name?.toLowerCase().includes('target')
-            ? 5
-            : typeof currentGame.doors === 'number' ? currentGame.doors : 3
-        }
+        doorCount={typeof currentGame.doors === 'number' ? currentGame.doors : 3}
         onGameComplete={handleGameComplete}
         onBack={handleBackFromGame}
       />
@@ -912,8 +951,26 @@ export default function HomeScreen() {
         {/* Collapsible Filter/Sort Bar - Only show when not searching */}
         {!searchText && showFilters && (
           <View style={{ backgroundColor: '#F8F9FA', borderRadius: 18, padding: 12, marginBottom: 18, marginHorizontal: 12, paddingHorizontal: 12 }}>
-            {/* Row 1: Category chips + Favorites toggle */}
+            {/* Row 1: Favorites toggle first, then Category chips */}
             <RNScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }} contentContainerStyle={{ paddingHorizontal: 12 }}>
+              {/* Favorites toggle chip - First */}
+              <TouchableOpacity
+                style={{
+                  backgroundColor: showOnlyFavorites ? '#009688' : '#E0F7F4',
+                  paddingHorizontal: 14,
+                  paddingVertical: 8,
+                  borderRadius: 16,
+                  marginRight: 8,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  borderWidth: showOnlyFavorites ? 2 : 0,
+                  borderColor: '#009688',
+                }}
+                onPress={() => setShowOnlyFavorites(f => !f)}
+              >
+                <Ionicons name={showOnlyFavorites ? 'star' : 'star-outline'} size={18} color={showOnlyFavorites ? '#FFD700' : '#B0B0B0'} style={{ marginRight: 4 }} />
+                <Text style={{ color: showOnlyFavorites ? 'white' : '#009688', fontWeight: '600' }}>Favorites</Text>
+              </TouchableOpacity>
               {categories.map(cat => (
                 <TouchableOpacity
                   key={cat}
@@ -933,24 +990,6 @@ export default function HomeScreen() {
                   <Text style={{ color: selectedCategories.includes(cat) ? 'white' : '#009688', fontWeight: '600' }}>{cat}</Text>
                 </TouchableOpacity>
               ))}
-              {/* Favorites toggle chip */}
-              <TouchableOpacity
-                style={{
-                  backgroundColor: showOnlyFavorites ? '#009688' : '#E0F7F4',
-                  paddingHorizontal: 14,
-                  paddingVertical: 8,
-                  borderRadius: 16,
-                  marginRight: 0,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  borderWidth: showOnlyFavorites ? 2 : 0,
-                  borderColor: '#009688',
-                }}
-                onPress={() => setShowOnlyFavorites(f => !f)}
-              >
-                <Ionicons name={showOnlyFavorites ? 'star' : 'star-outline'} size={18} color={showOnlyFavorites ? '#FFD700' : '#B0B0B0'} style={{ marginRight: 4 }} />
-                <Text style={{ color: showOnlyFavorites ? 'white' : '#009688', fontWeight: '600' }}>Favorites</Text>
-              </TouchableOpacity>
             </RNScrollView>
 
             {/* Row 2: Distance segmented control */}
@@ -1029,6 +1068,20 @@ export default function HomeScreen() {
       </ScrollView>
 
       <BottomNavBar />
+
+      {/* Modals */}
+      <EarnRewardModal
+        visible={showEarnRewardModal}
+        onClose={() => setShowEarnRewardModal(false)}
+        onWatchAd={handleWatchAd}
+        onReferFriend={handleReferFriend}
+      />
+
+      <WatchAdModal
+        visible={showWatchAdModal}
+        onClose={() => setShowWatchAdModal(false)}
+        onAdComplete={handleAdComplete}
+      />
     </SafeAreaView>
   );
 }
