@@ -394,8 +394,9 @@ export default function HomeScreen() {
           
           if (prefCategories.length > 0) {
             setUserPreferenceCategories(prefCategories); // Store for emphasis (used for visual emphasis only)
-            // Don't auto-exclude any categories - show all by default
             console.log('✅ Loaded user preference categories for emphasis:', prefCategories);
+          } else {
+            setUserPreferenceCategories([]); // Clear if no preferences
           }
         }
         
@@ -435,6 +436,49 @@ export default function HomeScreen() {
     };
     
     loadUserPreferences();
+  }, [user?.id]);
+
+  // Listen for preference refresh events (when user updates preferences in profile)
+  useEffect(() => {
+    if (!user?.id) return;
+    
+    const refreshListener = DeviceEventEmitter.addListener('REFRESH_USER_PREFERENCES', () => {
+      console.log('🔄 Refreshing user preferences from profile update');
+      
+      // Reload preferences when event is received
+      const loadUserPreferences = async () => {
+        try {
+          // Load category preferences
+          const { data: prefData, error: prefError } = await supabase
+            .from('user_preferences')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+          
+          if (!prefError && prefData) {
+            // Map database categories to filter categories
+            const prefCategories: string[] = [];
+            if (prefData.food_and_dining) prefCategories.push('Food');
+            if (prefData.coffee_and_drinks) prefCategories.push('Drinks');
+            if (prefData.entertainment) prefCategories.push('Entertainment');
+            if (prefData.fitness_and_health) prefCategories.push('Activities');
+            if (prefData.beauty_and_wellness) prefCategories.push('Wellness');
+            if (prefData.shopping) prefCategories.push('Retail');
+            
+            setUserPreferenceCategories(prefCategories.length > 0 ? prefCategories : []);
+            console.log('✅ Refreshed user preference categories:', prefCategories);
+          }
+        } catch (error) {
+          console.error('Error refreshing user preferences:', error);
+        }
+      };
+      
+      loadUserPreferences();
+    });
+
+    return () => {
+      refreshListener.remove();
+    };
   }, [user?.id]);
   const distanceOptions = ['5 mi', '10 mi', '25 mi', '50 mi', 'Any'];
   const sortOptions = ['Closest', 'Suggested', 'Highest Value', 'Most Popular'];

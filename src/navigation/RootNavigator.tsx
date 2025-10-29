@@ -61,8 +61,8 @@ export default function RootNavigator() {
       }
     };
     if (user?.id) {
-      const timer = setTimeout(checkSurveyStatus, 100);
-      return () => clearTimeout(timer);
+      // Check immediately without delay to avoid flash
+      checkSurveyStatus();
     } else {
       setSurveyCompleted(null);
     }
@@ -96,7 +96,8 @@ export default function RootNavigator() {
     setSurveyCompleted(true);
   };
 
-  if (loading || checkingSurvey || tutorialLoading) {
+  // Show loading screen while checking auth, survey status, or tutorial
+  if (loading || checkingSurvey || tutorialLoading || (user && surveyCompleted === null)) {
     console.log('🔍 Showing loading screen');
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -111,8 +112,8 @@ export default function RootNavigator() {
     return <AuthNavigator />;
   }
 
-  // If user is authenticated but hasn't completed survey, show survey in a stack
-  if (!surveyCompleted) {
+  // If user is authenticated but hasn't completed survey (and we've checked), show survey
+  if (surveyCompleted === false) {
     console.log('🔍 User authenticated but survey not completed, showing SurveyScreen');
     return (
       <RootStack.Navigator screenOptions={{ headerShown: false }}>

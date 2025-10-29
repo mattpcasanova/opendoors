@@ -6,17 +6,18 @@ import * as Location from 'expo-location';
 import * as Notifications from 'expo-notifications';
 import React, { useEffect, useState } from 'react';
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Linking,
-  Modal,
-  Platform,
-  ScrollView,
-  Switch,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Alert,
+    DeviceEventEmitter,
+    KeyboardAvoidingView,
+    Linking,
+    Modal,
+    Platform,
+    ScrollView,
+    Switch,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import BottomNavBar from '../../components/main/BottomNavBar';
@@ -161,6 +162,12 @@ export default function ProfileScreen() {
     const { error } = await supabase
       .from('user_preferences')
       .upsert({ user_id: user.id, ...preferences }, { onConflict: 'user_id' });
+    
+    if (!error) {
+      // Emit event to refresh preferences in HomeScreen
+      DeviceEventEmitter.emit('REFRESH_USER_PREFERENCES');
+    }
+    
     setEditMode(false);
     setSaving(false);
   };
