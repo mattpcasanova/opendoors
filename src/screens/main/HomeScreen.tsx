@@ -331,19 +331,6 @@ const ProgressSection: React.FC<ProgressSectionProps> = ({
   );
 };
 
-// Helper to calculate distance (copied from GameCard)
-function getDistanceValue(userLocation: { latitude: number; longitude: number } | null | undefined, address: string | undefined): number {
-  if (!userLocation || !address) return 99999;
-  const lowerAddress = address.toLowerCase();
-  if (lowerAddress.includes('online') || lowerAddress.includes('target')) return 99999;
-  if (lowerAddress.includes('biscayne') || lowerAddress.includes('downtown')) return 1.2;
-  if (lowerAddress.includes('lincoln') || lowerAddress.includes('beach')) return 2.1;
-  if (lowerAddress.includes('brickell')) return 0.8;
-  if (lowerAddress.includes('ocean')) return 3.2;
-  if (lowerAddress.includes('coral gables')) return 4.5;
-  if (lowerAddress.includes('wynwood')) return 2.7;
-  return 1.5;
-}
 
 export default function HomeScreen() {
   const navigation = useNavigation<MainStackNavigationProp>();
@@ -355,6 +342,7 @@ export default function HomeScreen() {
   const [error, setError] = useState<string | null>(null);
   const [featuredGame, setFeaturedGame] = useState<Prize | null>(null);
   const [regularGames, setRegularGames] = useState<Prize[]>([]);
+  const [gamesWithDistances, setGamesWithDistances] = useState<Array<{ prize: Prize; distance: number }>>([]);
   
   // Game state tracking
   const [gamesUntilBonus, setGamesUntilBonus] = useState(5);
@@ -569,6 +557,56 @@ export default function HomeScreen() {
     
     setFilteredGames(filtered);
   }, [searchText, regularGames]);
+
+  // Calculate distances for sorting
+  useEffect(() => {
+    if (!location || !filteredGames.length) {
+      setGamesWithDistances([]);
+      return;
+    }
+
+    const calculateDistances = async () => {
+      const { geocodeAddress, calculateDistanceInMiles } = await import('../../utils/distance');
+      
+      const distances = await Promise.all(
+        filteredGames.map(async (prize) => {
+          if (!prize.address) {
+            return { prize, distance: Infinity }; // Games without addresses go to bottom
+          }
+
+          const lowerAddress = prize.address.toLowerCase();
+          if (lowerAddress.includes('online') || lowerAddress.includes('virtual')) {
+            return { prize, distance: Infinity };
+          }
+
+          try {
+            const addressCoords = await geocodeAddress(prize.address);
+            if (!addressCoords) {
+              return { prize, distance: Infinity };
+            }
+
+            const distance = calculateDistanceInMiles(
+              location.latitude,
+              location.longitude,
+              addressCoords.latitude,
+              addressCoords.longitude
+            );
+
+            return { prize, distance };
+          } catch (error) {
+            console.error('Error calculating distance for prize:', prize.id, error);
+            return { prize, distance: Infinity };
+          }
+        })
+      );
+
+      // Sort by distance (closest first)
+      distances.sort((a, b) => a.distance - b.distance);
+      setGamesWithDistances(distances);
+    };
+
+    calculateDistances();
+  }, [location, filteredGames]);
 
   const playGame = (prize: Prize) => {
     // Check if user has already played today
@@ -1039,21 +1077,20 @@ export default function HomeScreen() {
         )}
         
         {(() => {
-          // Sort filteredGames by distance
-          const sortedGames = [...filteredGames].sort((a, b) => {
-            const distA = getDistanceValue(location, a.address);
-            const distB = getDistanceValue(location, b.address);
-            return distA - distB;
-          });
+          // If we have calculated distances, use sorted list, otherwise use filtered games
+          const gamesToDisplay = location && gamesWithDistances.length > 0
+            ? gamesWithDistances.map(item => item.prize)
+            : filteredGames;
+          
           return (
-            sortedGames.length === 0 && searchText.length > 0 ? (
+            gamesToDisplay.length === 0 && searchText.length > 0 ? (
               <View className="py-8 items-center">
                 <Ionicons name="search" size={48} color="#999999" />
                 <Text className="text-gray-500 text-lg mt-4">No games found</Text>
                 <Text className="text-gray-400 text-sm mt-2">Try searching for something else</Text>
               </View>
             ) : (
-              sortedGames.map((prize) => (
+              gamesToDisplay.map((prize) => (
                 <GameCard
                   key={prize.id}
                   prize={prize}

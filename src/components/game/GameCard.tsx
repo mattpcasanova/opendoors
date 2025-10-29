@@ -6,6 +6,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { favoritesService } from '../../services/favoritesService';
 import { Prize } from '../../services/gameLogic/games';
 import { supabase } from '../../services/supabase/client';
+import { calculateDistanceToAddress } from '../../utils/distance';
 
 interface Coordinates {
   latitude: number;
@@ -109,32 +110,6 @@ const CompanyLogo = ({ prize }: { prize: Prize }) => {
   );
 };
 
-// Simple distance calculation - replace with real geocoding later
-const calculateDistance = (
-  userLocation: Coordinates | null, 
-  address: string | undefined,
-  locationEnabled: boolean = true
-): string => {
-  if (!locationEnabled) {
-    return 'N/A';
-  }
-  
-  if (!userLocation || !address) {
-    return 'N/A';
-  }
-  
-  // Mock distances based on address keywords for now
-  const lowerAddress = address.toLowerCase();
-  if (lowerAddress.includes('online') || lowerAddress.includes('target')) return 'Online';
-  if (lowerAddress.includes('biscayne') || lowerAddress.includes('downtown')) return '1.2 mi';
-  if (lowerAddress.includes('lincoln') || lowerAddress.includes('beach')) return '2.1 mi';
-  if (lowerAddress.includes('brickell')) return '0.8 mi';
-  if (lowerAddress.includes('ocean')) return '3.2 mi';
-  if (lowerAddress.includes('coral gables')) return '4.5 mi';
-  if (lowerAddress.includes('wynwood')) return '2.7 mi';
-  
-  return '1.5 mi'; // Default
-};
 
 export default function GameCard({ prize, onPress, userLocation, variant = "default" }: Props) {
   const { user } = useAuth();
@@ -148,30 +123,62 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
   // Defaults to 3 if not specified
   const doorCount = typeof prize.doors === 'number' ? prize.doors : 3;
 
-  // Load location enabled status
+  // Load location enabled status and calculate distance
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      // If no user, still check if we have location to calculate distance
+      if (userLocation && prize.address) {
+        calculateDistanceToAddress(userLocation, prize.address, true)
+          .then(setDistance)
+          .catch(() => setDistance('N/A'));
+      } else {
+        setDistance('N/A');
+      }
+      return;
+    }
     
-    const loadLocationSetting = async () => {
+    const loadLocationSettingAndDistance = async () => {
+      // Load location enabled setting
       const { data, error } = await supabase
         .from('user_settings')
         .select('location_enabled')
         .eq('user_id', user.id)
         .single();
       
-      if (!error && data) {
-        const enabled = data.location_enabled ?? true; // Default to true if not set
-        setLocationEnabled(enabled);
-        const calculatedDistance = calculateDistance(userLocation || null, prize.address, enabled);
+      const enabled = (error || !data) ? true : (data.location_enabled ?? true); // Default to true if not set
+      setLocationEnabled(enabled);
+      
+      // Calculate real distance using geocoding
+      // If location is not enabled OR userLocation is null, show N/A
+      if (!enabled) {
+        setDistance('N/A');
+        return;
+      }
+      
+      if (!userLocation) {
+        setDistance('N/A');
+        return;
+      }
+      
+      if (!prize.address) {
+        setDistance('N/A');
+        return;
+      }
+      
+      try {
+        const calculatedDistance = await calculateDistanceToAddress(
+          userLocation,
+          prize.address,
+          enabled
+        );
         setDistance(calculatedDistance);
-      } else {
-        // Default to enabled if no setting found
-        const calculatedDistance = calculateDistance(userLocation || null, prize.address, true);
-        setDistance(calculatedDistance);
+      } catch (error) {
+        console.error('Error calculating distance:', error);
+        setDistance('N/A');
       }
     };
     
-    loadLocationSetting();
+    loadLocationSettingAndDistance();
   }, [user?.id, userLocation, prize.address]);
 
   useEffect(() => {
@@ -298,9 +305,9 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
                 <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold', marginBottom: 2 }}>
                   {prize.name || 'Free Reward'}
                 </Text>
-                {/* Subtitle: company name */}
+                {/* Subtitle: location name */}
                 <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 15, fontWeight: '500', marginBottom: 8 }}>
-                  {prize.company_name || 'OpenDoors'}
+                  {prize.location_name || prize.company_name || 'OpenDoors'}
                 </Text>
                 <View style={{
                   backgroundColor: 'rgba(255,255,255,0.2)',
@@ -417,9 +424,9 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
                 <Text style={{ color: '#111827', fontSize: 18, fontWeight: 'bold', marginBottom: 2 }}>
                   {prize.name || 'Free Reward'}
                 </Text>
-                {/* Subtitle: company name */}
+                {/* Subtitle: location name */}
                 <Text style={{ color: '#6b7280', fontSize: 15, fontWeight: '500', marginBottom: 8 }}>
-                  {prize.company_name || 'OpenDoors'}
+                  {prize.location_name || prize.company_name || 'OpenDoors'}
                 </Text>
                 <View style={{
                   backgroundColor: categoryColors.bg,

@@ -15,14 +15,18 @@ export const useLocation = () => {
       }
 
       try {
-        const location = await Location.getCurrentPositionAsync({});
-        setLocation({
+        const location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        const coords = {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude
-        });
+        };
+        setLocation(coords);
       } catch (error) {
         setErrorMsg('Error getting location');
         console.error('Location error:', error);
+        setLocation(null); // Explicitly set to null on error
       }
     })();
   }, []);
