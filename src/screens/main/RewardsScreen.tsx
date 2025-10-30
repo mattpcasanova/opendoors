@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { CheckCircle, Clock, Gift } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -274,6 +274,14 @@ export default function RewardsScreen() {
       fetchRewards();
     }
   }, [user]);
+
+  // Refresh when the screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      if (user) fetchRewards();
+      return () => {};
+    }, [user])
+  );
 
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener('REFRESH_REWARDS', fetchRewards);

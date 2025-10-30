@@ -47,19 +47,19 @@ This checklist covers all critical items before launching your Minimum Viable Pr
 
 ### Database Security (Decision: Implement RLS Now)
 - [x] **Decision:** Implement proper RLS policies before MVP launch
-- [ ] Enable RLS on critical tables
-  - [ ] `door_distributions`
-  - [ ] `earned_rewards`
-  - [ ] `door_notifications`
-- [ ] Add SECURITY DEFINER functions (privileged inserts only)
-  - [ ] `create_door_distribution(distributor_id, recipient_id, doors_to_send, reason)`
-  - [ ] `add_earned_reward(user_id, source_type, source_name, description, doors_earned)`
-  - [ ] `create_door_notification(user_id, distributor_name, doors_sent, reason)`
-- [ ] Lock down direct INSERTS (INSERT policies with `WITH CHECK (false)`); allow owner SELECT/UPDATE
-- [ ] Update app to call RPCs instead of direct inserts
-  - [ ] Use `supabase.rpc('create_door_distribution', ...)`
-  - [ ] Use `supabase.rpc('add_earned_reward', ...)`
-  - [ ] Use `supabase.rpc('create_door_notification', ...)`
+- [x] Enable RLS on critical tables
+  - [x] `door_distributions`
+  - [x] `earned_rewards`
+  - [x] `door_notifications`
+- [x] Add SECURITY DEFINER functions (privileged inserts only)
+  - [x] `create_door_distribution(distributor_id, recipient_id, organization_id, doors_to_send, reason)`
+  - [x] `add_earned_reward(user_id, source_type, source_name, description, doors_earned)`
+  - [x] `create_door_notification(user_id, distributor_name, doors_sent, reason)`
+- [x] Lock down direct INSERTS (INSERT policies with `WITH CHECK (false)`); allow owner SELECT/UPDATE
+- [x] Update app to call RPCs instead of direct inserts
+  - [x] Use `supabase.rpc('create_door_distribution', ...)`
+  - [x] Use `supabase.rpc('add_earned_reward', ...)`
+  - [x] Use `supabase.rpc('create_door_notification', ...)`
 - [ ] Test policies across roles (user, distributor, admin)
   - [ ] Positive tests (authorized actions succeed)
   - [ ] Negative tests (unauthorized actions blocked)

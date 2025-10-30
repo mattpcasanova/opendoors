@@ -147,7 +147,7 @@ class AuthService {
       });
       
       if (result.error) {
-        console.error('❌ Signin error:', result.error);
+        console.warn('⚠️ Signin warning:', result.error);
         return { data: null, error: result.error };
       }
       

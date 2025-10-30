@@ -13,16 +13,20 @@ export const userPreferencesService = {
     console.log('🔍 Database query result:', { data, error });
     
     if (error) {
+      if ((error as any).code === 'PGRST116') {
+        console.log('🔍 No user profile found.');
+        return false;
+      }
       console.error('❌ Error querying user_profiles:', error);
       return false;
     }
     
     if (!data) {
-      console.log('🔍 No user profile found, returning false');
+      console.log('🔍 No user profile found (null data), returning false');
       return false;
     }
     
-    const result = data.has_completed_survey || false;
+    const result = (data as any).has_completed_survey || false;
     console.log('🔍 Survey completion status:', result);
     return result;
   },
@@ -33,7 +37,7 @@ export const userPreferencesService = {
     try {
       const { error } = await supabase
         .from('user_profiles')
-        .update({ has_completed_survey: true })
+        .update({ has_completed_survey: true, updated_at: new Date().toISOString() })
         .eq('id', userId);
 
       console.log('🔍 Update result:', { error });

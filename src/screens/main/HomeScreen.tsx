@@ -919,6 +919,11 @@ export default function HomeScreen() {
         return;
       }
 
+      // If won, notify rewards screen to refresh immediately
+      if (won) {
+        DeviceEventEmitter.emit('REFRESH_REWARDS');
+      }
+
       // Show result alert
       Alert.alert(
         won ? 'Congratulations!' : 'Better luck next time!',
@@ -945,6 +950,7 @@ export default function HomeScreen() {
             setGamesUntilBonus(updatedProgress.gamesUntilBonus);
             setLastPlayDate(updatedProgress.lastPlayDate);
             setBonusPlaysAvailable(updatedProgress.bonusPlaysAvailable);
+            setHasPlayedAnyGameToday(updatedProgress.hasPlayedToday);
           }
         }
       }

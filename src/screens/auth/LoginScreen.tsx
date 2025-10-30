@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as SecureStore from 'expo-secure-store';
 import { ArrowLeft, ArrowRight, Eye, EyeOff, Gift, Heart, Lock, Mail, Trophy } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -20,6 +21,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
+import { supabase } from '../../services/supabase/client';
 import { AuthStackParamList } from '../../types/navigation';
 
 const { width, height } = Dimensions.get('window');
@@ -41,6 +43,17 @@ export default function LoginScreen() {
   const logoLiftAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    // Prefill saved email if present
+    (async () => {
+      try {
+        const savedEmail = await SecureStore.getItemAsync('rememberedEmail');
+        if (savedEmail) {
+          setFormData(prev => ({ ...prev, email: savedEmail }));
+          setRememberMe(true);
+        }
+      } catch {}
+    })();
+
     Animated.loop(
       Animated.sequence([
         Animated.timing(logoLiftAnim, {
@@ -99,8 +112,43 @@ export default function LoginScreen() {
         
         Alert.alert('Error', errorMessage);
       } else {
-        console.log('✅ Login successful, letting RootNavigator handle flow');
-        // Do not navigate or reset navigation here. RootNavigator will handle the flow based on auth state.
+        console.log('✅ Login successful, verifying user profile exists');
+        // Ensure a user_profiles row exists; if not, sign the user out with a clear message
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.id) {
+          const { data, error } = await supabase
+            .from('user_profiles')
+            .select('id')
+            .eq('id', user.id)
+            .single();
+
+          if (error && (error as any).code === 'PGRST116') {
+            Alert.alert(
+              'Account Not Found',
+              'This account is not set up in OpenDoors. Please contact support or create a new account.',
+              [{ text: 'OK' }]
+            );
+            try { await supabase.auth.signOut(); } catch {}
+            return;
+          }
+          if (error) {
+            Alert.alert('Error', 'Could not verify your account. Please try again.');
+            try { await supabase.auth.signOut(); } catch {}
+            return;
+          }
+        }
+
+        // Remember Me: save or clear email AFTER successful login
+        try {
+          if (rememberMe) {
+            await SecureStore.setItemAsync('rememberedEmail', formData.email.trim().toLowerCase());
+          } else {
+            await SecureStore.deleteItemAsync('rememberedEmail');
+          }
+        } catch {}
+
+        // Let RootNavigator continue if profile exists
+        console.log('✅ Profile verified, handing off to RootNavigator');
       }
     } catch (error) {
       console.error('❌ Login error:', error);
