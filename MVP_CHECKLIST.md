@@ -45,14 +45,24 @@ This checklist covers all critical items before launching your Minimum Viable Pr
   - **Status:** ✅ DONE
   - **Impact:** Referral shares now have a working URL
 
-### Database Security (Needs Decision)
-- [ ] **Review RLS Policies** 
-  - [ ] Review `supabase/migrations/20241220000006_bypass_rls.sql` - RLS disabled on `door_distributions` (marked "for MVP")
-  - [ ] **Decision:** Keep disabled for MVP launch OR implement proper RLS policies
-  - If keeping disabled: Document security implications and add to post-MVP roadmap
-  - If fixing: Implement proper RLS policies and test with different user roles
-  - **Status:** ⚠️ INTENTIONAL BYPASS (documented for MVP) - Evaluate if acceptable for launch
-  - **Impact:** Security concern, but may be acceptable for MVP with proper access controls
+### Database Security (Decision: Implement RLS Now)
+- [x] **Decision:** Implement proper RLS policies before MVP launch
+- [ ] Enable RLS on critical tables
+  - [ ] `door_distributions`
+  - [ ] `earned_rewards`
+  - [ ] `door_notifications`
+- [ ] Add SECURITY DEFINER functions (privileged inserts only)
+  - [ ] `create_door_distribution(distributor_id, recipient_id, doors_to_send, reason)`
+  - [ ] `add_earned_reward(user_id, source_type, source_name, description, doors_earned)`
+  - [ ] `create_door_notification(user_id, distributor_name, doors_sent, reason)`
+- [ ] Lock down direct INSERTS (INSERT policies with `WITH CHECK (false)`); allow owner SELECT/UPDATE
+- [ ] Update app to call RPCs instead of direct inserts
+  - [ ] Use `supabase.rpc('create_door_distribution', ...)`
+  - [ ] Use `supabase.rpc('add_earned_reward', ...)`
+  - [ ] Use `supabase.rpc('create_door_notification', ...)`
+- [ ] Test policies across roles (user, distributor, admin)
+  - [ ] Positive tests (authorized actions succeed)
+  - [ ] Negative tests (unauthorized actions blocked)
 
 ---
 
@@ -314,7 +324,7 @@ This checklist covers all critical items before launching your Minimum Viable Pr
 
 - **Ad Integration:** The simulated ad watch is functional for MVP, but you'll want real ads eventually for monetization.
 
-- **RLS Bypass:** `door_distributions` table currently has RLS disabled. This is a security concern and should be fixed before launch, especially if you have sensitive data or multiple user roles.
+- **RLS:** Implementing now: enable RLS on critical tables, add SECURITY DEFINER functions, and use RPCs for privileged inserts.
 
 - **Game Tracking:** Game data values now flow from `GameScreen` to `HomeScreen` and into `recordGame`.
 
