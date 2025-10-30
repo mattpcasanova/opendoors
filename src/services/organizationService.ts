@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { earnedRewardsService } from './earnedRewardsService';
 import { notificationService } from './notificationService';
 
 export interface Organization {
@@ -191,10 +192,9 @@ class OrganizationService {
         reason
       });
 
-      // Create door distribution record
-      // Try with RLS first, if that fails, try with service role
+      // Create door distribution record via RPC (SEC DEFINER)
       let distribution, distributionError;
-      
+
       const distributionData = {
         distributor_id: distributorId,
         recipient_id: recipientId,
@@ -204,28 +204,12 @@ class OrganizationService {
       };
 
       const { data: distData, error: distError } = await supabase
-        .from('door_distributions')
-        .insert(distributionData)
-        .select()
-        .single();
+        .rpc('create_door_distribution', distributionData);
 
       if (distError) {
-        console.log('🔍 RLS error, trying alternative approach:', distError);
-        
-        // If RLS fails, try using a function that bypasses RLS
-        const { data: altData, error: altError } = await supabase
-          .rpc('create_door_distribution', distributionData);
-        
-        if (altError) {
-          console.log('🔍 Alternative approach also failed:', altError);
-          distributionError = distError; // Use original error
-        } else {
-          distribution = altData;
-          distributionError = null;
-        }
+        distributionError = distError;
       } else {
         distribution = distData;
-        distributionError = null;
       }
 
       if (distributionError || !distribution) {
@@ -260,7 +244,7 @@ class OrganizationService {
             : distributorNameData.email)
         : 'Unknown Distributor';
 
-      // Create notification for the recipient
+      // Create notification for the recipient via RPC
       const notificationResult = await notificationService.createDoorNotification(
         recipientId,
         distributorName,
@@ -273,28 +257,18 @@ class OrganizationService {
         // Don't fail the entire operation for notification errors
       }
 
-      // Add earned rewards for the recipient
-      const earnedRewardsToCreate = [];
+      // Add earned rewards for the recipient via RPC per door
       for (let i = 0; i < doorsToSend; i++) {
-        earnedRewardsToCreate.push({
-          user_id: recipientId,
-          doors_earned: 1,
-          source_type: 'distributor',
-          source_name: distributorName,
-          description: reason,
-          claimed: false,
-          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
-          distribution_id: distribution.id
-        });
-      }
-
-      const { error: rewardsError } = await supabase
-        .from('earned_rewards')
-        .insert(earnedRewardsToCreate);
-
-      if (rewardsError) {
-        console.error('Error creating earned rewards:', rewardsError);
-        return { success: false, error: 'Failed to create earned rewards' };
+        const res = await earnedRewardsService.addDistributorReward(
+          recipientId,
+          distributorName,
+          reason,
+          1
+        );
+        if (res.error) {
+          console.error('Error creating earned reward via RPC:', res.error);
+          return { success: false, error: 'Failed to create earned rewards' };
+        }
       }
 
       return { success: true, data: distribution };

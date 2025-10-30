@@ -16,9 +16,9 @@ export interface EarnedReward {
 
 export interface CreateEarnedRewardData {
   doors_earned?: number;
-  source_type: 'ad_watch' | 'referral' | 'distributor' | 'achievement' | 'lesson';
+  source_type: EarnedReward['source_type'];
   source_name: string;
-  description: string;
+  description?: string;
 }
 
 class EarnedRewardsService {
@@ -35,21 +35,19 @@ class EarnedRewardsService {
         return { data: null, error: error.message };
       }
 
-      return { data: data || [], error: null };
+      return { data: data as EarnedReward[] | null, error: null };
     } catch (error) {
       return { data: null, error: 'Failed to fetch earned rewards' };
     }
   }
 
-  // Get unclaimed earned rewards count for a user
   async getUnclaimedDoorsCount(userId: string): Promise<{ count: number; error: string | null }> {
     try {
       const { count, error } = await supabase
         .from('earned_rewards')
-        .select('doors_earned', { count: 'exact', head: true })
+        .select('*', { count: 'exact', head: true })
         .eq('user_id', userId)
-        .eq('claimed', false)
-        .gt('expires_at', new Date().toISOString());
+        .eq('claimed', false);
 
       if (error) {
         return { count: 0, error: error.message };
@@ -61,26 +59,22 @@ class EarnedRewardsService {
     }
   }
 
-  // Add a new earned reward
+  // Add a new earned reward via RPC (SECURITY DEFINER)
   async addEarnedReward(userId: string, rewardData: CreateEarnedRewardData): Promise<{ data: EarnedReward | null; error: string | null }> {
     try {
-      const { data, error } = await supabase
-        .from('earned_rewards')
-        .insert({
-          user_id: userId,
-          doors_earned: rewardData.doors_earned || 1,
-          source_type: rewardData.source_type,
-          source_name: rewardData.source_name,
-          description: rewardData.description,
-        })
-        .select()
-        .single();
+      const { data, error } = await supabase.rpc('add_earned_reward', {
+        p_user_id: userId,
+        p_source_type: rewardData.source_type,
+        p_source_name: rewardData.source_name,
+        p_description: rewardData.description || null,
+        p_doors_earned: rewardData.doors_earned || 1,
+      });
 
       if (error) {
         return { data: null, error: error.message };
       }
 
-      return { data, error: null };
+      return { data: data as EarnedReward, error: null };
     } catch (error) {
       return { data: null, error: 'Failed to add earned reward' };
     }
@@ -115,7 +109,6 @@ class EarnedRewardsService {
         .select('*')
         .eq('user_id', userId)
         .eq('claimed', false)
-        .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: true })
         .limit(1)
         .single();
@@ -124,18 +117,18 @@ class EarnedRewardsService {
         return { data: null, error: error.message };
       }
 
-      return { data, error: null };
+      return { data: data as EarnedReward, error: null };
     } catch (error) {
       return { data: null, error: 'Failed to get next unclaimed reward' };
     }
   }
 
-  // Add ad watch reward
+  // Convenience wrappers
   async addAdWatchReward(userId: string): Promise<{ data: EarnedReward | null; error: string | null }> {
     return this.addEarnedReward(userId, {
       source_type: 'ad_watch',
-      source_name: 'Ad Watch',
-      description: 'Watched 30-second advertisement',
+      source_name: 'Watch Ad',
+      description: 'Watched a rewarded ad',
     });
   }
 

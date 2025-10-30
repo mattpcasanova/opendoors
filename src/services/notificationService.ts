@@ -21,16 +21,12 @@ class NotificationService {
     reason: string
   ) {
     try {
-      const { data, error } = await supabase
-        .from('door_notifications')
-        .insert({
-          user_id: userId,
-          distributor_name: distributorName,
-          doors_sent: doorsSent,
-          reason: reason
-        })
-        .select()
-        .single();
+      const { data, error } = await supabase.rpc('create_door_notification', {
+        p_user_id: userId,
+        p_distributor_name: distributorName,
+        p_doors_sent: doorsSent,
+        p_reason: reason,
+      });
 
       if (error) {
         console.error('Error creating door notification:', error);
