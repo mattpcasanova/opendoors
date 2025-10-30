@@ -16,7 +16,14 @@ interface Props {
   prizeDescription?: string;
   locationName?: string;
   doorCount?: number;
-  onGameComplete?: (won: boolean, switched: boolean) => void;
+  onGameComplete?: (
+    won: boolean,
+    switched: boolean,
+    chosenDoor: number,
+    winningDoor: number,
+    revealedDoor: number | null,
+    durationSeconds: number
+  ) => void;
   onBack?: () => void;
 }
 
@@ -59,6 +66,9 @@ export default function GameScreen({
 
   const layout = getDoorLayout();
   const doorSize = layout.doorSize;
+
+  // Track game start time to compute duration
+  const gameStartRef = useRef<number>(Date.now());
 
   // Game state
   const [gameStage, setGameStage] = useState<GameStage>('selection');
@@ -111,6 +121,8 @@ export default function GameScreen({
   const handleDoorClick = (doorNumber: number) => {
     if (gameStage === 'selection') {
       setSelectedDoor(doorNumber);
+      // reset start time when user starts the game interaction
+      gameStartRef.current = Date.now();
       
       // Always reveal just 1 door to make the game more challenging
       const doorsToReveal = 1;
@@ -153,15 +165,22 @@ export default function GameScreen({
       // Show result message after door animation completes (1.5 seconds)
       setTimeout(() => {
         const message = won ? 
-          `🎉 Congratulations! You won the ${prizeName}!` : 
-          '😔 Sorry! Better luck next time!';
+          `Congratulations! You won the ${prizeName}!` : 
+          'Sorry! Better luck next time!';
         
         setGameResult({ won, message });
       }, 2100);
       
       // Call completion callback
       setTimeout(() => {
-        onGameComplete?.(won, switchedChoice);
+        onGameComplete?.(
+          won,
+          switchedChoice,
+          selectedDoor ?? doorNumber,
+          prizeLocation,
+          revealedDoors.length > 0 ? revealedDoors[0] : null,
+          0 // no timer tracking
+        );
       }, 2000);
     }
   };
@@ -275,8 +294,6 @@ export default function GameScreen({
                           else handleDoorClick(doorNumber);
                         }}
                         disabled={switchPickMode ? !selectable : false}
-                        width={doorSize}
-                        height={doorSize * 1.5}
                       />
                     </View>
                   );

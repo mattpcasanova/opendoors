@@ -11,6 +11,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import Constants from 'expo-constants';
 import { useAuth } from '../../hooks/useAuth';
 import { earnedRewardsService } from '../../services/earnedRewardsService';
 
@@ -31,8 +32,10 @@ const EarnRewardModal: React.FC<EarnRewardModalProps> = ({
 }) => {
   const { user } = useAuth();
 
+  const referralUrl = (Constants.expoConfig as any)?.extra?.referralUrl || 'https://opendoors.app/download';
+
   const handleReferFriend = async () => {
-    const referralMessage = "Hey! I'm using OpenDoors - a fun game where you can win real prizes! Join me and we'll both get extra doors to play with. Download here: [APP_STORE_LINK]";
+    const referralMessage = `Hey! I'm using OpenDoors - a fun game where you can win real prizes! Join me and we'll both get extra doors to play with. Download here: ${referralUrl}`;
     
     try {
       const result = await Share.share({

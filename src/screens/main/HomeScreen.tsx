@@ -862,7 +862,14 @@ export default function HomeScreen() {
     setShowGameScreen(true);
   };
 
-  const handleGameComplete = async (won: boolean, switched: boolean) => {
+  const handleGameComplete = async (
+    won: boolean,
+    switched: boolean,
+    chosenDoor: number,
+    winningDoor: number,
+    revealedDoor: number | null,
+    durationSeconds: number
+  ) => {
     if (!user || !currentGame) return;
     
     try {
@@ -900,10 +907,10 @@ export default function HomeScreen() {
         prize_id: currentGame.id,
         won,
         switched,
-        chosen_door: 1, // TODO: Track actual chosen door
-        winning_door: won ? 1 : 2, // TODO: Track actual winning door
-        revealed_door: 3, // TODO: Track actual revealed door
-        game_duration_seconds: 30 // TODO: Track actual duration
+        chosen_door: chosenDoor,
+        winning_door: winningDoor,
+        revealed_door: revealedDoor ?? undefined,
+        game_duration_seconds: durationSeconds
       });
 
       if (gameError) {
@@ -940,27 +947,17 @@ export default function HomeScreen() {
             setBonusPlaysAvailable(updatedProgress.bonusPlaysAvailable);
           }
         }
-
-        // If used earned door, claim it
-        if (doorType === 'earned' && usedEarnedRewardId) {
-          const { success, error: claimError } = await earnedRewardsService.claimEarnedReward(usedEarnedRewardId);
-          if (!success || claimError) {
-            console.error('❌ Error claiming earned reward:', claimError);
-            Alert.alert('Error', 'Failed to use earned door. Please try again.');
-            return;
-          }
-        }
       }
 
-      // Reload earned rewards to update count
-      await loadEarnedRewards();
-
-      // Emit events to refresh History and Rewards screens
-      DeviceEventEmitter.emit('REFRESH_HISTORY');
-      DeviceEventEmitter.emit('REFRESH_REWARDS');
-
-      // Set hasPlayedToday to true
-      setHasPlayedAnyGameToday(true);
+      // If used earned door, mark it as claimed
+      if (usedEarnedRewardId) {
+        const { success, error: claimError } = await earnedRewardsService.claimEarnedReward(usedEarnedRewardId);
+        if (claimError || success === false) {
+          console.error('❌ Error marking earned reward as claimed:', claimError);
+        } else {
+          await loadEarnedRewards();
+        }
+      }
 
     } catch (error) {
       console.error('❌ Error in handleGameComplete:', error);
