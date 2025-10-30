@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import {
     DeviceEventEmitter,
+    Alert,
     SafeAreaView,
     ScrollView,
     StyleSheet,
@@ -15,6 +16,7 @@ import EarnRewardModal from '../../components/modals/EarnRewardModal';
 import WatchAdModal from '../../components/modals/WatchAdModal';
 import { useAuth } from '../../hooks/useAuth';
 import { EarnedReward, earnedRewardsService } from '../../services/earnedRewardsService';
+import { adsService } from '../../services/adsService';
 
 const EarnedRewardsScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -52,9 +54,25 @@ const EarnedRewardsScreen: React.FC = () => {
     setShowEarnModal(true);
   };
 
-  const handleWatchAd = () => {
+  const handleWatchAd = async () => {
     setShowEarnModal(false);
-    setShowWatchAdModal(true);
+    try {
+      await adsService.init();
+      const result = await adsService.showRewardedAd();
+      if (result.userEarnedReward && user?.id) {
+        const { error } = await earnedRewardsService.addAdWatchReward(user.id);
+        if (error) {
+          console.error('Error adding ad reward:', error);
+        }
+        await loadEarnedRewards();
+        DeviceEventEmitter.emit('REFRESH_EARNED_DOORS');
+        return;
+      }
+      Alert.alert('No reward granted', 'The ad did not grant a reward this time. Please try again.');
+    } catch (e) {
+      console.warn('[ads] Falling back, ad failed:', e);
+      Alert.alert('Ad unavailable', 'The ad failed to load. Please try again shortly.');
+    }
   };
 
   const handleReferFriend = async () => {

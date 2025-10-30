@@ -23,6 +23,7 @@ import EarnRewardModal from '../../components/modals/EarnRewardModal';
 import WatchAdModal from '../../components/modals/WatchAdModal';
 import { useAuth } from '../../hooks/useAuth';
 import { useLocation } from '../../hooks/useLocation';
+import { adsService } from '../../services/adsService';
 import { EarnedReward, earnedRewardsService } from '../../services/earnedRewardsService';
 import { gamesService, Prize } from '../../services/gameLogic/games';
 import { notificationService } from '../../services/notificationService';
@@ -1011,9 +1012,24 @@ export default function HomeScreen() {
     setShowGameScreen(false);
   };
 
-  const handleWatchAd = () => {
+  const handleWatchAd = async () => {
     setShowEarnRewardModal(false);
-    setShowWatchAdModal(true);
+    try {
+      await adsService.init();
+      const result = await adsService.showRewardedAd();
+      if (result.userEarnedReward && user?.id) {
+        const { error } = await earnedRewardsService.addAdWatchReward(user.id);
+        if (error) {
+          console.error('Error adding ad reward:', error);
+        }
+        await loadEarnedRewards();
+        return;
+      }
+      Alert.alert('No reward granted', 'The ad did not grant a reward this time. Please try again.');
+    } catch (e) {
+      console.warn('Falling back to mock ad modal:', e);
+      Alert.alert('Ad unavailable', 'The ad failed to load. Please try again shortly.');
+    }
   };
 
   const handleAdComplete = async () => {

@@ -18,3 +18,5 @@ grant execute on function public.get_distributor_history(uuid) to authenticated;
 
 comment on function public.get_distributor_history(uuid) is 'Return door_distributions for the given distributor_id (SECURITY DEFINER)';
 
+
+

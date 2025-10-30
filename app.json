@@ -48,6 +48,13 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow Open Doors to use your location to show you nearby prizes and games."
         }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "iosAppId": "ca-app-pub-3940256099942544~1458002511",
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713"
+        }
       ]
     ],
     "experiments": {

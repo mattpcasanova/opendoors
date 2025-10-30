@@ -21,3 +21,5 @@ alter table public.door_notifications replica identity full;
 
 comment on table public.door_notifications is 'Realtime-enabled: publishes INSERT events to supabase_realtime';
 
+
+
