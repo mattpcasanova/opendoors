@@ -1,10 +1,11 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, AppState } from 'react-native';
 import DoorNotificationComponent from '../components/DoorNotification';
 import TutorialOverlay from '../components/TutorialOverlay';
 import { useAuth } from '../hooks/useAuth';
 import { useTutorial } from '../hooks/useTutorial';
+import { supabase } from '../services/supabase/client';
 import { userPreferencesService } from '../services/userPreferencesService';
 import { RootStackParamList } from '../types/navigation';
 
@@ -86,9 +87,55 @@ export default function RootNavigator() {
 
     if (user?.id && surveyCompleted && !showTutorial) {
       const timer = setTimeout(checkNotifications, 1000); // Small delay to ensure app is ready
-      return () => clearTimeout(timer);
+      // Also re-check when app comes to foreground
+      const sub = AppState.addEventListener('change', (state) => {
+        if (state === 'active') {
+          checkNotifications();
+        }
+      });
+      return () => {
+        clearTimeout(timer);
+        sub.remove();
+      };
     }
   }, [user?.id, surveyCompleted, showTutorial]);
+
+  // Realtime: show notification popup immediately when a new door_notification is inserted for this user
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel(`door_notifications_${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'door_notifications',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          setShowNotifications(true);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'earned_rewards',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          setShowNotifications(true);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
 
   // Handle survey completion
   const handleSurveyComplete = () => {

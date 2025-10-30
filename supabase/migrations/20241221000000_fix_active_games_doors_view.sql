@@ -18,7 +18,7 @@ SELECT
     p.image_url,
     COALESCE(p.logo_url, 'https://boemdxppyuspuhvgfzmb.supabase.co/storage/v1/object/public/logos//opendoors-logo.png') as logo_url,
     p.prize_type,
-    p.category,
+    p.category, 
     p.stock_quantity,
     p.expires_at,
     p.is_active,

@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase } from './supabase/client';
 import { earnedRewardsService } from './earnedRewardsService';
 import { notificationService } from './notificationService';
 
@@ -283,11 +283,9 @@ class OrganizationService {
    */
   async getDistributorHistory(distributorId: string) {
     try {
+      // Use SECURITY DEFINER RPC to avoid RLS visibility edge cases
       const { data, error } = await supabase
-        .from('door_distributions')
-        .select('*')
-        .eq('distributor_id', distributorId)
-        .order('created_at', { ascending: false });
+        .rpc('get_distributor_history', { p_distributor_id: distributorId });
 
       if (error) {
         console.error('Error fetching distributor history:', error);

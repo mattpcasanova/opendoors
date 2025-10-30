@@ -60,9 +60,11 @@ This checklist covers all critical items before launching your Minimum Viable Pr
   - [x] Use `supabase.rpc('create_door_distribution', ...)`
   - [x] Use `supabase.rpc('add_earned_reward', ...)`
   - [x] Use `supabase.rpc('create_door_notification', ...)`
-- [ ] Test policies across roles (user, distributor, admin)
-  - [ ] Positive tests (authorized actions succeed)
-  - [ ] Negative tests (unauthorized actions blocked)
+- [x] Test policies across roles (user, distributor, admin)
+  - [x] Positive tests (authorized actions succeed)
+  - [x] Negative tests (unauthorized actions blocked)
+  - Run: `supabase/migrations/20241221000009_test_rls_policies.sql` (replace placeholder UUIDs)
+  - Result: If script completes without error → policies are correct
 
 ---
 

@@ -5,11 +5,11 @@ import * as Location from 'expo-location';
 export { Location };
 
 export interface Coordinates {
-  latitude: number;
-  longitude: number;
-}
-
-/**
+    latitude: number;
+    longitude: number;
+  }
+  
+  /**
  * Calculate distance between two coordinates using Haversine formula
  * Returns distance in miles
  */
@@ -128,31 +128,31 @@ export async function calculateDistanceToAddress(
 /**
  * Get user's current location using device GPS (for web compatibility)
  * Note: For React Native, use expo-location directly
- */
-export async function getCurrentLocation(): Promise<Coordinates | null> {
-  return new Promise((resolve) => {
-    if (!navigator.geolocation) {
-      console.warn('Geolocation is not supported by this browser');
-      resolve(null);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        resolve({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
-      },
-      (error) => {
-        console.warn('Location access denied or unavailable:', error.message);
+   */
+  export async function getCurrentLocation(): Promise<Coordinates | null> {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        console.warn('Geolocation is not supported by this browser');
         resolve(null);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000, // 10 seconds
-        maximumAge: 300000, // 5 minutes
+        return;
       }
-    );
-  });
-}
+  
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+        },
+        (error) => {
+          console.warn('Location access denied or unavailable:', error.message);
+          resolve(null);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000, // 10 seconds
+          maximumAge: 300000, // 5 minutes
+        }
+      );
+    });
+  }

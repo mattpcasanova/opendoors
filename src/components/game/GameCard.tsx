@@ -326,10 +326,10 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
             {/* Location and Door Count */}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                <MapPin size={18} color="white" style={{ marginRight: 6 }} />
-                <Text style={{ color: 'white', fontSize: 15, fontWeight: '500' }}>
-                  {distance}
-                </Text>
+              <MapPin size={18} color="white" style={{ marginRight: 6 }} />
+              <Text style={{ color: 'white', fontSize: 15, fontWeight: '500' }}>
+                {distance}
+              </Text>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <DoorOpen size={16} color="rgba(255,255,255,0.8)" style={{ marginRight: 4 }} />
@@ -468,10 +468,10 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
           {/* Location and Door Count */}
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-              <MapPin size={18} color="#6b7280" style={{ marginRight: 6 }} />
-              <Text style={{ color: '#6b7280', fontSize: 15, fontWeight: '500' }}>
-                {distance}
-              </Text>
+            <MapPin size={18} color="#6b7280" style={{ marginRight: 6 }} />
+            <Text style={{ color: '#6b7280', fontSize: 15, fontWeight: '500' }}>
+              {distance}
+            </Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <DoorOpen size={16} color="#6b7280" style={{ marginRight: 4 }} />

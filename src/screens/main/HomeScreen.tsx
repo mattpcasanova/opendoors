@@ -5,16 +5,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Gift, Zap } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-    Alert,
-    DeviceEventEmitter,
-    ScrollView as RNScrollView,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  DeviceEventEmitter,
+  ScrollView as RNScrollView,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import DoorNotificationComponent from '../../components/DoorNotification';
 import GameCard from '../../components/game/GameCard';
 import BottomNavBar from '../../components/main/BottomNavBar';
 import Header from "../../components/main/Header";
@@ -24,6 +25,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useLocation } from '../../hooks/useLocation';
 import { EarnedReward, earnedRewardsService } from '../../services/earnedRewardsService';
 import { gamesService, Prize } from '../../services/gameLogic/games';
+import { notificationService } from '../../services/notificationService';
 import { supabase } from '../../services/supabase/client';
 import { UserProgress, userProgressService } from '../../services/userProgressService';
 import type { MainTabParamList } from '../../types/navigation';
@@ -356,6 +358,7 @@ export default function HomeScreen() {
   const [showEarnRewardModal, setShowEarnRewardModal] = useState(false);
   const [showWatchAdModal, setShowWatchAdModal] = useState(false);
   const { user, session } = useAuth();
+  const [showDoorNotifications, setShowDoorNotifications] = useState(false);
 
   // Filter/sort state
   const [showFilters, setShowFilters] = useState(false);
@@ -436,6 +439,39 @@ export default function HomeScreen() {
     };
     
     loadUserPreferences();
+  }, [user?.id]);
+
+  // Notifications: check unread on mount/login and subscribe to realtime inserts
+  useEffect(() => {
+    const init = async () => {
+      if (!user?.id) return;
+      const result = await notificationService.getUnreadNotifications(user.id);
+      if (result.data && result.data.length > 0) {
+        setShowDoorNotifications(true);
+      }
+    };
+    init();
+
+    if (!user?.id) return;
+    const channel = supabase
+      .channel(`home_notifications_${user.id}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'door_notifications',
+        filter: `user_id=eq.${user.id}`,
+      }, () => setShowDoorNotifications(true))
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'earned_rewards',
+        filter: `user_id=eq.${user.id}`,
+      }, () => setShowDoorNotifications(true))
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user?.id]);
 
   // Listen for preference refresh events (when user updates preferences in profile)
@@ -1355,6 +1391,11 @@ export default function HomeScreen() {
         visible={showWatchAdModal}
         onClose={() => setShowWatchAdModal(false)}
         onAdComplete={handleAdComplete}
+      />
+
+      <DoorNotificationComponent
+        isVisible={showDoorNotifications}
+        onClose={() => setShowDoorNotifications(false)}
       />
     </SafeAreaView>
   );
