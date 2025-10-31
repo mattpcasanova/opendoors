@@ -163,15 +163,18 @@ Since you're "almost" ready, focus on these **3 things**:
 - ✅ Database migrations run
 - ✅ Notification system working
 - ✅ Daily reset tested
+- ✅ Error handling implemented (see `ERROR_HANDLING_STATUS.md`)
 
 ---
 
 ## 🚨 **Blockers vs Non-Blockers**
 
-**MUST fix before launch:**
-- ❌ Referral system broken
-- ❌ Core user flow broken
-- ❌ App crashes on common errors
+**MUST fix before launch IF found:**
+- ❌ Referral system broken (test to verify it works)
+- ❌ Core user flow broken (test: signup → play game → claim reward)
+- ❌ App crashes on common errors (test: network failure, permission denial)
+
+**Note:** These are examples of what WOULD stop a launch - not statements that they're currently broken. The app has error handling, but testing will verify it works.
 
 **Can launch without (fix later):**
 - ⚠️ Perfect screenshots (can update)
