@@ -59,9 +59,11 @@ You can create the app listing now and prepare it, but not submit until ready.
 
 ### 3. Set Up EAS (Expo Application Services) Credentials
 
-If you're using EAS Build (recommended), set up credentials:
+**⏰ WHEN:** Do this **right before your first production build** (when ready to build for TestFlight/App Store).
 
-**Steps:**
+**Why wait?** You don't need certificates until you actually build. Setting them up now is fine, but not necessary yet.
+
+**If you're using EAS Build (recommended):**
 1. Install EAS CLI if not already: `npm install -g eas-cli`
 2. Login to EAS: `eas login`
 3. Link your project (if not done): `eas build:configure`
@@ -72,7 +74,9 @@ If you're using EAS Build (recommended), set up credentials:
 - Manage signing for you
 - Handle both development and distribution certificates
 
-**Option:** You can also manually generate certificates in Apple Developer Portal, but EAS makes it much easier.
+**Alternative:** You can also manually generate certificates in Apple Developer Portal, but EAS makes it much easier.
+
+**Timeline:** Do this when you're ready to run `eas build --platform ios --profile production` (before launch).
 
 ---
 

@@ -500,11 +500,32 @@ export default function ProfileScreen() {
     );
   };
 
-  const showPrivacyPolicy = () => {
+  const showPrivacyPolicy = async () => {
+    // Privacy policy must be a web URL (required by App Store/AdMob)
+    // Update this URL once you have your privacy policy hosted
+    const privacyPolicyUrl = 'https://opendoors.app/privacy'; // TODO: Update with actual URL
+    
     Alert.alert(
       'Privacy Policy',
-      `OpenDoors Privacy Policy\n\nLast updated: ${new Date().toLocaleDateString()}\n\n1. Information We Collect\n- Email address and basic profile information\n- Location data (with your permission)\n- Game play history and preferences\n- Device information and app usage\n\n2. How We Use Your Information\n- To provide and improve our services\n- To send you notifications about games and rewards\n- To personalize your experience\n- To communicate with you about your account\n\n3. Information Sharing\nWe do not sell your personal information. We may share data with:\n- Partner businesses (for reward fulfillment)\n- Service providers (for app functionality)\n- Legal authorities (when required by law)\n\n4. Data Security\nWe implement appropriate security measures to protect your information.\n\n5. Your Rights\nYou can:\n- Access and update your profile information\n- Opt out of notifications\n- Request deletion of your account\n- Control location permissions\n\n6. Data Retention\nWe retain your data as long as your account is active or as required by law.\n\n7. Children's Privacy\nOur service is not intended for users under 18 years old.\n\n8. Changes to Policy\nWe may update this policy. We'll notify you of significant changes.\n\n9. Contact Us\nFor privacy questions, contact support@opendoors.com`,
-      [{ text: 'OK' }]
+      'View our privacy policy in your browser?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Open in Browser',
+          onPress: async () => {
+            try {
+              const supported = await Linking.canOpenURL(privacyPolicyUrl);
+              if (supported) {
+                await Linking.openURL(privacyPolicyUrl);
+              } else {
+                Alert.alert('Error', 'Unable to open privacy policy URL');
+              }
+            } catch (error) {
+              Alert.alert('Error', 'Failed to open privacy policy');
+            }
+          }
+        }
+      ]
     );
   };
 
