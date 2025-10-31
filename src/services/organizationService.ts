@@ -1,4 +1,5 @@
 import { supabase } from './supabase/client';
+import { pushNotificationService } from './pushNotificationService';
 import { earnedRewardsService } from './earnedRewardsService';
 import { notificationService } from './notificationService';
 
@@ -255,6 +256,13 @@ class OrganizationService {
       if (!notificationResult.success) {
         console.error('Error creating notification:', notificationResult.error);
         // Don't fail the entire operation for notification errors
+      } else {
+        // Send push notification for doors received
+        await pushNotificationService.notifyDoorsReceived(
+          recipientId,
+          distributorName,
+          doorsToSend
+        );
       }
 
       // Add earned rewards for the recipient via RPC per door

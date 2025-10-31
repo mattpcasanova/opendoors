@@ -270,7 +270,12 @@ export default function ProfileScreen() {
                 const { status } = await Notifications.requestPermissionsAsync();
                 if (status === 'granted') {
                   setPrivacySettings(prev => prev.map(s => s.id === 'notifications' ? { ...s, enabled: true } : s));
-                  if (user) await supabase.from('user_settings').upsert({ user_id: user.id, notifications_enabled: true }, { onConflict: 'user_id' });
+                  if (user) {
+                    await supabase.from('user_settings').upsert({ user_id: user.id, notifications_enabled: true }, { onConflict: 'user_id' });
+                    // Register for push notifications
+                    const { pushNotificationService } = await import('../../services/pushNotificationService');
+                    await pushNotificationService.registerForPushNotifications(user.id);
+                  }
                 } else {
                   Alert.alert('Permission Denied', 'Notification permission was not granted.');
                   setPrivacySettings(prev => prev.map(s => s.id === 'notifications' ? { ...s, enabled: false } : s));

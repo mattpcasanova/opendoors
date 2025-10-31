@@ -127,16 +127,40 @@ This checklist covers all critical items before launching your Minimum Viable Pr
   - **Impact:** Ads working with test IDs; ready to monetize once production AdMob account is set up
   - **Note:** You can get AdMob App IDs BEFORE launch (just register your bundle ID/package name in AdMob console). Include them in your first production build to avoid needing an update later.
 
-### Push Notifications (Partially Done)
-- [ ] **Complete Push Notification Setup**
-  - [x] **Done:** Notification permissions flow implemented (`ProfileScreen.tsx`)
-  - [x] **Done:** In-app notifications UI (`DoorNotification.tsx`)
-  - [x] **Done:** Database notifications system (`notificationService.ts`)
-  - [ ] **Missing:** Actual push notification sending (external push service not integrated)
-  - [ ] **Missing:** Update `ios/OpenDoors/OpenDoors.entitlements` for production (`aps-environment: production`)
-  - [ ] **Missing:** Deep linking for notification taps
-  - **Status:** ⚠️ PARTIAL - In-app notifications work, but no actual push notifications sent to devices
-  - **Impact:** Users will see notifications when they open the app, but won't receive push notifications
+### Push Notifications & Automatic Notifications ✅ COMPLETE (Test Mode)
+- [x] **Notification System Setup**
+  - [x] Notification permissions flow implemented (`ProfileScreen.tsx`)
+  - [x] Push notification service implemented (`pushNotificationService.ts`) using `expo-notifications`
+  - [x] Push token registration on app startup and when permissions granted
+  - [x] Local push notifications working (using `scheduleNotificationAsync` for testing)
+  - [x] Database notifications system (`notificationService.ts`)
+  - [x] In-app notification popups (`DoorNotification.tsx`, `BonusPlayNotification.tsx`, `EarnedRewardNotification.tsx`)
+
+- [x] **Automatic Notification Triggers**
+  - [x] Daily reset notification - Push notification when new play available (no popup, button is sufficient)
+  - [x] Doors received - Notification popup + push when distributor sends doors
+  - [x] Rewards expiring soon - Notification 2 days before expiration ("expiring soon")
+  - [x] Rewards expiring tomorrow - Notification 1 day before expiration ("expiring tomorrow")
+  - [x] Bonus play available - Dedicated popup when first earned (separate from general notifications)
+  - [x] Earned reward from ad - Popup immediately after watching ad successfully
+
+- [x] **Notification Persistence & Deduplication**
+  - [x] Notifications only show once per event (database tracking in `user_settings`)
+  - [x] Daily notifications tracked via `last_daily_notification_date`
+  - [x] Expiring notifications tracked via `last_expiring_soon_date` and `last_expiring_tomorrow_date`
+  - [x] Bonus notifications tracked via `last_bonus_notification_date`
+  - [x] Bonus notifications filtered from general door notification popup (only show in dedicated bonus popup)
+  - [x] Notifications marked as read when user dismisses popup (prevents re-showing on refresh)
+
+- [ ] **Production Push Notification Setup** (Before Launch)
+  - [ ] Store push tokens in database for server-side notification sending
+  - [ ] Set up backend service (Supabase Edge Function or own server) to send push notifications
+  - [ ] Replace local notifications with actual Expo Push Notification API calls from backend
+  - [ ] Update `ios/OpenDoors/OpenDoors.entitlements` for production (`aps-environment: production`)
+  - [ ] Implement deep linking for notification taps
+  - **Status:** ✅ COMPLETE (Local/Test Mode) - Ready for production push service integration
+  - **Impact:** Notifications work locally for testing; needs backend integration for production push notifications
+  - **Note:** Current implementation uses local notifications which work on simulator/device but require backend for true push notifications when app is closed
 
 ### Error Handling & Edge Cases (Needs Testing)
 - [ ] **Network Failure Handling** - Code exists, needs testing

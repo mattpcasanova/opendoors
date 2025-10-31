@@ -15,7 +15,9 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import BonusPlayNotification from '../../components/BonusPlayNotification';
 import DoorNotificationComponent from '../../components/DoorNotification';
+import EarnedRewardNotification from '../../components/EarnedRewardNotification';
 import GameCard from '../../components/game/GameCard';
 import BottomNavBar from '../../components/main/BottomNavBar';
 import Header from "../../components/main/Header";
@@ -361,6 +363,9 @@ export default function HomeScreen() {
   const [showWatchAdModal, setShowWatchAdModal] = useState(false);
   const { user, session } = useAuth();
   const [showDoorNotifications, setShowDoorNotifications] = useState(false);
+  const [showBonusNotification, setShowBonusNotification] = useState(false);
+  const [showEarnedRewardNotification, setShowEarnedRewardNotification] = useState(false);
+  const [earnedRewardData, setEarnedRewardData] = useState<{ sourceName: string; doorsEarned: number } | null>(null);
 
   // Filter/sort state
   const [showFilters, setShowFilters] = useState(false);
@@ -448,8 +453,14 @@ export default function HomeScreen() {
     const init = async () => {
       if (!user?.id) return;
       const result = await notificationService.getUnreadNotifications(user.id);
-      if (result.data && result.data.length > 0) {
-        setShowDoorNotifications(true);
+      if (result.data) {
+        // Filter out bonus notifications - they have their own popup component
+        const filteredNotifications = result.data.filter(n => 
+          !(n.distributor_name === 'OpenDoors' && n.reason === 'Bonus play available! Play any game for free.')
+        );
+        if (filteredNotifications.length > 0) {
+          setShowDoorNotifications(true);
+        }
       }
     };
     init();
@@ -462,7 +473,18 @@ export default function HomeScreen() {
         schema: 'public',
         table: 'door_notifications',
         filter: `user_id=eq.${user.id}`,
-      }, () => setShowDoorNotifications(true))
+      }, async () => {
+        // Check if it's a bonus notification - if so, don't show door notification popup
+        const result = await notificationService.getUnreadNotifications(user.id);
+        if (result.data) {
+          const filteredNotifications = result.data.filter(n => 
+            !(n.distributor_name === 'OpenDoors' && n.reason === 'Bonus play available! Play any game for free.')
+          );
+          if (filteredNotifications.length > 0) {
+            setShowDoorNotifications(true);
+          }
+        }
+      })
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -993,10 +1015,21 @@ export default function HomeScreen() {
           // Reload progress from database to update UI
           const { data: updatedProgress } = await userProgressService.loadUserProgress(user.id);
           if (updatedProgress) {
+            const hadBonusBefore = bonusPlaysAvailable > 0;
             setGamesUntilBonus(updatedProgress.gamesUntilBonus);
             setLastPlayDate(updatedProgress.lastPlayDate);
             setBonusPlaysAvailable(updatedProgress.bonusPlaysAvailable);
             setHasPlayedAnyGameToday(updatedProgress.hasPlayedToday);
+            
+            // If bonus just became available, show popup and send notifications
+            if (!hadBonusBefore && updatedProgress.bonusPlaysAvailable > 0) {
+              // Show bonus popup immediately
+              setShowBonusNotification(true);
+              
+              // Send notifications (in-app and push)
+              const { autoNotificationService } = await import('../../services/autoNotificationService');
+              await autoNotificationService.checkBonusAvailableNotification(user.id);
+            }
           }
         }
       }
@@ -1027,10 +1060,22 @@ export default function HomeScreen() {
       await adsService.init();
       const result = await adsService.showRewardedAd();
       if (result.userEarnedReward && user?.id) {
-        const { error } = await earnedRewardsService.addAdWatchReward(user.id);
+        const { data: reward, error } = await earnedRewardsService.addAdWatchReward(user.id);
         if (error) {
           console.error('Error adding ad reward:', error);
+          Alert.alert('Error', 'Failed to add reward. Please try again.');
+          return;
         }
+        
+        // Show earned reward popup
+        if (reward) {
+          setEarnedRewardData({
+            sourceName: reward.source_name || 'Watch Ad',
+            doorsEarned: reward.doors_earned || 1
+          });
+          setShowEarnedRewardNotification(true);
+        }
+        
         await loadEarnedRewards();
         return;
       }
@@ -1422,6 +1467,23 @@ export default function HomeScreen() {
         isVisible={showDoorNotifications}
         onClose={() => setShowDoorNotifications(false)}
       />
+
+      <BonusPlayNotification
+        isVisible={showBonusNotification}
+        onClose={() => setShowBonusNotification(false)}
+      />
+
+      {earnedRewardData && (
+        <EarnedRewardNotification
+          isVisible={showEarnedRewardNotification}
+          onClose={() => {
+            setShowEarnedRewardNotification(false);
+            setEarnedRewardData(null);
+          }}
+          sourceName={earnedRewardData.sourceName}
+          doorsEarned={earnedRewardData.doorsEarned}
+        />
+      )}
     </SafeAreaView>
   );
 }

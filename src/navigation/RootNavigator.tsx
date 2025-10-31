@@ -69,28 +69,55 @@ export default function RootNavigator() {
     }
   }, [user?.id]);
 
-  // Check for notifications when user is authenticated and survey is completed
+  // Register for push notifications and check notifications when user is authenticated
   useEffect(() => {
-    const checkNotifications = async () => {
+    const initNotifications = async () => {
       if (user?.id && surveyCompleted && !showTutorial) {
         try {
+          // Register for push notifications (will only register if permission granted)
+          const { pushNotificationService } = await import('../services/pushNotificationService');
+          await pushNotificationService.registerForPushNotifications(user.id);
+
+          // Check for existing unread notifications (excluding bonus notifications - they have their own popup)
           const { notificationService } = await import('../services/notificationService');
           const result = await notificationService.getUnreadNotifications(user.id);
-          if (result.data && result.data.length > 0) {
-            setShowNotifications(true);
+          if (result.data) {
+            // Filter out bonus notifications
+            const filteredNotifications = result.data.filter(n => 
+              !(n.distributor_name === 'OpenDoors' && n.reason === 'Bonus play available! Play any game for free.')
+            );
+            if (filteredNotifications.length > 0) {
+              setShowNotifications(true);
+            }
+          }
+
+          // Run automatic notification checks (daily reset, expiring rewards, etc.)
+          const { autoNotificationService } = await import('../services/autoNotificationService');
+          await autoNotificationService.checkAllNotifications(user.id);
+          
+          // Re-check notifications after auto checks may have created new ones
+          const updatedResult = await notificationService.getUnreadNotifications(user.id);
+          if (updatedResult.data) {
+            // Filter out bonus notifications
+            const filteredNotifications = updatedResult.data.filter(n => 
+              !(n.distributor_name === 'OpenDoors' && n.reason === 'Bonus play available! Play any game for free.')
+            );
+            if (filteredNotifications.length > 0) {
+              setShowNotifications(true);
+            }
           }
         } catch (error) {
-          console.error('Error checking notifications:', error);
+          console.error('Error initializing notifications:', error);
         }
       }
     };
 
     if (user?.id && surveyCompleted && !showTutorial) {
-      const timer = setTimeout(checkNotifications, 1000); // Small delay to ensure app is ready
+      const timer = setTimeout(initNotifications, 1000); // Small delay to ensure app is ready
       // Also re-check when app comes to foreground
       const sub = AppState.addEventListener('change', (state) => {
         if (state === 'active') {
-          checkNotifications();
+          initNotifications();
         }
       });
       return () => {
@@ -114,8 +141,18 @@ export default function RootNavigator() {
           table: 'door_notifications',
           filter: `user_id=eq.${user.id}`,
         },
-        () => {
-          setShowNotifications(true);
+        async () => {
+          // Check if it's a bonus notification - if so, don't show door notification popup
+          const { notificationService } = await import('../services/notificationService');
+          const result = await notificationService.getUnreadNotifications(user.id);
+          if (result.data) {
+            const filteredNotifications = result.data.filter(n => 
+              !(n.distributor_name === 'OpenDoors' && n.reason === 'Bonus play available! Play any game for free.')
+            );
+            if (filteredNotifications.length > 0) {
+              setShowNotifications(true);
+            }
+          }
         }
       )
       .on(

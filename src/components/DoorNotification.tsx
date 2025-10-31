@@ -34,7 +34,11 @@ export default function DoorNotificationComponent({ isVisible, onClose }: DoorNo
     try {
       const result = await notificationService.getUnreadNotifications(user.id);
       if (result.data) {
-        setNotifications(result.data);
+        // Filter out bonus notifications - they have their own popup component
+        const filteredNotifications = result.data.filter(n => 
+          !(n.distributor_name === 'OpenDoors' && n.reason === 'Bonus play available! Play any game for free.')
+        );
+        setNotifications(filteredNotifications);
         setCurrentNotificationIndex(0);
       }
     } catch (error) {
@@ -64,6 +68,17 @@ export default function DoorNotificationComponent({ isVisible, onClose }: DoorNo
     }
   };
 
+  // Mark all notifications as read when modal is dismissed (via back button or swipe)
+  const handleClose = async () => {
+    // Mark all remaining notifications as read
+    if (notifications.length > 0) {
+      await Promise.all(
+        notifications.map(n => notificationService.markNotificationAsRead(n.id))
+      );
+    }
+    onClose();
+  };
+
   const currentNotification = notifications[currentNotificationIndex];
 
   if (!isVisible || notifications.length === 0) {
@@ -75,7 +90,7 @@ export default function DoorNotificationComponent({ isVisible, onClose }: DoorNo
       visible={isVisible}
       transparent
       animationType="fade"
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
       <View style={{
         flex: 1,
