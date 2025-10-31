@@ -1,4 +1,4 @@
-# 🧪 OpenDoors Testing Script
+# OpenDoors Testing Script
 
 This script helps you systematically test all critical user flows before launch.
 

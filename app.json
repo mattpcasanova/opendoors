@@ -52,7 +52,7 @@
       [
         "react-native-google-mobile-ads",
         {
-          "iosAppId": "ca-app-pub-3940256099942544~1458002511",
+          "iosAppId": "ca-app-pub-5055120875750202~8739261688",
           "androidAppId": "ca-app-pub-3940256099942544~3347511713"
         }
       ]
@@ -64,6 +64,12 @@
       "router": {},
       "eas": {
         "projectId": "526a3bad-24d4-45b4-a6c0-2df2b26b3c83"
+      },
+      "admob": {
+        "rewardedUnitIds": {
+          "ios": "ca-app-pub-5055120875750202/9079717627",
+          "android": "ca-app-pub-3940256099942544/5224354917"
+        }
       }
     }
   }

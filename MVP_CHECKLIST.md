@@ -113,19 +113,18 @@ This checklist covers all critical items before launching your Minimum Viable Pr
 
 ## 🟠 **HIGH PRIORITY - Should Fix Before Launch**
 
-### Ad Integration ✅ COMPLETE
+### Ad Integration ✅ COMPLETE (iOS Production Ready)
 - [x] **Ad SDK Integration** (`src/services/adsService.ts`, `src/screens/main/HomeScreen.tsx`, `src/screens/rewards/EarnedRewardsScreen.tsx`)
   - [x] **Done:** Google AdMob SDK integrated with rewarded ads
-  - [x] **Done:** Test App IDs configured in `app.json` (iOS: `ca-app-pub-3940256099942544~1458002511`, Android: `ca-app-pub-3940256099942544~3347511713`)
+  - [x] **Done:** iOS production App ID configured: `ca-app-pub-5055120875750202~8739261688`
+  - [x] **Done:** iOS production Rewarded Ad Unit ID configured: `ca-app-pub-5055120875750202/9079717627`
   - [x] **Done:** Rewarded ad flow implemented (load → show → grant reward)
   - [x] **Done:** Integrated in HomeScreen and EarnedRewardsScreen
-  - [ ] **Before First Production Build:** Set up AdMob account and get real App IDs + Rewarded Ad Unit IDs
-  - [ ] **Before First Production Build:** Replace test App IDs in `app.json` with real AdMob App IDs
-  - [ ] **Before First Production Build:** Add real Rewarded Ad Unit IDs via `expo.extra.admob.rewardedUnitIds` or update `adsService.ts`
+  - [ ] **When Ready for Android:** Set up Android app in AdMob and add Android production IDs
   - [ ] **Optional:** Add consent/ATT handling for GDPR/CCPA compliance
-  - **Status:** ✅ COMPLETE (Test Mode) - Ready for production IDs
-  - **Impact:** Ads working with test IDs; ready to monetize once production AdMob account is set up
-  - **Note:** You can get AdMob App IDs BEFORE launch (just register your bundle ID/package name in AdMob console). Include them in your first production build to avoid needing an update later.
+  - **Status:** ✅ COMPLETE (iOS Production) - Android using test IDs
+  - **Impact:** iOS ads ready to monetize in production builds; Android will use test IDs until production IDs added
+  - **Note:** Android IDs configured as test IDs in `app.json`. Replace with production IDs when ready for Android launch. See `ADMOB_CONFIG_NOTES.md` for details.
 
 ### Push Notifications & Automatic Notifications ✅ COMPLETE (Test Mode)
 - [x] **Notification System Setup**
