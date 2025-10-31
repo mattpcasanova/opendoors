@@ -323,17 +323,25 @@ This checklist covers all critical items before launching your Minimum Viable Pr
   - [ ] Create production build profiles if needed
 
 ### App Store Submission (iOS)
+- [x] **Apple Developer Account**
+  - [x] ✅ Apple Developer account approved
+  - [ ] Register Bundle ID (`com.opendoors.app`) in Apple Developer Portal
+  - [ ] Set up EAS credentials (or manually generate certificates/provisioning profiles)
+
 - [ ] **App Store Connect**
-  - [ ] Create app listing in App Store Connect
+  - [ ] Create app listing in App Store Connect (can be draft - don't submit yet)
   - [ ] Fill out app description, keywords, screenshots
   - [ ] Set up App Store categories
   - [ ] Prepare privacy policy URL (or create one)
   - [ ] Prepare support URL
 
 - [ ] **Certificates & Provisioning**
-  - [ ] Verify Apple Developer account is active
-  - [ ] Generate production certificates
-  - [ ] Update bundle identifier matches App Store Connect
+  - [x] Apple Developer account is active ✅
+  - [ ] Generate production certificates (EAS can handle this automatically)
+  - [ ] Verify bundle identifier matches: `com.opendoors.app`
+  - [ ] Update `ios/OpenDoors/OpenDoors.entitlements` to `production` (when ready for first production build)
+
+**Note:** See `APPLE_DEVELOPER_SETUP.md` for step-by-step post-approval setup instructions.
 
 ### Google Play Submission (Android)
 - [ ] **Google Play Console**
