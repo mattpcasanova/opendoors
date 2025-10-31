@@ -14,6 +14,8 @@ import {
 import Constants from 'expo-constants';
 import { useAuth } from '../../hooks/useAuth';
 import { earnedRewardsService } from '../../services/earnedRewardsService';
+import { referralService } from '../../services/referralService';
+import { useState, useEffect } from 'react';
 
 interface EarnRewardModalProps {
   visible: boolean;
@@ -31,11 +33,26 @@ const EarnRewardModal: React.FC<EarnRewardModalProps> = ({
   onReferFriend
 }) => {
   const { user } = useAuth();
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user?.id) {
+      referralService.getUserReferralCode(user.id).then(code => setReferralCode(code));
+    }
+  }, [user?.id]);
 
   const referralUrl = (Constants.expoConfig as any)?.extra?.referralUrl || 'https://opendoors.app/download';
+  const shareUrl = referralCode 
+    ? `${referralUrl}?ref=${referralCode}`
+    : referralUrl;
 
   const handleReferFriend = async () => {
-    const referralMessage = `Hey! I'm using OpenDoors - a fun game where you can win real prizes! Join me and we'll both get extra doors to play with. Download here: ${referralUrl}`;
+    if (!referralCode) {
+      Alert.alert('Error', 'Unable to generate referral code. Please try again.');
+      return;
+    }
+
+    const referralMessage = `Hey! I'm using OpenDoors - a fun game where you can win real prizes! Join me and we'll both get extra doors to play with. Download here: ${shareUrl}`;
     
     try {
       const result = await Share.share({
@@ -44,19 +61,7 @@ const EarnRewardModal: React.FC<EarnRewardModalProps> = ({
       });
 
       if (result.action === Share.sharedAction) {
-        // User shared successfully - add referral reward
-        if (user?.id) {
-          try {
-            const { data, error } = await earnedRewardsService.addReferralReward(user.id);
-            if (error) {
-              console.error('Error adding referral reward:', error);
-              return;
-            }
-          } catch (error) {
-            console.error('Error in referral reward:', error);
-            return;
-          }
-        }
+        // User shared successfully - reward is granted when friend plays first game
         onReferFriend();
       }
     } catch (error) {
@@ -69,21 +74,13 @@ const EarnRewardModal: React.FC<EarnRewardModalProps> = ({
           { text: "Cancel", style: "cancel" },
           { 
             text: "Copy Link", 
-            onPress: async () => {
-              console.log("Copy referral link to clipboard");
-              // Add referral reward even for copy action
-              if (user?.id) {
-                try {
-                  const { data, error } = await earnedRewardsService.addReferralReward(user.id);
-                  if (error) {
-                    console.error('Error adding referral reward:', error);
-                    return;
-                  }
-                } catch (error) {
-                  console.error('Error in referral reward:', error);
-                  return;
-                }
-              }
+            onPress: () => {
+              // Show link in alert - user can manually copy
+              // When website is live, we can add proper clipboard support
+              Alert.alert('Referral Link', shareUrl, [
+                { text: 'OK' }
+              ]);
+              // Reward is granted when friend plays first game
               onReferFriend();
             }
           }

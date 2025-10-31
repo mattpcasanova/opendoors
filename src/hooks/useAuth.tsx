@@ -7,7 +7,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (data: SignUpData) => Promise<{ error: any; user?: User }>;
+  signUp: (data: SignUpData, referralCode?: string | null) => Promise<{ error: any; user?: User }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
@@ -73,7 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription?.unsubscribe();
   }, []);
 
-  const signUp = async (data: SignUpData): Promise<AuthResult> => {
+  const signUp = async (data: SignUpData, referralCode?: string | null): Promise<AuthResult> => {
     setLoading(true);
     try {
       const cleanData = {
@@ -84,7 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         phone: data.phone ? String(data.phone).trim() : undefined,
       };
 
-      const result = await authService.signUp(cleanData);
+      const result = await authService.signUp(cleanData, referralCode);
       
       if (result.error) {
         setLoading(false);

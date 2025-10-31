@@ -27,6 +27,7 @@ import { adsService } from '../../services/adsService';
 import { EarnedReward, earnedRewardsService } from '../../services/earnedRewardsService';
 import { gamesService, Prize } from '../../services/gameLogic/games';
 import { notificationService } from '../../services/notificationService';
+import { referralService } from '../../services/referralService';
 import { supabase } from '../../services/supabase/client';
 import { UserProgress, userProgressService } from '../../services/userProgressService';
 import type { MainTabParamList } from '../../types/navigation';
@@ -954,6 +955,14 @@ export default function HomeScreen() {
         console.error('❌ Error recording game:', gameError);
         Alert.alert('Error', 'Failed to save game result. Please try again.');
         return;
+      }
+
+      // Check and grant referral rewards if this is first game
+      const { granted: referralGranted } = await referralService.checkAndGrantReferralRewards(user.id);
+      if (referralGranted) {
+        console.log('✅ Referral rewards granted for first game');
+        // Refresh earned rewards to show new door
+        await loadEarnedRewards();
       }
 
       // If won, notify rewards screen to refresh immediately

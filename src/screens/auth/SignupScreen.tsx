@@ -20,6 +20,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
+import { useReferralLink } from '../../hooks/useReferralLink';
 import { AuthStackParamList } from '../../types/navigation';
 
 const { width, height } = Dimensions.get('window');
@@ -29,6 +30,7 @@ type SignupScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, 
 export default function SignupScreen() {
   const navigation = useNavigation<SignupScreenNavigationProp>();
   const { signUp } = useAuth();
+  const { getAndClearReferralCode } = useReferralLink();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -131,12 +133,16 @@ export default function SignupScreen() {
     
     try {
       console.log('🔍 Starting signup process...');
+      const referralCode = await getAndClearReferralCode();
+      if (referralCode) {
+        console.log('📎 Referral code found:', referralCode);
+      }
       const result = await signUp({
         firstName,
         lastName,
         email,
         password,
-      });
+      }, referralCode);
 
       console.log('🔍 Signup result:', { 
         success: !result.error, 

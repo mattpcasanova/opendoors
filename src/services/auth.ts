@@ -1,5 +1,6 @@
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from './supabase/client';
+import { referralService } from './referralService';
 
 export interface SignUpData {
   email: string;
@@ -16,7 +17,7 @@ export interface SignInData {
 
 class AuthService {
   // Sign up new user
-  async signUp({ email, password, firstName, lastName, phone }: SignUpData) {
+  async signUp({ email, password, firstName, lastName, phone }: SignUpData, referralCode?: string | null) {
     try {
       const cleanEmail = String(email).trim().toLowerCase();
       const cleanPassword = String(password);
@@ -82,6 +83,24 @@ class AuthService {
       }
 
       // Profile will be created automatically by trigger
+      
+      // Process referral code if provided
+      if (referralCode && data.user) {
+        try {
+          const { success, error: refError } = await referralService.createReferral(
+            referralCode,
+            data.user.id
+          );
+          if (refError) {
+            console.warn('⚠️ Referral creation failed (user still created):', refError);
+          } else if (success) {
+            console.log('✅ Referral relationship created successfully');
+          }
+        } catch (refErr) {
+          console.warn('⚠️ Error processing referral (user still created):', refErr);
+        }
+      }
+
       console.log('🔍 Returning signup data (user not signed in)');
       return { data, error: null };
       

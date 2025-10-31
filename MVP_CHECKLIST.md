@@ -39,11 +39,54 @@ This checklist covers all critical items before launching your Minimum Viable Pr
   - **Status:** ✅ DONE
   - **Impact:** Accurate analytics and game statistics
 
-### Referral System (Actually Missing)
-- [x] **Replace App Store Link Placeholder** (`src/components/modals/EarnRewardModal.tsx`)
-  - [x] Use config-driven `referralUrl` from `app.config.ts` (`EXPO_PUBLIC_REFERRAL_URL`) with sensible default
-  - **Status:** ✅ DONE
-  - **Impact:** Referral shares now have a working URL
+### Referral System ✅ COMPLETE (Needs Testing)
+- [x] **Database Schema** (`supabase/migrations/20241222000000_create_referrals_table.sql`)
+  - [x] Created `referrals` table with tracking fields
+  - [x] Added `referral_code` and `referred_by_id` to `user_profiles`
+  - [x] RLS policies configured
+  - **Status:** ✅ DONE - Migration ready to run
+  - **Note:** Run migration: `supabase/migrations/20241222000000_create_referrals_table.sql`
+
+- [x] **Referral Service** (`src/services/referralService.ts`)
+  - [x] Generates unique referral codes for each user
+  - [x] Creates referral relationships on signup
+  - [x] Checks first game and grants rewards to both parties
+  - [x] Sends notifications to both referrer and referred user
+  - **Status:** ✅ COMPLETE
+
+- [x] **Deep Linking** (`src/hooks/useReferralLink.ts`)
+  - [x] Captures referral codes from URLs (`?ref=CODE`)
+  - [x] Supports both `https://opendoors.app/download?ref=CODE` and `opendoors://?ref=CODE`
+  - [x] Stores code temporarily until signup
+  - **Status:** ✅ COMPLETE (may need testing for deep link handling)
+
+- [x] **Share URL with Referral Code** (`src/components/modals/EarnRewardModal.tsx`)
+  - [x] Includes referral code in share URL
+  - [x] Placeholder website URL works (`https://opendoors.app/download`)
+  - [x] Can be updated to real website URL later via `EXPO_PUBLIC_REFERRAL_URL`
+  - **Status:** ✅ COMPLETE
+
+- [x] **Signup Integration** (`src/screens/auth/SignupScreen.tsx`, `src/services/auth.ts`)
+  - [x] Captures referral code from deep link on signup
+  - [x] Creates referral relationship in database
+  - **Status:** ✅ COMPLETE
+
+- [x] **Game Completion Check** (`src/screens/main/HomeScreen.tsx`)
+  - [x] Checks if user's first game after signup
+  - [x] Grants rewards to both referrer and referred user
+  - [x] Sends notifications to both users
+  - **Status:** ✅ COMPLETE
+
+- [ ] **Testing Required:**
+  - [ ] Verify deep link capture (open `opendoors://?ref=TESTCODE` and check logs)
+  - [ ] Test full flow: Share link → Friend signs up → Friend plays first game → Both get rewards
+  - [ ] Verify notifications appear for both users
+  - [ ] Check database `referrals` table after full flow
+  - [ ] Test edge cases: self-referral (should be blocked), invalid codes, duplicate referrals
+  - **Status:** ⚠️ NEEDS TESTING - Code complete, functionality needs verification
+
+- **Overall Status:** ✅ CODE COMPLETE - Ready for testing
+- **Impact:** Full referral system implemented - both referrer and referred user get +1 door when referred user plays first game
 
 ### Database Security (Decision: Implement RLS Now)
 - [x] **Decision:** Implement proper RLS policies before MVP launch
@@ -70,13 +113,19 @@ This checklist covers all critical items before launching your Minimum Viable Pr
 
 ## 🟠 **HIGH PRIORITY - Should Fix Before Launch**
 
-### Ad Integration (Needs Decision)
-- [ ] **Ad SDK Integration Decision** (`src/components/modals/WatchAdModal.tsx`)
-  - [ ] **Current:** Uses simulated 30-second countdown
-  - [ ] **Option A:** Integrate real ad SDK (Google AdMob, Meta Audience Network) - recommended for production
-  - [ ] **Option B:** Keep simulation for MVP launch - acceptable if documented
-  - **Status:** ✅ FUNCTIONAL (simulated) - Works but not monetized
-  - **Impact:** No revenue from ads, but functional for MVP testing
+### Ad Integration ✅ COMPLETE
+- [x] **Ad SDK Integration** (`src/services/adsService.ts`, `src/screens/main/HomeScreen.tsx`, `src/screens/rewards/EarnedRewardsScreen.tsx`)
+  - [x] **Done:** Google AdMob SDK integrated with rewarded ads
+  - [x] **Done:** Test App IDs configured in `app.json` (iOS: `ca-app-pub-3940256099942544~1458002511`, Android: `ca-app-pub-3940256099942544~3347511713`)
+  - [x] **Done:** Rewarded ad flow implemented (load → show → grant reward)
+  - [x] **Done:** Integrated in HomeScreen and EarnedRewardsScreen
+  - [ ] **Before First Production Build:** Set up AdMob account and get real App IDs + Rewarded Ad Unit IDs
+  - [ ] **Before First Production Build:** Replace test App IDs in `app.json` with real AdMob App IDs
+  - [ ] **Before First Production Build:** Add real Rewarded Ad Unit IDs via `expo.extra.admob.rewardedUnitIds` or update `adsService.ts`
+  - [ ] **Optional:** Add consent/ATT handling for GDPR/CCPA compliance
+  - **Status:** ✅ COMPLETE (Test Mode) - Ready for production IDs
+  - **Impact:** Ads working with test IDs; ready to monetize once production AdMob account is set up
+  - **Note:** You can get AdMob App IDs BEFORE launch (just register your bundle ID/package name in AdMob console). Include them in your first production build to avoid needing an update later.
 
 ### Push Notifications (Partially Done)
 - [ ] **Complete Push Notification Setup**
