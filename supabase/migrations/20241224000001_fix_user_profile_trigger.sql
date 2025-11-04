@@ -5,43 +5,52 @@
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.user_profiles (
-    id,
-    email,
-    first_name,
-    last_name,
-    phone,
-    status,
-    total_games,
-    total_wins,
-    daily_plays_remaining,
-    subscription_status,
-    user_type,
-    doors_available,
-    doors_distributed,
-    created_at,
-    updated_at
-  )
-  VALUES (
-    NEW.id,
-    NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'first_name', ''),
-    COALESCE(NEW.raw_user_meta_data->>'last_name', ''),
-    COALESCE(NEW.raw_user_meta_data->>'phone', NULL),
-    CASE 
-      WHEN NEW.email_confirmed_at IS NOT NULL THEN 'active'
-      ELSE 'pending_confirmation'
-    END,
-    0, -- total_games
-    0, -- total_wins
-    1, -- daily_plays_remaining
-    'free', -- subscription_status
-    'user', -- user_type (required, NOT NULL)
-    0, -- doors_available (required, NOT NULL)
-    0, -- doors_distributed (required, NOT NULL)
-    NOW(), -- created_at
-    NOW()  -- updated_at
-  );
+  -- Try to insert user profile with all required columns
+  BEGIN
+    INSERT INTO public.user_profiles (
+      id,
+      email,
+      first_name,
+      last_name,
+      phone,
+      status,
+      total_games,
+      total_wins,
+      daily_plays_remaining,
+      subscription_status,
+      user_type,
+      doors_available,
+      doors_distributed,
+      created_at,
+      updated_at
+    )
+    VALUES (
+      NEW.id,
+      NEW.email,
+      COALESCE(NEW.raw_user_meta_data->>'first_name', ''),
+      COALESCE(NEW.raw_user_meta_data->>'last_name', ''),
+      COALESCE(NEW.raw_user_meta_data->>'phone', NULL),
+      CASE 
+        WHEN NEW.email_confirmed_at IS NOT NULL THEN 'active'
+        ELSE 'pending_confirmation'
+      END,
+      0, -- total_games
+      0, -- total_wins
+      1, -- daily_plays_remaining
+      'free', -- subscription_status
+      'user', -- user_type (required, NOT NULL)
+      0, -- doors_available (required, NOT NULL)
+      0, -- doors_distributed (required, NOT NULL)
+      NOW(), -- created_at
+      NOW()  -- updated_at
+    );
+  EXCEPTION WHEN OTHERS THEN
+    -- Log the error but don't fail the auth user creation
+    RAISE WARNING 'Failed to create user_profile for user %: %', NEW.id, SQLERRM;
+    -- Re-raise the error so we can see what's wrong
+    RAISE;
+  END;
+  
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

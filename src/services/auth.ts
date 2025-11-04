@@ -44,11 +44,44 @@ class AuthService {
         success: !error, 
         userId: data?.user?.id,
         hasSession: !!data?.session,
-        error: error?.message 
+        error: error?.message,
+        errorCode: error?.code,
+        errorDetails: error?.details,
+        errorHint: error?.hint
       });
 
       if (error) {
         console.warn('⚠️ Auth signup error:', error);
+        console.warn('⚠️ Error details:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          status: (error as any).status
+        });
+        
+        // Check if it's actually an orphaned account issue
+        if (error.code === 'user_already_exists' || error.message?.includes('already registered')) {
+          // Try to check if profile exists for this email
+          try {
+            const { data: existingUser } = await supabase.auth.getUser();
+            if (existingUser?.user) {
+              const { data: profile } = await supabase
+                .from('user_profiles')
+                .select('id')
+                .eq('id', existingUser.user.id)
+                .single();
+              
+              if (!profile) {
+                console.error('❌ ORPHANED ACCOUNT DETECTED: Auth user exists but no profile');
+                throw new Error('Account exists but is incomplete. Please contact support or try signing in.');
+              }
+            }
+          } catch (checkError) {
+            // Ignore check errors, just throw the original
+          }
+        }
+        
         throw error;
       }
 
@@ -63,26 +96,67 @@ class AuthService {
         sessionUser: data.session?.user?.id 
       });
 
-      // For testing: Update user profile status to 'active' to bypass email confirmation
+      // Verify profile was created by trigger
       if (data.user) {
         try {
-          // Update user profile status
-          const { error: updateError } = await supabase
-            .from('user_profiles')
-            .update({ status: 'active' })
-            .eq('id', data.user.id);
+          // Wait a moment for trigger to complete
+          await new Promise(resolve => setTimeout(resolve, 500));
           
-          if (updateError) {
-            console.warn('⚠️ Could not update user status to active:', updateError);
+          // Check if profile exists
+          const { data: profile, error: profileError } = await supabase
+            .from('user_profiles')
+            .select('id, user_type, status')
+            .eq('id', data.user.id)
+            .single();
+          
+          if (profileError || !profile) {
+            console.error('❌ CRITICAL: Profile was NOT created by trigger!', profileError);
+            console.error('❌ User ID:', data.user.id, 'Email:', cleanEmail);
+            // Try to create profile manually as fallback
+            const { error: manualInsertError } = await supabase
+              .from('user_profiles')
+              .insert({
+                id: data.user.id,
+                email: cleanEmail,
+                first_name: cleanFirstName,
+                last_name: cleanLastName,
+                phone: cleanPhone,
+                status: 'active',
+                total_games: 0,
+                total_wins: 0,
+                daily_plays_remaining: 1,
+                subscription_status: 'free',
+                user_type: 'user',
+                doors_available: 0,
+                doors_distributed: 0
+              });
+            
+            if (manualInsertError) {
+              console.error('❌ Failed to create profile manually:', manualInsertError);
+              throw new Error('Account created but profile creation failed. Please contact support.');
+            } else {
+              console.log('✅ Profile created manually as fallback');
+            }
           } else {
-            console.log('✅ User profile status updated to active');
+            console.log('✅ Profile verified - exists:', { id: profile.id, user_type: profile.user_type });
+            
+            // Update user profile status to 'active' to bypass email confirmation
+            const { error: updateError } = await supabase
+              .from('user_profiles')
+              .update({ status: 'active' })
+              .eq('id', data.user.id);
+            
+            if (updateError) {
+              console.warn('⚠️ Could not update user status to active:', updateError);
+            } else {
+              console.log('✅ User profile status updated to active');
+            }
           }
-        } catch (profileError) {
-          console.warn('⚠️ Error updating user profile status:', profileError);
+        } catch (profileError: any) {
+          console.error('❌ Error verifying/creating profile:', profileError);
+          // Don't fail signup if profile check fails - user is created
         }
       }
-
-      // Profile will be created automatically by trigger
       
       // Process referral code if provided
       if (referralCode && data.user) {
