@@ -37,6 +37,7 @@ export default function SignupScreen() {
     email: '',
     password: '',
     confirmPassword: '',
+    referralCode: '', // Manual referral code entry
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -133,10 +134,16 @@ export default function SignupScreen() {
     
     try {
       console.log('🔍 Starting signup process...');
-      const referralCode = await getAndClearReferralCode();
+      
+      // Get referral code from deep link OR manual entry (manual takes priority)
+      const deepLinkCode = await getAndClearReferralCode();
+      const manualCode = formData.referralCode?.trim().toUpperCase();
+      const referralCode = manualCode || deepLinkCode;
+      
       if (referralCode) {
-        console.log('📎 Referral code found:', referralCode);
+        console.log('📎 Referral code found:', referralCode, manualCode ? '(manual)' : '(deep link)');
       }
+      
       const result = await signUp({
         firstName,
         lastName,
@@ -189,6 +196,10 @@ export default function SignupScreen() {
 
   const updateConfirmPassword = (text: string) => {
     setFormData(prev => ({ ...prev, confirmPassword: text }));
+  };
+
+  const updateReferralCode = (text: string) => {
+    setFormData(prev => ({ ...prev, referralCode: text }));
   };
 
   return (
@@ -400,6 +411,30 @@ export default function SignupScreen() {
                         {showConfirmPassword ? <EyeOff size={20} color="#64748B" /> : <Eye size={20} color="#64748B" />}
                       </TouchableOpacity>
                     </View>
+                  </View>
+
+                  {/* Referral Code (Optional) */}
+                  <View style={styles.inputField}>
+                    <Text style={styles.inputLabel}>Referral Code (Optional)</Text>
+                    <View style={styles.inputContainer}>
+                      <View style={styles.inputIconContainer}>
+                        <Gift size={20} color="#14B8A6" />
+                      </View>
+                      <TextInput
+                        style={styles.textInput}
+                        placeholder="Enter referral code if you have one"
+                        placeholderTextColor="#9CA3AF"
+                        value={formData.referralCode}
+                        onChangeText={updateReferralCode}
+                        autoCapitalize="characters"
+                        autoComplete="off"
+                        returnKeyType="done"
+                        onSubmitEditing={handleSignup}
+                      />
+                    </View>
+                    <Text style={styles.helperText}>
+                      Have a friend's referral code? Enter it here and you'll both get +1 door after your first game!
+                    </Text>
                   </View>
                 </View>
 
@@ -626,6 +661,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#374151',
     marginBottom: 8,
+  },
+  helperText: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 6,
+    lineHeight: 16,
   },
   inputContainer: {
     backgroundColor: '#F8FAFC',

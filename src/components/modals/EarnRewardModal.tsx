@@ -41,10 +41,20 @@ const EarnRewardModal: React.FC<EarnRewardModalProps> = ({
     }
   }, [user?.id]);
 
-  const referralUrl = (Constants.expoConfig as any)?.extra?.referralUrl || 'https://opendoors.app/download';
-  const shareUrl = referralCode 
+  // Use deep link for referral (works without website)
+  // Format: opendoors://?ref=CODE
+  const deepLinkUrl = referralCode 
+    ? `opendoors://?ref=${referralCode}`
+    : 'opendoors://';
+  
+  // Also generate web URL if configured (for future use with website)
+  const referralUrl = (Constants.expoConfig as any)?.extra?.referralUrl;
+  const webUrl = referralUrl && referralCode 
     ? `${referralUrl}?ref=${referralCode}`
-    : referralUrl;
+    : null;
+  
+  // Use deep link as primary, web URL as fallback if available
+  const shareUrl = deepLinkUrl;
 
   const handleReferFriend = async () => {
     if (!referralCode) {
@@ -52,7 +62,8 @@ const EarnRewardModal: React.FC<EarnRewardModalProps> = ({
       return;
     }
 
-    const referralMessage = `Hey! I'm using OpenDoors - a fun game where you can win real prizes! Join me and we'll both get extra doors to play with. Download here: ${shareUrl}`;
+    // Updated message with deep link (works for testing and production)
+    const referralMessage = `Hey! I'm using OpenDoors - a fun game where you can win real prizes! Join me and we'll both get extra doors to play with.\n\nOpen this link: ${shareUrl}\n\nOr enter referral code: ${referralCode}`;
     
     try {
       const result = await Share.share({
@@ -77,7 +88,7 @@ const EarnRewardModal: React.FC<EarnRewardModalProps> = ({
             onPress: () => {
               // Show link in alert - user can manually copy
               // When website is live, we can add proper clipboard support
-              Alert.alert('Referral Link', shareUrl, [
+              Alert.alert('Referral Link', `${shareUrl}\n\nOr share code: ${referralCode}`, [
                 { text: 'OK' }
               ]);
               // Reward is granted when friend plays first game
