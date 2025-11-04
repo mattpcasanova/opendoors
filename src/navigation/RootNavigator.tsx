@@ -1,4 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import * as Location from 'expo-location';
+import * as Notifications from 'expo-notifications';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, DeviceEventEmitter, View, AppState } from 'react-native';
 import DoorNotificationComponent from '../components/DoorNotification';
@@ -89,7 +91,6 @@ export default function RootNavigator() {
         });
 
         // Request location permission
-        const { Location } = await import('expo-location');
         const locationStatus = await Location.getForegroundPermissionsAsync();
         console.log('📍 Location permission status:', locationStatus.status);
         
@@ -127,7 +128,6 @@ export default function RootNavigator() {
         }
 
         // Request push notification permission
-        const { Notifications } = await import('expo-notifications');
         const notificationStatus = await Notifications.getPermissionsAsync();
         console.log('🔔 Notification permission status:', notificationStatus.status);
         
