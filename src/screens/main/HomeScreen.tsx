@@ -985,6 +985,8 @@ export default function HomeScreen() {
         console.log('✅ Referral rewards granted for first game');
         // Refresh earned rewards to show new door
         await loadEarnedRewards();
+        // Show referral notification popup immediately (no delay)
+        setShowDoorNotifications(true);
       }
 
       // Notify history screen to refresh immediately (game was recorded)

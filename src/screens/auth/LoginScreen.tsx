@@ -279,6 +279,7 @@ export default function LoginScreen() {
                         autoCapitalize="none"
                         autoComplete="email"
                         returnKeyType="next"
+                        autoFocus={Platform.OS === 'ios'}
                       />
                     </View>
                   </View>

@@ -1,7 +1,7 @@
 // src/components/game/GameCard.tsx
 import { DoorOpen, Heart, MapPin, Star } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { DeviceEventEmitter, Image, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../hooks/useAuth';
 import { favoritesService } from '../../services/favoritesService';
 import { Prize } from '../../services/gameLogic/games';
@@ -179,6 +179,29 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
     };
     
     loadLocationSettingAndDistance();
+  }, [user?.id, userLocation, prize.address]);
+
+  // Listen for location enabled event to refresh distance immediately
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener('LOCATION_ENABLED', async () => {
+      if (user?.id && userLocation && prize.address) {
+        try {
+          const calculatedDistance = await calculateDistanceToAddress(
+            userLocation,
+            prize.address,
+            true
+          );
+          setDistance(calculatedDistance);
+          setLocationEnabled(true);
+        } catch (error) {
+          console.error('Error calculating distance after location enabled:', error);
+        }
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
   }, [user?.id, userLocation, prize.address]);
 
   useEffect(() => {

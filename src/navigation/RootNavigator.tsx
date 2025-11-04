@@ -1,6 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, View, AppState } from 'react-native';
+import { ActivityIndicator, DeviceEventEmitter, View, AppState } from 'react-native';
 import DoorNotificationComponent from '../components/DoorNotification';
 import TutorialOverlay from '../components/TutorialOverlay';
 import { useAuth } from '../hooks/useAuth';
@@ -68,6 +68,76 @@ export default function RootNavigator() {
       setSurveyCompleted(null);
     }
   }, [user?.id]);
+
+  // Request permissions on first sign-in (after survey completion)
+  useEffect(() => {
+    const requestInitialPermissions = async () => {
+      if (!user?.id || !surveyCompleted || showTutorial) return;
+
+      try {
+        // Check if permissions were already requested (check user_settings)
+        const { data: settings } = await supabase
+          .from('user_settings')
+          .select('location_enabled, notifications_enabled')
+          .eq('user_id', user.id)
+          .single();
+        
+        // If both permissions are already set, skip (they were requested before)
+        if (settings && settings.location_enabled !== null && settings.notifications_enabled !== null) {
+          // Permissions already requested, skip
+          return;
+        }
+
+        // Request location permission
+        const { Location } = await import('expo-location');
+        const locationStatus = await Location.getForegroundPermissionsAsync();
+        if (locationStatus.status !== 'granted') {
+          const { status: newLocationStatus } = await Location.requestForegroundPermissionsAsync();
+          if (newLocationStatus === 'granted') {
+            // Update user settings
+            await supabase.from('user_settings').upsert(
+              { user_id: user.id, location_enabled: true },
+              { onConflict: 'user_id' }
+            );
+            // Emit event to refresh game cards with distance
+            DeviceEventEmitter.emit('LOCATION_ENABLED');
+          }
+        }
+
+        // Request push notification permission
+        const { Notifications } = await import('expo-notifications');
+        const notificationStatus = await Notifications.getPermissionsAsync();
+        if (notificationStatus.status !== 'granted') {
+          const { status: newNotificationStatus } = await Notifications.requestPermissionsAsync();
+          if (newNotificationStatus === 'granted') {
+            // Update user settings and register
+            await supabase.from('user_settings').upsert(
+              { user_id: user.id, notifications_enabled: true },
+              { onConflict: 'user_id' }
+            );
+            const { pushNotificationService } = await import('../services/pushNotificationService');
+            await pushNotificationService.registerForPushNotifications(user.id);
+          }
+        } else {
+          // Already granted, just register
+          await supabase.from('user_settings').upsert(
+            { user_id: user.id, notifications_enabled: true },
+            { onConflict: 'user_id' }
+          );
+          const { pushNotificationService } = await import('../services/pushNotificationService');
+          await pushNotificationService.registerForPushNotifications(user.id);
+        }
+      } catch (error) {
+        console.error('Error requesting initial permissions:', error);
+      }
+    };
+
+    if (user?.id && surveyCompleted && !showTutorial) {
+      // Small delay to ensure app is ready
+      const timer = setTimeout(requestInitialPermissions, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [user?.id, surveyCompleted, showTutorial]);
 
   // Register for push notifications and check notifications when user is authenticated
   useEffect(() => {

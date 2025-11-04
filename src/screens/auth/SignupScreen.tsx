@@ -322,6 +322,7 @@ export default function SignupScreen() {
                           onChangeText={updateFirstName}
                           autoCapitalize="words"
                           returnKeyType="next"
+                          autoFocus={Platform.OS === 'ios'}
                         />
                       </View>
                     </View>
@@ -362,6 +363,7 @@ export default function SignupScreen() {
                         autoCapitalize="none"
                         autoComplete="email"
                         returnKeyType="next"
+                        autoFocus={Platform.OS === 'ios' && !formData.firstName}
                       />
                     </View>
                   </View>
