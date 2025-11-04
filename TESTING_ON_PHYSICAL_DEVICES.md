@@ -5,43 +5,100 @@
 1. **Apple Developer Account** (already approved ✅)
 2. **Xcode** installed on your Mac
 3. **Physical iPhone/iPad** (iOS device)
-4. **USB cable** to connect device to Mac
+4. **USB cable** (only needed for first-time wireless setup)
+5. **Same WiFi network** for Mac and iPhone
 
-## Step-by-Step: Testing on Your Phone
+## Two Ways to Test: USB or Wireless
 
-### 1. Connect Your Device
+### Option A: Wireless Testing (No USB Cable Needed After Setup)
 
-1. Connect your iPhone/iPad to your Mac via USB cable
-2. Unlock your device and trust the computer if prompted
-3. Open Xcode (if not already open)
+**First Time Setup (Requires USB):**
+1. Connect iPhone to Mac via USB (one-time only)
+2. Open Xcode → **Window → Devices and Simulators**
+3. Select your device
+4. Check **"Connect via network"** checkbox
+5. Wait for device to show network icon (globe)
+6. Unplug USB cable - device stays connected!
 
-### 2. Build and Install on Device
+**After Setup (Wireless):**
+1. Make sure Mac and iPhone are on **same WiFi network**
+2. Build and install wirelessly:
+   ```bash
+   npx expo run:ios --device
+   ```
+3. App installs wirelessly, no cable needed!
 
-From your project directory:
+### Option B: USB Testing (Always Connected)
+
+1. Connect iPhone to Mac via USB cable
+2. Unlock device and trust computer if prompted
+3. Build and install:
+   ```bash
+   npx expo run:ios --device
+   ```
+
+## Step-by-Step: Wireless Setup (One-Time)
+
+### 1. First-Time USB Connection
+
+1. Connect iPhone to Mac via USB
+2. Unlock iPhone and tap "Trust This Computer"
+3. Open **Xcode** (if not already open)
+
+### 2. Enable Wireless Debugging
+
+1. In Xcode: **Window → Devices and Simulators** (or press `⌘⇧2`)
+2. Select your iPhone from left sidebar
+3. Check the box: **"Connect via network"**
+4. Wait for network icon (🌐) to appear next to device name
+5. You can now unplug the USB cable!
+
+### 3. Verify Wireless Connection
+
+- Device should show "Connected" even without USB
+- Network icon (globe) should be visible
+- Device name should be gray (not red)
+
+### 4. Build Wirelessly
 
 ```bash
-# Build and install on connected device
+# From your project directory
 npx expo run:ios --device
-
-# Or if you have multiple devices, select one:
-npx expo run:ios --device --select-device
 ```
 
-This will:
-- Build the app for your device
-- Install it on your phone
-- Launch the Expo development server
-- Open the app on your device
+The app will build and install wirelessly!
 
-### 3. Start Development Server (if needed)
-
-If the build completed but the app isn't running, start the dev server:
+### 5. Start Development Server
 
 ```bash
 npx expo start --dev-client
 ```
 
-Then open the app on your device - it should connect automatically.
+Your phone will connect to the dev server over WiFi automatically.
+
+## Troubleshooting Wireless Connection
+
+### "Device not found" or "No devices available"
+
+1. **Check WiFi**: Mac and iPhone must be on same WiFi network
+2. **Re-enable wireless**: 
+   - Xcode → Devices and Simulators
+   - Uncheck "Connect via network"
+   - Check it again
+3. **Restart devices**: Restart both Mac and iPhone
+4. **Reconnect USB**: Plug in USB, enable wireless, unplug again
+
+### "Code signing failed"
+
+1. Make sure your Apple Developer account is set up in Xcode
+2. **Xcode → Preferences → Accounts**
+3. Add your Apple ID and select your team
+
+### "Cannot connect to dev server"
+
+1. Both devices must be on **same WiFi network**
+2. Check firewall isn't blocking connection
+3. Try manually entering dev server URL in Expo Go/dev client
 
 ## Testing on Multiple Devices
 
