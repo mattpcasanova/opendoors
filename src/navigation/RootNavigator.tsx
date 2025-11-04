@@ -82,17 +82,24 @@ export default function RootNavigator() {
           .eq('user_id', user.id)
           .single();
         
-        // If both permissions are already set, skip (they were requested before)
-        if (settings && settings.location_enabled !== null && settings.notifications_enabled !== null) {
-          // Permissions already requested, skip
-          return;
-        }
+        console.log('🔍 Checking permissions for first sign-in:', {
+          hasSettings: !!settings,
+          locationEnabled: settings?.location_enabled,
+          notificationsEnabled: settings?.notifications_enabled
+        });
 
         // Request location permission
         const { Location } = await import('expo-location');
         const locationStatus = await Location.getForegroundPermissionsAsync();
-        if (locationStatus.status !== 'granted') {
+        console.log('📍 Location permission status:', locationStatus.status);
+        
+        // Only request if status is 'undetermined' (first time) or if we haven't saved it yet
+        if (locationStatus.status === 'undetermined' || 
+            (locationStatus.status === 'granted' && settings?.location_enabled !== true)) {
+          console.log('📍 Requesting location permission...');
           const { status: newLocationStatus } = await Location.requestForegroundPermissionsAsync();
+          console.log('📍 Location permission result:', newLocationStatus);
+          
           if (newLocationStatus === 'granted') {
             // Update user settings
             await supabase.from('user_settings').upsert(
@@ -101,14 +108,36 @@ export default function RootNavigator() {
             );
             // Emit event to refresh game cards with distance
             DeviceEventEmitter.emit('LOCATION_ENABLED');
+            console.log('✅ Location permission granted and saved');
+          } else if (newLocationStatus === 'denied') {
+            // User denied, save that too
+            await supabase.from('user_settings').upsert(
+              { user_id: user.id, location_enabled: false },
+              { onConflict: 'user_id' }
+            );
+            console.log('⚠️ Location permission denied');
           }
+        } else if (locationStatus.status === 'granted' && settings?.location_enabled !== true) {
+          // Permission already granted by system but not saved in our DB
+          await supabase.from('user_settings').upsert(
+            { user_id: user.id, location_enabled: true },
+            { onConflict: 'user_id' }
+          );
+          DeviceEventEmitter.emit('LOCATION_ENABLED');
         }
 
         // Request push notification permission
         const { Notifications } = await import('expo-notifications');
         const notificationStatus = await Notifications.getPermissionsAsync();
-        if (notificationStatus.status !== 'granted') {
+        console.log('🔔 Notification permission status:', notificationStatus.status);
+        
+        // Only request if status is 'undetermined' (first time) or if we haven't saved it yet
+        if (notificationStatus.status === 'undetermined' || 
+            (notificationStatus.status === 'granted' && settings?.notifications_enabled !== true)) {
+          console.log('🔔 Requesting notification permission...');
           const { status: newNotificationStatus } = await Notifications.requestPermissionsAsync();
+          console.log('🔔 Notification permission result:', newNotificationStatus);
+          
           if (newNotificationStatus === 'granted') {
             // Update user settings and register
             await supabase.from('user_settings').upsert(
@@ -117,9 +146,17 @@ export default function RootNavigator() {
             );
             const { pushNotificationService } = await import('../services/pushNotificationService');
             await pushNotificationService.registerForPushNotifications(user.id);
+            console.log('✅ Notification permission granted and saved');
+          } else if (newNotificationStatus === 'denied') {
+            // User denied, save that too
+            await supabase.from('user_settings').upsert(
+              { user_id: user.id, notifications_enabled: false },
+              { onConflict: 'user_id' }
+            );
+            console.log('⚠️ Notification permission denied');
           }
-        } else {
-          // Already granted, just register
+        } else if (notificationStatus.status === 'granted') {
+          // Already granted, just register and save
           await supabase.from('user_settings').upsert(
             { user_id: user.id, notifications_enabled: true },
             { onConflict: 'user_id' }
@@ -128,7 +165,7 @@ export default function RootNavigator() {
           await pushNotificationService.registerForPushNotifications(user.id);
         }
       } catch (error) {
-        console.error('Error requesting initial permissions:', error);
+        console.error('❌ Error requesting initial permissions:', error);
       }
     };
 
