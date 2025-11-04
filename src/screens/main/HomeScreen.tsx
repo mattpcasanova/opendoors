@@ -987,6 +987,9 @@ export default function HomeScreen() {
         await loadEarnedRewards();
       }
 
+      // Notify history screen to refresh immediately (game was recorded)
+      DeviceEventEmitter.emit('REFRESH_HISTORY');
+
       // If won, notify rewards screen to refresh immediately
       if (won) {
         DeviceEventEmitter.emit('REFRESH_REWARDS');

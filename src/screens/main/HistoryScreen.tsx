@@ -1,5 +1,6 @@
+import { useFocusEffect } from '@react-navigation/native';
 import { GamepadIcon } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     DeviceEventEmitter,
@@ -36,13 +37,22 @@ export default function HistoryScreen() {
   }, [user]);
 
   useEffect(() => {
-    // Listen for refresh events
+    // Listen for refresh events (e.g., when game is completed)
     const subscription = DeviceEventEmitter.addListener('REFRESH_HISTORY', fetchHistory);
     
     return () => {
       subscription.remove();
     };
-  }, []);
+  }, [user]);
+
+  // Refresh when screen comes into focus (e.g., navigating back from game)
+  useFocusEffect(
+    useCallback(() => {
+      if (user) {
+        fetchHistory();
+      }
+    }, [user])
+  );
 
   const fetchHistory = async () => {
     try {
