@@ -231,6 +231,8 @@ export default function ProfileScreen() {
                   setPrivacySettings(prev => prev.map(s => s.id === 'location' ? { ...s, enabled: true } : s));
                   // Sync to backend
                   if (user) await supabase.from('user_settings').upsert({ user_id: user.id, location_enabled: true }, { onConflict: 'user_id' });
+                  // Emit event to refresh game cards with distance
+                  DeviceEventEmitter.emit('LOCATION_ENABLED');
                 } else {
                   Alert.alert('Permission Denied', 'Location permission was not granted.');
                   setPrivacySettings(prev => prev.map(s => s.id === 'location' ? { ...s, enabled: false } : s));
