@@ -27,32 +27,6 @@ class AuthService {
 
       console.log('🔍 Starting signup process for:', cleanEmail);
 
-      // Check if user exists in auth.users but profile doesn't exist (orphaned account)
-      // This can happen if signup was interrupted or profile creation failed
-      try {
-        const { data: existingAuth } = await supabase.auth.admin.getUserByEmail(cleanEmail);
-        if (existingAuth?.user) {
-          // Check if profile exists
-          const { data: existingProfile } = await supabase
-            .from('user_profiles')
-            .select('id')
-            .eq('id', existingAuth.user.id)
-            .single();
-          
-          if (!existingProfile) {
-            // Orphaned account - profile missing, suggest user to contact support or try different email
-            throw new Error('An account with this email exists but is incomplete. Please contact support or try a different email.');
-          }
-        }
-      } catch (checkError: any) {
-        // If it's our custom error, throw it
-        if (checkError.message?.includes('incomplete')) {
-          throw checkError;
-        }
-        // Otherwise, continue with normal signup (admin.getUserByEmail might not be available in all contexts)
-        // The signup will fail if email exists anyway
-      }
-
       const { data, error } = await supabase.auth.signUp({
         email: cleanEmail,
         password: cleanPassword,
@@ -119,11 +93,19 @@ class AuthService {
           );
           if (refError) {
             console.warn('⚠️ Referral creation failed (user still created):', refError);
+            // Log specific referral error for debugging
+            if (refError.includes('unique') || refError.includes('duplicate')) {
+              console.warn('⚠️ Referral code constraint issue (should be fixed by migration):', refError);
+            }
           } else if (success) {
             console.log('✅ Referral relationship created successfully');
           }
-        } catch (refErr) {
+        } catch (refErr: any) {
           console.warn('⚠️ Error processing referral (user still created):', refErr);
+          // Check if it's a constraint error
+          if (refErr?.code === '23505' || refErr?.message?.includes('unique')) {
+            console.warn('⚠️ Referral code unique constraint error (run migration to fix):', refErr.message);
+          }
         }
       }
 

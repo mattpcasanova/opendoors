@@ -101,6 +101,13 @@ class ReferralService {
 
       if (insertError) {
         console.error('Error creating referral:', insertError);
+        // Provide clearer error message for constraint violations
+        if (insertError.code === '23505' || insertError.message?.includes('unique')) {
+          return { 
+            success: false, 
+            error: 'Referral code constraint error. This should be fixed - please run the migration to allow code reuse.' 
+          };
+        }
         return { success: false, error: insertError.message };
       }
 
