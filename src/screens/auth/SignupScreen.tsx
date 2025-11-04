@@ -161,11 +161,19 @@ export default function SignupScreen() {
         
         if (result.error.message) {
           errorMessage = result.error.message;
+          // Make Supabase errors more user-friendly
+          if (errorMessage.includes('already registered') || errorMessage.includes('already exists')) {
+            errorMessage = 'This email is already registered. Please use a different email or sign in.';
+          } else if (errorMessage.includes('invalid email')) {
+            errorMessage = 'Please enter a valid email address.';
+          } else if (errorMessage.includes('password')) {
+            errorMessage = 'Password is too weak. Please use a stronger password.';
+          }
         } else if (typeof result.error === 'string') {
           errorMessage = result.error;
         }
         
-        Alert.alert('Error', errorMessage);
+        Alert.alert('Sign Up Error', errorMessage);
       } else {
         console.log('✅ Signup successful, letting RootNavigator handle flow');
         // Do not navigate or reset navigation here. RootNavigator will handle the flow based on auth state.

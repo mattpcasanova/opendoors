@@ -209,6 +209,14 @@ class ReferralService {
           `Your friend ${referredName} played their first game! You both earned +1 door.`
         );
 
+        // Send push notification for referrer
+        const { pushNotificationService } = await import('./pushNotificationService');
+        await pushNotificationService.sendLocalNotification(
+          'Referral Reward Earned! 🎉',
+          `Your friend ${referredName} played their first game! You both earned +1 door.`,
+          { type: 'referral_reward', userId: referrerId, referredName }
+        );
+
         // Mark referrer as rewarded
         await supabase
           .from('referrals')
@@ -229,6 +237,14 @@ class ReferralService {
           'OpenDoors',
           1,
           `Thanks for joining! You and ${referrerName} both earned +1 door for playing your first game.`
+        );
+
+        // Send push notification for referred user
+        const { pushNotificationService: pushService } = await import('./pushNotificationService');
+        await pushService.sendLocalNotification(
+          'Referral Reward Earned! 🎉',
+          `Thanks for joining! You and ${referrerName} both earned +1 door for playing your first game.`,
+          { type: 'referral_reward', userId: referredId, referrerName }
         );
 
         // Mark referred as rewarded

@@ -1,5 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import * as Location from 'expo-location';
+import * as Notifications from 'expo-notifications';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowDown, ArrowUp, Check, ChevronLeft, ChevronRight, Star } from 'lucide-react-native';
 import React, { useState } from 'react';
@@ -18,6 +20,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
+import { supabase } from '../../services/supabase/client';
+import { pushNotificationService } from '../../services/pushNotificationService';
 import { userPreferencesService } from '../../services/userPreferencesService';
 import { RootStackParamList } from '../../types/navigation';
 
@@ -40,6 +44,51 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
 
   const totalSlides = 7;
   const progressPercentage = (currentSlide / totalSlides) * 100;
+
+  // Request location and push notification permissions
+  const requestInitialPermissions = async () => {
+    if (!user?.id) return;
+
+    try {
+      // Request location permission
+      const locationStatus = await Location.getForegroundPermissionsAsync();
+      if (locationStatus.status !== 'granted') {
+        const { status: newLocationStatus } = await Location.requestForegroundPermissionsAsync();
+        if (newLocationStatus === 'granted') {
+          // Update user settings
+          await supabase.from('user_settings').upsert(
+            { user_id: user.id, location_enabled: true },
+            { onConflict: 'user_id' }
+          );
+        }
+      }
+
+      // Request push notification permission
+      const notificationStatus = await Notifications.getPermissionsAsync();
+      if (notificationStatus.status !== 'granted') {
+        const { status: newNotificationStatus } = await Notifications.requestPermissionsAsync();
+        if (newNotificationStatus === 'granted') {
+          // Update user settings and register for push
+          await supabase.from('user_settings').upsert(
+            { user_id: user.id, notifications_enabled: true },
+            { onConflict: 'user_id' }
+          );
+          // Register for push notifications
+          await pushNotificationService.registerForPushNotifications(user.id);
+        }
+      } else {
+        // Already granted, just register
+        await supabase.from('user_settings').upsert(
+          { user_id: user.id, notifications_enabled: true },
+          { onConflict: 'user_id' }
+        );
+        await pushNotificationService.registerForPushNotifications(user.id);
+      }
+    } catch (error) {
+      console.error('Error requesting permissions:', error);
+      // Don't block survey completion if permissions fail
+    }
+  };
 
   const categories = [
     { key: 'food', label: 'Food & Dining', icon: '🍕', color: 'from-orange-400 to-red-500' },
@@ -208,6 +257,9 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
         Alert.alert('Error', `Failed to save survey answers: ${error}`);
         return;
       }
+      
+      // Request location and push notification permissions after survey completion
+      await requestInitialPermissions();
       
       if (onComplete) {
         onComplete();
