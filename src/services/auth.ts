@@ -48,7 +48,7 @@ class AuthService {
       });
 
       if (error) {
-        console.error('❌ Auth signup error:', error);
+        console.warn('⚠️ Auth signup error:', error);
         throw error;
       }
 

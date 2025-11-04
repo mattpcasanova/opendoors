@@ -179,7 +179,7 @@ export default function SignupScreen() {
         // Do not navigate or reset navigation here. RootNavigator will handle the flow based on auth state.
       }
     } catch (error) {
-      console.error('❌ Signup error:', error);
+      console.warn('⚠️ Signup error:', error);
       Alert.alert('Error', 'An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
