@@ -1,5 +1,21 @@
 # Building and Running on Your Phone from Xcode
 
+## ⚠️ Important: Choose ONE Method
+
+**Don't use both Xcode AND `npx expo run:ios` at the same time!** They will conflict.
+
+### Option 1: Build from Xcode Only
+- Build and run from Xcode (▶️ button)
+- **Then** start dev server: `npx expo start --dev-client`
+- **Don't** run `npx expo run:ios --device` after building from Xcode
+
+### Option 2: Build from Command Line Only
+- Run: `npx expo run:ios --device`
+- This builds AND installs automatically
+- **Don't** build from Xcode at the same time
+
+**If you build from Xcode, just start the dev server afterward. Don't run `npx expo run:ios --device`.**
+
 ## Quick Steps
 
 1. **Select Your Device**
@@ -68,13 +84,12 @@
 1. Xcode builds the app (you'll see progress in top bar)
 2. App installs on your phone
 3. App launches automatically
-4. Expo dev server connects (if needed)
 
-### Step 5: Start Dev Server (If Needed)
+### Step 5: Start Dev Server (Required!)
 
-If the app opens but shows connection error:
+**After building from Xcode, you MUST start the dev server:**
 
-1. Open **Terminal**
+1. Open **Terminal** (keep Xcode open if you want to see logs)
 2. Navigate to project:
    ```bash
    cd /Users/mattcasanova/Projects/opendoors
@@ -84,6 +99,11 @@ If the app opens but shows connection error:
    npx expo start --dev-client
    ```
 4. App on phone should connect automatically
+
+**⚠️ Do NOT run `npx expo run:ios --device` after building from Xcode!** 
+- Xcode already built and installed the app
+- Just start the dev server (`npx expo start --dev-client`)
+- Running `npx expo run:ios --device` will try to build again and conflict with Xcode
 
 ## Troubleshooting
 
@@ -185,13 +205,25 @@ Then rebuild in Xcode.
 4. **Check device logs** - Xcode console shows real-time logs from your phone
 5. **Wireless debugging** - Once set up, you don't need USB cable
 
-## Alternative: Command Line (Easier!)
+## Alternative: Command Line Only (Easier!)
 
-If Xcode is giving you trouble, you can still use:
+If you prefer not to use Xcode, you can use the command line:
 
 ```bash
 npx expo run:ios --device
 ```
 
-This does everything automatically - no need to configure signing or select device!
+This does everything automatically:
+- Builds the app
+- Installs on your device
+- Starts the dev server
+
+**When using this method:**
+- **Don't** build from Xcode at the same time
+- **Don't** need to manually start dev server (it starts automatically)
+- Just run the command and wait for it to finish
+
+**Choose your workflow:**
+- **Xcode workflow**: Build in Xcode → Start dev server manually
+- **Command line workflow**: Run `npx expo run:ios --device` (does everything)
 

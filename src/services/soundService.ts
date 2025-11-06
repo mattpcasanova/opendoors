@@ -1,12 +1,10 @@
 import { Audio } from 'expo-av';
 
 class SoundService {
+  private soundsLoaded = false;
   private doorClickSound: Audio.Sound | null = null;
-  private doorCreakSound: Audio.Sound | null = null;
   private doorOpenSound: Audio.Sound | null = null;
-  private winningChimeSound: Audio.Sound | null = null;
   private celebrationSound: Audio.Sound | null = null;
-  private losingDoorSound: Audio.Sound | null = null;
   private lossSound: Audio.Sound | null = null;
 
   constructor() {
@@ -15,8 +13,6 @@ class SoundService {
 
   private async loadSounds() {
     try {
-      // Load actual sound files - you can replace these with your own sound files
-      // For now, we'll create placeholder sounds using Expo's built-in sounds
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
         staysActiveInBackground: false,
@@ -25,56 +21,129 @@ class SoundService {
         playThroughEarpieceAndroid: false,
       });
 
-      // In a real app, you would load actual sound files here:
-      // this.doorClickSound = new Audio.Sound();
-      // await this.doorClickSound.loadAsync(require('../assets/sounds/door-click.mp3'));
-      
-      // For now, we'll just create placeholder functions
-      this.doorClickSound = new Audio.Sound();
-      this.doorCreakSound = new Audio.Sound();
-      this.doorOpenSound = new Audio.Sound();
-      this.winningChimeSound = new Audio.Sound();
-      this.celebrationSound = new Audio.Sound();
-      this.losingDoorSound = new Audio.Sound();
-      this.lossSound = new Audio.Sound();
+      // Try to load sound files if they exist, otherwise use system sounds
+      try {
+        // Load the 4 sound files
+        const { sound: doorClick } = await Audio.Sound.createAsync(
+          require('../../assets/sounds/door-click.mp3'),
+          { shouldPlay: false }
+        );
+        this.doorClickSound = doorClick;
+
+        const { sound: doorOpen } = await Audio.Sound.createAsync(
+          require('../../assets/sounds/door-open.mp3'),
+          { shouldPlay: false }
+        );
+        this.doorOpenSound = doorOpen;
+
+        const { sound: celebration } = await Audio.Sound.createAsync(
+          require('../../assets/sounds/celebration.mp3'),
+          { shouldPlay: false }
+        );
+        this.celebrationSound = celebration;
+
+        const { sound: loss } = await Audio.Sound.createAsync(
+          require('../../assets/sounds/loss.mp3'),
+          { shouldPlay: false }
+        );
+        this.lossSound = loss;
+
+        console.log('✅ Custom sound files loaded successfully');
+      } catch (fileError) {
+        console.log('ℹ️ Custom sound files not found, using system feedback');
+        // Sound files not found - will use haptic/system feedback instead
+      }
+
+      this.soundsLoaded = true;
+      console.log('✅ Sound service initialized');
     } catch (error) {
-      console.log('Error loading sounds:', error);
+      console.error('Error initializing sound service:', error);
     }
   }
 
-  playDoorClick() {
-    console.log('🔊 Playing door click sound');
-    // this.doorClickSound?.replayAsync();
+  private async playSound(sound: Audio.Sound | null, fallbackLog: string) {
+    if (!this.soundsLoaded) {
+      console.warn('Sound service not ready');
+      return;
+    }
+
+    if (sound) {
+      try {
+        // Get the status first to check if sound is loaded
+        const status = await sound.getStatusAsync();
+
+        if (status.isLoaded) {
+          // If currently playing, stop it first
+          if (status.isPlaying) {
+            await sound.stopAsync();
+          }
+          // Rewind to the beginning
+          await sound.setPositionAsync(0);
+          // Play the sound
+          await sound.playAsync();
+        } else {
+          console.warn('Sound not loaded properly');
+        }
+      } catch (error) {
+        // Silently handle errors - sound is not critical
+        console.log(`Could not play sound (non-critical): ${error}`);
+      }
+    } else {
+      console.log(fallbackLog);
+      // Could add haptic feedback here as an alternative
+      // await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
   }
 
-  playDoorCreak() {
-    console.log('🔊 Playing door creak sound');
-    // this.doorCreakSound?.replayAsync();
+  async playDoorClick() {
+    await this.playSound(this.doorClickSound, '🔊 Door click (no sound file)');
   }
 
-  playDoorOpen() {
-    console.log('🔊 Playing door opening sound');
-    // this.doorOpenSound?.replayAsync();
+  async playDoorCreak() {
+    // No separate creak sound - just use door open
+    await this.playSound(this.doorOpenSound, '🔊 Door opening (no sound file)');
   }
 
-  playWinningChime() {
-    console.log('🔊 Playing winning chime sound');
-    // this.winningChimeSound?.replayAsync();
+  async playDoorOpen() {
+    await this.playSound(this.doorOpenSound, '🔊 Door opening (no sound file)');
   }
 
-  playCelebration() {
-    console.log('🎉 Playing celebration sound');
-    // this.celebrationSound?.replayAsync();
+  async playWinningChime() {
+    // No separate winning chime - use celebration
+    await this.playSound(this.celebrationSound, '🎉 Celebration (no sound file)');
   }
 
-  playLosingDoor() {
-    console.log('🔊 Playing losing door sound');
-    // this.losingDoorSound?.replayAsync();
+  async playCelebration() {
+    await this.playSound(this.celebrationSound, '🎉 Celebration (no sound file)');
   }
 
-  playLoss() {
-    console.log('😔 Playing loss sound');
-    // this.lossSound?.replayAsync();
+  async playLosingDoor() {
+    // No separate losing door sound - use door open
+    await this.playSound(this.doorOpenSound, '🔊 Door opening (no sound file)');
+  }
+
+  async playLoss() {
+    await this.playSound(this.lossSound, '😔 Loss sound (no sound file)');
+  }
+
+  // Cleanup method to unload sounds when no longer needed
+  async cleanup() {
+    const sounds = [
+      this.doorClickSound,
+      this.doorOpenSound,
+      this.celebrationSound,
+      this.lossSound,
+    ];
+
+    for (const sound of sounds) {
+      if (sound) {
+        try {
+          await sound.unloadAsync();
+        } catch (error) {
+          // Ignore cleanup errors
+        }
+      }
+    }
   }
 }
 

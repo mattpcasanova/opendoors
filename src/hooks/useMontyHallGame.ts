@@ -113,12 +113,14 @@ export const useMontyHallGame = ({ numDoors = 3 }: Props = {}) => {
       })));
       
       // Move to final state
+      console.log(`🎯 Setting game state to FINAL. Selected door: ${doorIndex}, Winning door: ${winningDoorIndex}`);
       setGameState('final');
-      
+
       // Open remaining doors with staggered animation
       const remainingDoors = Array.from({ length: numDoors }, (_, i) => i)
         .filter(i => !revealedDoorIndices.includes(i) && !doors[i].isOpen);
-      
+
+      console.log(`🚪 Opening remaining doors: ${remainingDoors.join(', ')}`);
       openDoorsWithDelay(remainingDoors, 300);
     }
   }, [gameState, winningDoorIndex, revealedDoorIndices, numDoors, doors, openDoorsWithDelay]);

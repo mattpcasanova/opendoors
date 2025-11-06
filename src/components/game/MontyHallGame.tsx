@@ -2,6 +2,7 @@ import React, { useCallback, useEffect } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useMontyHallGame } from '../../hooks/useMontyHallGame';
 import Door from '../Door';
+import { soundService } from '../../services/soundService';
 
 interface Props {
   onGameComplete?: (won: boolean, switched: boolean) => void;
@@ -18,11 +19,23 @@ export default function MontyHallGame({ onGameComplete, numDoors = 3 }: Props) {
 
   useEffect(() => {
     if (gameState === 'final') {
+      console.log('🎮 Game state is FINAL - starting 2 second delay before showing result');
       // Delay showing the final message to allow door opening animation to complete
       setTimeout(() => {
         setShowFinalMessage(true);
         const result = getResult();
+        console.log(`🎮 Final message showing! Result: ${result ? 'WIN' : 'LOSE'}`);
+
+        // Play celebration or loss sound when showing the final message
         if (result !== null) {
+          if (result) {
+            console.log('🎉 Playing CELEBRATION sound');
+            soundService.playCelebration();
+          } else {
+            console.log('😔 Playing LOSS sound');
+            soundService.playLoss();
+          }
+
           const switched = doors.findIndex(door => door.isSelected) !== doors.findIndex((door, i) => door.isSelected && i === 0);
           onGameComplete?.(result, switched);
         }
@@ -89,6 +102,7 @@ export default function MontyHallGame({ onGameComplete, numDoors = 3 }: Props) {
               onPress={() => handleDoorPress(index)}
               disabled={isDoorDisabled(index)}
               isWinningDoor={door.isWinningDoor}
+              isFinalReveal={gameState === 'final'}
             />
           ))}
         </View>

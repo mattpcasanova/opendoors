@@ -167,7 +167,9 @@ export default function MiniGame({ onComplete }: MiniGameProps) {
   };
 
   const isWinningDoor = (doorNumber: number) => {
-    return doorNumber === prizeLocation;
+    const isWinner = doorNumber === prizeLocation;
+    console.log(`🎯 MiniGame: Door ${doorNumber} isWinningDoor=${isWinner} (prizeLocation=${prizeLocation})`);
+    return isWinner;
   };
 
   // Start the game

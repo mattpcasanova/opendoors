@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 
 interface SparkleParticle {
@@ -29,39 +29,7 @@ const SparkleEffect: React.FC<SparkleEffectProps> = ({
   const [particles, setParticles] = useState<SparkleParticle[]>([]);
   const animationRef = useRef<Animated.CompositeAnimation | null>(null);
 
-  useEffect(() => {
-    if (isActive && particles.length === 0) {
-      createSparkles();
-    }
-    
-    return () => {
-      if (animationRef.current) {
-        animationRef.current.stop();
-      }
-    };
-  }, [isActive]);
-
-  const createSparkles = () => {
-    const newParticles: SparkleParticle[] = [];
-    
-    for (let i = 0; i < particleCount; i++) {
-      const particle: SparkleParticle = {
-        id: i,
-        animatedValue: new Animated.Value(0),
-        x: new Animated.Value(0),
-        y: new Animated.Value(0),
-        opacity: new Animated.Value(1),
-        scale: new Animated.Value(0.3),
-        startDelay: i * 50
-      };
-      newParticles.push(particle);
-    }
-    
-    setParticles(newParticles);
-    animateParticles(newParticles);
-  };
-
-  const animateParticles = (particlesToAnimate: SparkleParticle[]) => {
+  const animateParticles = useCallback((particlesToAnimate: SparkleParticle[]) => {
     const animations = particlesToAnimate.map((particle, index) => {
       // More dramatic spread for celebration
       const angle = (Math.PI * 2 * index) / particleCount + (Math.random() - 0.5) * 1.0;
@@ -114,7 +82,39 @@ const SparkleEffect: React.FC<SparkleEffectProps> = ({
         setParticles([]);
       }, 100);
     });
-  };
+  }, [particleCount, duration]);
+
+  const createSparkles = useCallback(() => {
+    const newParticles: SparkleParticle[] = [];
+
+    for (let i = 0; i < particleCount; i++) {
+      const particle: SparkleParticle = {
+        id: i,
+        animatedValue: new Animated.Value(0),
+        x: new Animated.Value(0),
+        y: new Animated.Value(0),
+        opacity: new Animated.Value(1),
+        scale: new Animated.Value(0.3),
+        startDelay: i * 50
+      };
+      newParticles.push(particle);
+    }
+
+    setParticles(newParticles);
+    animateParticles(newParticles);
+  }, [particleCount, animateParticles]);
+
+  useEffect(() => {
+    if (isActive && particles.length === 0) {
+      createSparkles();
+    }
+
+    return () => {
+      if (animationRef.current) {
+        animationRef.current.stop();
+      }
+    };
+  }, [isActive, particles.length, createSparkles]);
 
   if (!isActive || particles.length === 0) {
     return null;
@@ -150,9 +150,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: '50%',
     left: '50%',
-    width: 1,
-    height: 1,
-    zIndex: 10,
+    width: 0,
+    height: 0,
+    zIndex: 100,
+    backgroundColor: 'transparent',
   },
   particle: {
     position: 'absolute',

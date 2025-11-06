@@ -294,6 +294,7 @@ export default function GameScreen({
                           else handleDoorClick(doorNumber);
                         }}
                         disabled={switchPickMode ? !selectable : false}
+                        isWinningDoor={doorNumber === prizeLocation}
                       />
                     </View>
                   );

@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { Animated, Text, TouchableOpacity, View } from 'react-native';
 import { soundService } from '../services/soundService';
-import SparkleEffect from './SparkleParticles';
 
 interface Props {
   doorNumber: number;
@@ -11,59 +10,24 @@ interface Props {
   onPress: () => void;
   disabled: boolean;
   isWinningDoor?: boolean;
+  isFinalReveal?: boolean;
 }
 
-export default function Door({ doorNumber, isOpen, content, isSelected, onPress, disabled, isWinningDoor = false }: Props) {
+export default function Door({ doorNumber, isOpen, content, isSelected, onPress, disabled, isWinningDoor = false, isFinalReveal = false }: Props) {
   const openAnim = React.useRef(new Animated.Value(0)).current;
   const contentAnim = React.useRef(new Animated.Value(0)).current;
   const doorShakeAnim = React.useRef(new Animated.Value(0)).current;
   const selectionGlowAnim = React.useRef(new Animated.Value(0)).current;
   const celebrationAnim = React.useRef(new Animated.Value(0)).current;
   const [isOpening, setIsOpening] = React.useState(false);
+  const [hasPlayedResultSound, setHasPlayedResultSound] = React.useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setIsOpening(true);
-      soundService.playDoorCreak();
-      
-      // Play door opening sound after creak
-      setTimeout(() => {
-        soundService.playDoorOpen();
-      }, 200);
-      
-      // Play appropriate sound based on content
-      if (isWinningDoor) {
-        // Play winning sounds with delay to sync with animation
-        setTimeout(() => {
-          soundService.playWinningChime();
-        }, 800);
-        setTimeout(() => {
-          soundService.playCelebration();
-        }, 1200);
-        
-        // Start celebration animation for winning door
-        Animated.loop(
-          Animated.sequence([
-            Animated.timing(celebrationAnim, {
-              toValue: 1,
-              duration: 800,
-              useNativeDriver: true,
-            }),
-            Animated.timing(celebrationAnim, {
-              toValue: 0,
-              duration: 800,
-              useNativeDriver: true,
-            }),
-          ]),
-          { iterations: 3 }
-        ).start();
-      } else {
-        soundService.playLosingDoor();
-        // Play loss sound after door opens
-        setTimeout(() => {
-          soundService.playLoss();
-        }, 1000);
-      }
+
+      // Play door opening sound
+      soundService.playDoorOpen();
 
       // Enhanced door opening sequence
       Animated.sequence([
@@ -95,7 +59,7 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
       celebrationAnim.setValue(0);
       setIsOpening(false);
     }
-  }, [isOpen, isWinningDoor]);
+  }, [isOpen, isWinningDoor, isFinalReveal, isSelected]);
 
   // Handle selection glow
   useEffect(() => {
@@ -106,6 +70,49 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
       useNativeDriver: true,
     }).start();
   }, [isSelected]);
+
+  // Detect final result and play sounds - this runs independently of isFinalReveal prop
+  useEffect(() => {
+    // The game is complete when a door is both selected AND open
+    // This only happens at the very end of the game
+    if (isSelected && isOpen && !hasPlayedResultSound) {
+      console.log(`🎯 Door ${doorNumber} FINAL RESULT DETECTED! isWinningDoor: ${isWinningDoor}, isSelected: ${isSelected}, isOpen: ${isOpen}`);
+
+      // Wait 1 second for door opening animation, then play result sound
+      setTimeout(() => {
+        if (isWinningDoor) {
+          console.log(`🎉 Door ${doorNumber} - Playing WIN sound and showing sparkles!`);
+          soundService.playCelebration();
+
+          // Start celebration animation
+          Animated.loop(
+            Animated.sequence([
+              Animated.timing(celebrationAnim, {
+                toValue: 1,
+                duration: 800,
+                useNativeDriver: true,
+              }),
+              Animated.timing(celebrationAnim, {
+                toValue: 0,
+                duration: 800,
+                useNativeDriver: true,
+              }),
+            ]),
+            { iterations: 3 }
+          ).start();
+        } else {
+          console.log(`😔 Door ${doorNumber} - Playing LOSS sound`);
+          soundService.playLoss();
+        }
+        setHasPlayedResultSound(true);
+      }, 1000);
+    }
+
+    // Reset when door closes (new game)
+    if (!isOpen && hasPlayedResultSound) {
+      setHasPlayedResultSound(false);
+    }
+  }, [isSelected, isOpen, isWinningDoor, hasPlayedResultSound, doorNumber]);
 
   // Door shake effect (reduced intensity)
   const shakeRotation = doorShakeAnim.interpolate({
@@ -119,15 +126,15 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
     outputRange: [0, 1]
   });
 
-  // Celebration effect for winning doors
+  // Celebration effect for winning doors - visible but elegant
   const celebrationScale = celebrationAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [1, 1.2]
+    outputRange: [1, 1.08]
   });
 
   const celebrationGlow = celebrationAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 1]
+    outputRange: [0, 0.6] // More visible glow
   });
 
   // Enhanced 3D depth effect
@@ -142,8 +149,8 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
   });
 
   return (
-    <View style={{ alignItems: 'center', marginHorizontal: 8 }}>
-      <View style={{ width: 100, height: 150, position: 'relative' }}>
+    <View style={{ alignItems: 'center', marginHorizontal: 8, overflow: 'visible' }}>
+      <View style={{ width: 100, height: 150, position: 'relative', overflow: 'visible', zIndex: 1 }}>
         {/* Content behind the door */}
         <Animated.View style={{
           position: 'absolute',
@@ -187,7 +194,7 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
             }} />
           )}
 
-          {/* Celebration Effect for Winning Doors */}
+          {/* Celebration Effect for Winning Doors - elegant golden glow */}
           {isWinningDoor && isOpen && (
             <Animated.View style={{
               position: 'absolute',
@@ -196,14 +203,14 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
               top: '-10%',
               left: '-10%',
               borderRadius: 16,
-              borderWidth: 8,
+              borderWidth: 6,
               borderColor: '#FFD700',
               opacity: celebrationGlow,
               shadowColor: '#FFD700',
               shadowOffset: { width: 0, height: 0 },
-              shadowOpacity: 1,
-              shadowRadius: 20,
-              elevation: 20,
+              shadowOpacity: 0.8,
+              shadowRadius: 25,
+              elevation: 15,
               transform: [{ scale: celebrationScale }],
             }} />
           )}
@@ -289,6 +296,7 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
           ) : null}
         </Animated.View>
 
+
         {/* Clickable area */}
         <TouchableOpacity
           style={{
@@ -296,22 +304,14 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
             width: '100%',
             height: '100%',
             backgroundColor: 'transparent',
+            zIndex: 5,
           }}
-                      onPress={() => {
-              soundService.playDoorClick();
-              onPress();
-            }}
-            disabled={disabled}
-          />
-
-          {/* Enhanced Sparkle Effect for Winning Doors */}
-          <SparkleEffect 
-            isActive={isWinningDoor && isOpen}
-            particleCount={25}
-            duration={2500}
-            size={12}
-            colors={['#FFD700', '#FFA500', '#FF8C00', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7']}
-          />
+          onPress={() => {
+            soundService.playDoorClick();
+            onPress();
+          }}
+          disabled={disabled}
+        />
         </View>
       <Text style={{ 
         marginTop: 8, 
