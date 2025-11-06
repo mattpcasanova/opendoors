@@ -24,6 +24,11 @@ export default function DoorNotificationComponent({ isVisible, onClose }: DoorNo
   useEffect(() => {
     if (isVisible && user?.id) {
       loadNotifications();
+    } else if (!isVisible) {
+      // Reset state when modal is closed to prevent stale data
+      setNotifications([]);
+      setCurrentNotificationIndex(0);
+      setLoading(false);
     }
   }, [isVisible, user?.id]);
 
@@ -50,21 +55,36 @@ export default function DoorNotificationComponent({ isVisible, onClose }: DoorNo
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {
+      console.log('📥 Marking notification as read:', notificationId);
       const result = await notificationService.markNotificationAsRead(notificationId);
+
       if (result.success) {
+        console.log('✅ Notification marked as read successfully');
+        // Check if this is the last notification BEFORE removing it
+        const isLastNotification = notifications.length <= 1;
+
+        console.log(`📊 Notifications remaining: ${notifications.length - 1} (isLast: ${isLastNotification})`);
+
         // Remove the notification from the list
         setNotifications(prev => prev.filter(n => n.id !== notificationId));
-        
-        // If there are more notifications, show the next one
-        if (notifications.length > 1) {
-          setCurrentNotificationIndex(prev => Math.min(prev, notifications.length - 2));
-        } else {
-          // No more notifications, close the modal
+
+        if (isLastNotification) {
+          // No more notifications, close the modal immediately
+          console.log('🚪 Closing notification modal (last notification)');
           onClose();
+        } else {
+          // If there are more notifications, show the next one
+          console.log('➡️ Moving to next notification');
+          setCurrentNotificationIndex(prev => Math.min(prev, notifications.length - 2));
         }
+      } else {
+        console.warn('⚠️ Failed to mark notification as read');
+        onClose();
       }
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      console.error('❌ Error marking notification as read:', error);
+      // On error, still try to close the modal to prevent freezing
+      onClose();
     }
   };
 
@@ -81,36 +101,46 @@ export default function DoorNotificationComponent({ isVisible, onClose }: DoorNo
 
   const currentNotification = notifications[currentNotificationIndex];
 
+  // Don't render the modal at all if not visible or no notifications
   if (!isVisible || notifications.length === 0) {
     return null;
   }
 
   return (
     <Modal
-      visible={isVisible}
+      visible={isVisible && notifications.length > 0}
       transparent
       animationType="fade"
       onRequestClose={handleClose}
+      statusBarTranslucent
     >
-      <View style={{
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20
-      }}>
-        <View style={{
-          backgroundColor: 'white',
-          borderRadius: 20,
-          padding: 24,
-          width: '100%',
-          maxWidth: 400,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 8,
-          elevation: 8,
-        }}>
+      <TouchableOpacity
+        style={{
+          flex: 1,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 20
+        }}
+        activeOpacity={1}
+        onPress={handleClose}
+      >
+        <TouchableOpacity
+          activeOpacity={1}
+          style={{
+            backgroundColor: 'white',
+            borderRadius: 20,
+            padding: 24,
+            width: '100%',
+            maxWidth: 400,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 8,
+            elevation: 8,
+          }}
+          onPress={(e) => e.stopPropagation()}
+        >
           {loading ? (
             <View style={{ alignItems: 'center', padding: 20 }}>
               <ActivityIndicator size="large" color="#009688" />
@@ -187,8 +217,8 @@ export default function DoorNotificationComponent({ isVisible, onClose }: DoorNo
               </Text>
             </View>
           )}
-        </View>
-      </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
     </Modal>
   );
 }

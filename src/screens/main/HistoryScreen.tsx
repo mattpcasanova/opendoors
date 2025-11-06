@@ -22,6 +22,7 @@ import { getUserProfileWithRetry, testSupabaseConnection } from '../../utils/sup
 export default function HistoryScreen() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [gamePlays, setGamePlays] = useState<GamePlay[]>([]);
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -29,7 +30,9 @@ export default function HistoryScreen() {
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [doorsAvailable, setDoorsAvailable] = useState(0);
   const [doorsDistributed, setDoorsDistributed] = useState(0);
+  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
 
+  // Initial load
   useEffect(() => {
     if (user) {
       fetchHistory();
@@ -38,36 +41,51 @@ export default function HistoryScreen() {
 
   useEffect(() => {
     // Listen for refresh events (e.g., when game is completed)
-    const subscription = DeviceEventEmitter.addListener('REFRESH_HISTORY', fetchHistory);
-    
+    const subscription = DeviceEventEmitter.addListener('REFRESH_HISTORY', () => fetchHistory(true));
+
     return () => {
       subscription.remove();
     };
   }, [user]);
 
-  // Refresh when screen comes into focus (e.g., navigating back from game)
+  // Refresh when screen comes into focus (but only if data is stale)
   useFocusEffect(
     useCallback(() => {
-      if (user) {
+      if (user && gamePlays.length > 0) {
+        const now = Date.now();
+        const timeSinceLastFetch = now - lastFetchTime;
+        // Only refetch if more than 5 seconds have passed
+        if (timeSinceLastFetch > 5000) {
+          fetchHistory(true); // Background refresh
+        }
+      } else if (user && gamePlays.length === 0) {
+        // If no data, fetch immediately
         fetchHistory();
       }
-    }, [user])
+    }, [user, lastFetchTime, gamePlays.length])
   );
 
-  const fetchHistory = async () => {
+  const fetchHistory = async (backgroundRefresh: boolean = false) => {
     try {
-      setLoading(true);
+      // Only show loading spinner on initial load, not background refresh
+      if (!backgroundRefresh) {
+        setLoading(true);
+      } else {
+        setRefreshing(true);
+      }
       setError(null);
-      console.log('🎮 Fetching history for user:', user?.id);
-      
-      // Test connection first with retry logic
-      console.log('🔍 Testing Supabase connection...');
-      const connectionOk = await testSupabaseConnection();
-      
-      if (!connectionOk) {
-        setError('Connection failed. Please check your internet connection and try again.');
-        setLoading(false);
-        return;
+      console.log('🎮 Fetching history for user:', user?.id, backgroundRefresh ? '(background)' : '');
+
+      // Skip connection test on background refresh for speed
+      if (!backgroundRefresh) {
+        console.log('🔍 Testing Supabase connection...');
+        const connectionOk = await testSupabaseConnection();
+
+        if (!connectionOk) {
+          setError('Connection failed. Please check your internet connection and try again.');
+          setLoading(false);
+          return;
+        }
       }
 
       // Fetch user profile to get user type and organization with retry logic
@@ -129,11 +147,18 @@ export default function HistoryScreen() {
       console.log('🎮 Loaded', mappedGamePlays.length, 'game plays');
       setGamePlays(mappedGamePlays);
       setStats(statsResult.data || null);
+      setLastFetchTime(Date.now());
     } catch (err: any) {
       console.error('❌ Error fetching history:', err);
-      setError(err.message);
+      // Only set error on initial load, silently fail on background refresh
+      if (!backgroundRefresh) {
+        setError(err.message);
+      } else {
+        console.warn('Background refresh failed:', err.message);
+      }
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 

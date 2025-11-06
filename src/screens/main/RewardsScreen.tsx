@@ -266,41 +266,67 @@ export default function RewardsScreen() {
   const { user } = useAuth();
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
+  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
 
+  // Initial load
   useEffect(() => {
     if (user) {
       fetchRewards();
     }
   }, [user]);
 
-  // Refresh when the screen gains focus
+  // Refresh when the screen gains focus (but only if data is stale)
   useFocusEffect(
     useCallback(() => {
-      if (user) fetchRewards();
+      if (user && rewards.length > 0) {
+        const now = Date.now();
+        const timeSinceLastFetch = now - lastFetchTime;
+        // Only refetch if more than 5 seconds have passed
+        if (timeSinceLastFetch > 5000) {
+          fetchRewards(true); // Background refresh
+        }
+      } else if (user && rewards.length === 0) {
+        // If no data, fetch immediately
+        fetchRewards();
+      }
       return () => {};
-    }, [user])
+    }, [user, lastFetchTime, rewards.length])
   );
 
   useEffect(() => {
-    const subscription = DeviceEventEmitter.addListener('REFRESH_REWARDS', fetchRewards);
+    const subscription = DeviceEventEmitter.addListener('REFRESH_REWARDS', () => fetchRewards(true));
     return () => {
       subscription.remove();
     };
   }, []);
 
-  const fetchRewards = async () => {
+  const fetchRewards = async (backgroundRefresh: boolean = false) => {
     if (!user) return;
     try {
-      setLoading(true);
+      // Only show loading spinner on initial load, not background refresh
+      if (!backgroundRefresh) {
+        setLoading(true);
+      } else {
+        setRefreshing(true);
+      }
+
       const result = await rewardsService.getUserRewards(user.id);
       if (result.error) throw new Error(result.error);
       setRewards(result.data || []);
+      setLastFetchTime(Date.now());
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      // Only show alert on initial load errors, silently fail on background refresh
+      if (!backgroundRefresh) {
+        Alert.alert('Error', error.message);
+      } else {
+        console.warn('Background refresh failed:', error.message);
+      }
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
