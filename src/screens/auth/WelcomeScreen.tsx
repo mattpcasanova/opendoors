@@ -12,12 +12,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthNavigation } from '../../hooks/useNavigation';
+import { useReferralLink } from '../../hooks/useReferralLink';
 
 const { width, height } = Dimensions.get('window');
 
 export default function WelcomeScreen() {
   const navigation = useAuthNavigation();
-  
+  const { referralCode } = useReferralLink();
+
   // Animation setup for logo lift
   const logoLiftAnim = useRef(new Animated.Value(0)).current;
 
@@ -37,6 +39,18 @@ export default function WelcomeScreen() {
       ])
     ).start();
   }, []);
+
+  // Auto-navigate to Signup if there's a pending referral code from deep link
+  useEffect(() => {
+    if (referralCode) {
+      console.log('📎 Referral code detected on Welcome screen, auto-navigating to Signup');
+      // Small delay to ensure the screen is mounted
+      const timer = setTimeout(() => {
+        navigation.navigate('Signup');
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [referralCode, navigation]);
 
   const logoLift = logoLiftAnim.interpolate({
     inputRange: [0, 1],

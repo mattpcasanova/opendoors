@@ -42,17 +42,17 @@ const EarnRewardModal: React.FC<EarnRewardModalProps> = ({
   }, [user?.id]);
 
   // Use deep link for referral (works without website)
-  // Format: opendoors://?ref=CODE
-  const deepLinkUrl = referralCode 
-    ? `opendoors://?ref=${referralCode}`
-    : 'opendoors://';
-  
+  // Format: opendoors://signup?ref=CODE - navigates directly to signup with code
+  const deepLinkUrl = referralCode
+    ? `opendoors://signup?ref=${referralCode}`
+    : 'opendoors://signup';
+
   // Also generate web URL if configured (for future use with website)
   const referralUrl = (Constants.expoConfig as any)?.extra?.referralUrl;
-  const webUrl = referralUrl && referralCode 
-    ? `${referralUrl}?ref=${referralCode}`
+  const webUrl = referralUrl && referralCode
+    ? `${referralUrl}/signup?ref=${referralCode}`
     : null;
-  
+
   // Use deep link as primary, web URL as fallback if available
   const shareUrl = deepLinkUrl;
 

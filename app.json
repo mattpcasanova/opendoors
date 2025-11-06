@@ -16,6 +16,9 @@
         "ITSAppUsesNonExemptEncryption": false,
         "NSLocationWhenInUseUsageDescription": "Open Doors needs your location to show you nearby prizes and games.",
         "NSLocationAlwaysUsageDescription": "Open Doors needs your location to show you nearby prizes and games."
+      },
+      "entitlements": {
+        "aps-environment": "development"
       }
     },
     "android": {

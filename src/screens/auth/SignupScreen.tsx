@@ -30,7 +30,7 @@ type SignupScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, 
 export default function SignupScreen() {
   const navigation = useNavigation<SignupScreenNavigationProp>();
   const { signUp } = useAuth();
-  const { getAndClearReferralCode } = useReferralLink();
+  const { referralCode: deepLinkReferralCode, getAndClearReferralCode } = useReferralLink();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -62,6 +62,20 @@ export default function SignupScreen() {
       ])
     ).start();
   }, []);
+
+  // Auto-fill referral code from deep link
+  useEffect(() => {
+    if (deepLinkReferralCode && !formData.referralCode) {
+      console.log('📎 Auto-filling referral code from deep link:', deepLinkReferralCode);
+      setFormData(prev => ({ ...prev, referralCode: deepLinkReferralCode }));
+      // Show a brief alert to let the user know the code was applied
+      Alert.alert(
+        'Referral Code Applied! 🎉',
+        `Your friend's referral code has been automatically added. You'll both get +1 door after your first game!`,
+        [{ text: 'Great!', style: 'default' }]
+      );
+    }
+  }, [deepLinkReferralCode]);
 
   const logoLift = logoLiftAnim.interpolate({
     inputRange: [0, 1],

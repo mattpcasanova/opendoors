@@ -216,13 +216,16 @@ class ReferralService {
           `Your friend ${referredName} played their first game! You both earned +1 door.`
         );
 
-        // Send push notification for referrer
-        const { pushNotificationService } = await import('./pushNotificationService');
-        await pushNotificationService.sendLocalNotification(
-          'Referral Reward Earned! 🎉',
-          `Your friend ${referredName} played their first game! You both earned +1 door.`,
-          { type: 'referral_reward', userId: referrerId, referredName }
-        );
+        // Send push notification only to the referrer (not a local notification)
+        // Only send if this is the logged-in user on this device
+        if (referrerId === userId) {
+          const { pushNotificationService } = await import('./pushNotificationService');
+          await pushNotificationService.sendLocalNotification(
+            'Referral Reward Earned! 🎉',
+            `Your friend ${referredName} played their first game! You both earned +1 door.`,
+            { type: 'referral_reward', userId: referrerId, referredName }
+          );
+        }
 
         // Mark referrer as rewarded
         await supabase
@@ -246,13 +249,16 @@ class ReferralService {
           `Thanks for joining! You and ${referrerName} both earned +1 door for playing your first game.`
         );
 
-        // Send push notification for referred user
-        const { pushNotificationService: pushService } = await import('./pushNotificationService');
-        await pushService.sendLocalNotification(
-          'Referral Reward Earned! 🎉',
-          `Thanks for joining! You and ${referrerName} both earned +1 door for playing your first game.`,
-          { type: 'referral_reward', userId: referredId, referrerName }
-        );
+        // Send push notification only to the referred user (not a local notification)
+        // Only send if this is the logged-in user on this device
+        if (referredId === userId) {
+          const { pushNotificationService: pushService } = await import('./pushNotificationService');
+          await pushService.sendLocalNotification(
+            'Referral Reward Earned! 🎉',
+            `Thanks for joining! You and ${referrerName} both earned +1 door for playing your first game.`,
+            { type: 'referral_reward', userId: referredId, referrerName }
+          );
+        }
 
         // Mark referred as rewarded
         await supabase
