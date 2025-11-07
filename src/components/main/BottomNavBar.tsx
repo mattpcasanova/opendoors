@@ -1,5 +1,6 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { BlurView } from 'expo-blur';
 import { Clock, Gift, Home, User } from 'lucide-react-native';
 import React from 'react';
 import { Platform, Text, TouchableOpacity, View } from 'react-native';
@@ -68,28 +69,48 @@ export default function BottomNavBar({}: Props) {
         left: 0,
         right: 0,
         zIndex: 50,
-        backgroundColor: Platform.OS === 'ios' ? 'rgba(255,255,255,0.97)' : 'white',
-        borderTopWidth: 0.5,
-        borderTopColor: 'rgba(0,0,0,0.08)',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.06,
-        shadowRadius: 12,
-        elevation: 12,
-        paddingBottom: Platform.OS === 'ios' ? 34 : 16,
-        paddingTop: 16,
-        paddingHorizontal: 12,
+        overflow: 'hidden',
       }}
     >
-      <View
+      {/* Liquid Glass Effect */}
+      <BlurView
+        intensity={Platform.OS === 'ios' ? 80 : 100}
+        tint="light"
         style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          height: 56,
+          paddingBottom: Platform.OS === 'ios' ? 34 : 16,
+          paddingTop: 16,
+          paddingHorizontal: 12,
+          borderTopWidth: 0.5,
+          borderTopColor: 'rgba(0,0,0,0.06)',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.08,
+          shadowRadius: 16,
+          elevation: 12,
         }}
       >
-        {NAV_ITEMS.map((item) => {
+        {/* Subtle overlay for extra depth */}
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(255,255,255,0.7)',
+          }}
+          pointerEvents="none"
+        />
+
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            height: 64,
+          }}
+        >
+          {NAV_ITEMS.map((item) => {
           const isActive = activeTab === item.id;
           const IconComponent = item.icon;
 
@@ -101,99 +122,134 @@ export default function BottomNavBar({}: Props) {
                 flex: 1,
                 alignItems: 'center',
                 justifyContent: 'center',
-                paddingVertical: 6,
-                paddingHorizontal: 8,
+                paddingVertical: 8,
+                paddingHorizontal: 10,
               }}
               activeOpacity={0.65}
             >
-              <View
-                style={{
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  paddingVertical: 10,
-                  paddingHorizontal: 18,
-                  borderRadius: 24,
-                  backgroundColor: isActive 
-                    ? 'rgba(20, 184, 166, 0.12)' 
-                    : 'transparent',
-                  minWidth: 68,
-                  minHeight: 48,
-                  shadowColor: isActive ? '#14b8a6' : 'transparent',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: isActive ? 0.08 : 0,
-                  shadowRadius: isActive ? 8 : 0,
-                  elevation: isActive ? 3 : 0,
-                  transform: [{ scale: isActive ? 1.05 : 1 }],
-                  borderWidth: isActive ? 1 : 0,
-                  borderColor: isActive ? 'rgba(20, 184, 166, 0.15)' : 'transparent',
-                }}
-              >
-                <View
+              {isActive ? (
+                // Liquid Glass effect for active tab
+                <BlurView
+                  intensity={60}
+                  tint="light"
                   style={{
-                    marginBottom: 6,
-                    padding: isActive ? 2 : 0,
-                    borderRadius: 8,
-                    backgroundColor: isActive ? 'rgba(20, 184, 166, 0.08)' : 'transparent',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    paddingVertical: 12,
+                    paddingHorizontal: 20,
+                    borderRadius: 26,
+                    minWidth: 76,
+                    minHeight: 56,
+                    overflow: 'hidden',
+                    borderWidth: 1,
+                    borderColor: 'rgba(20, 184, 166, 0.25)',
+                    shadowColor: '#14b8a6',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.15,
+                    shadowRadius: 12,
+                    elevation: 5,
+                    transform: [{ scale: 1.05 }],
                   }}
                 >
-                  <IconComponent
-                    size={isActive ? 24 : 22}
-                    color={isActive ? '#14b8a6' : '#6b7280'}
-                    strokeWidth={isActive ? 2.5 : 2}
+                  <View
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: 'rgba(20, 184, 166, 0.15)',
+                    }}
+                    pointerEvents="none"
                   />
-                </View>
-                
-                <Text
-                  numberOfLines={1}
-                  style={{
-                    fontSize: isActive ? 12 : 11,
-                    fontWeight: isActive ? '700' : '600',
-                    color: isActive ? '#14b8a6' : '#6b7280',
-                    letterSpacing: 0.3,
-                    textAlign: 'center',
-                    width: '100%',
-                  }}
-                >
-                  {item.label}
-                </Text>
-                
-                {/* Enhanced active indicator */}
-                {isActive && (
-                  <>
-                    {/* Primary indicator line */}
+                  <View style={{ alignItems: 'center' }}>
+                    <View
+                      style={{
+                        marginBottom: 7,
+                        padding: 3,
+                        borderRadius: 10,
+                        backgroundColor: 'rgba(20, 184, 166, 0.08)',
+                      }}
+                    >
+                      <IconComponent
+                        size={26}
+                        color="#14b8a6"
+                        strokeWidth={2.5}
+                      />
+                    </View>
+
+                    <Text
+                      numberOfLines={1}
+                      style={{
+                        fontSize: 13,
+                        fontWeight: '700',
+                        color: '#14b8a6',
+                        letterSpacing: 0.3,
+                        textAlign: 'center',
+                        width: '100%',
+                      }}
+                    >
+                      {item.label}
+                    </Text>
+
+                    {/* Enhanced active indicator */}
                     <View
                       style={{
                         position: 'absolute',
-                        bottom: -8,
-                        width: 32,
-                        height: 3,
+                        bottom: -10,
+                        width: 36,
+                        height: 3.5,
                         backgroundColor: '#14b8a6',
                         borderRadius: 2,
                         shadowColor: '#14b8a6',
                         shadowOffset: { width: 0, height: 1 },
-                        shadowOpacity: 0.3,
-                        shadowRadius: 2,
+                        shadowOpacity: 0.4,
+                        shadowRadius: 3,
                       }}
                     />
-                    {/* Subtle glow effect */}
-                    <View
-                      style={{
-                        position: 'absolute',
-                        bottom: -8,
-                        width: 24,
-                        height: 2,
-                        backgroundColor: '#14b8a6',
-                        borderRadius: 1,
-                        opacity: 0.4,
-                      }}
+                  </View>
+                </BlurView>
+              ) : (
+                // Regular inactive tab
+                <View
+                  style={{
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    paddingVertical: 12,
+                    paddingHorizontal: 20,
+                    borderRadius: 26,
+                    minWidth: 76,
+                    minHeight: 56,
+                  }}
+                >
+                  <View style={{ marginBottom: 7 }}>
+                    <IconComponent
+                      size={24}
+                      color="#6b7280"
+                      strokeWidth={2}
                     />
-                  </>
-                )}
-              </View>
+                  </View>
+
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      fontSize: 12,
+                      fontWeight: '600',
+                      color: '#6b7280',
+                      letterSpacing: 0.3,
+                      textAlign: 'center',
+                      width: '100%',
+                    }}
+                  >
+                    {item.label}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
           );
         })}
       </View>
+    </BlurView>
     </View>
   );
 } 
