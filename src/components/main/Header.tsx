@@ -1,8 +1,9 @@
 import { Ionicons } from "@expo/vector-icons"
+import { BlurView } from "expo-blur"
 import { LinearGradient } from "expo-linear-gradient"
 import { Gift, History, Settings, Shield, Users } from "lucide-react-native"
 import type React from "react"
-import { Dimensions, Image, Text, TouchableOpacity, View } from "react-native"
+import { Dimensions, Image, Platform, Text, TouchableOpacity, View } from "react-native"
 
 const { width: screenWidth } = Dimensions.get("window")
 
@@ -149,27 +150,53 @@ export default function Header({
               </View>
             </View>
 
-            {/* Right Content - Logo */}
+            {/* Right Content - Logo with Liquid Glass Effect */}
             {showLogo && (
               <View
                 style={{
                   width: 100,
                   height: 100,
                   borderRadius: 50,
-                  backgroundColor: "rgba(255, 255, 255, 0.95)",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  overflow: "hidden",
                   shadowColor: "#000",
                   shadowOffset: { width: 0, height: 10 },
-                  shadowOpacity: 0.25,
-                  shadowRadius: 20,
-                  elevation: 15,
+                  shadowOpacity: 0.3,
+                  shadowRadius: 24,
+                  elevation: 18,
                 }}
               >
-                <Image
-                  source={require("../../../assets/OpenDoorsLogo.png")}
-                  style={{ width: 80, height: 80, resizeMode: "contain" }}
-                />
+                <BlurView
+                  intensity={Platform.OS === "ios" ? 90 : 100}
+                  tint="light"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderWidth: 1.5,
+                    borderColor: "rgba(255, 255, 255, 0.4)",
+                    borderRadius: 50,
+                  }}
+                >
+                  {/* Subtle white overlay for extra depth */}
+                  <View
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: "rgba(255, 255, 255, 0.75)",
+                      borderRadius: 50,
+                    }}
+                    pointerEvents="none"
+                  />
+
+                  <Image
+                    source={require("../../../assets/OpenDoorsLogo.png")}
+                    style={{ width: 80, height: 80, resizeMode: "contain", zIndex: 1 }}
+                  />
+                </BlurView>
               </View>
             )}
           </View>

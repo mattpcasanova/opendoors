@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as SecureStore from 'expo-secure-store';
 import { ArrowLeft, ArrowRight, Eye, EyeOff, Gift, Heart, Lock, Mail, Trophy } from 'lucide-react-native';
@@ -206,19 +207,26 @@ export default function LoginScreen() {
                 <View style={styles.headerSpacer} />
               </View>
 
-              {/* Enhanced Logo Section */}
+              {/* Enhanced Logo Section with Liquid Glass */}
               <View style={styles.logoContainer}>
-                <Animated.View 
+                <Animated.View
                   style={[
                     styles.logoWrapper,
                     { transform: [{ translateY: logoLift }] }
                   ]}
                 >
                   <View style={styles.logoGlowContainer}>
-                    <Image 
-                      source={require('../../../assets/OpenDoorsLogo.png')} 
-                      style={styles.logoImage}
-                    />
+                    <BlurView
+                      intensity={Platform.OS === 'ios' ? 95 : 100}
+                      tint="light"
+                      style={styles.logoBlur}
+                    >
+                      <View style={styles.logoOverlay} pointerEvents="none" />
+                      <Image
+                        source={require('../../../assets/OpenDoorsLogo.png')}
+                        style={styles.logoImage}
+                      />
+                    </BlurView>
                   </View>
                 </Animated.View>
               </View>
@@ -444,21 +452,36 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 60,
+    overflow: 'hidden',
+    shadowColor: '#14B8A6',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.7,
+    shadowRadius: 30,
+    elevation: 20,
+  },
+  logoBlur: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 60,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    shadowColor: '#14B8A6',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 20,
-    elevation: 15,
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  logoOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 60,
   },
   logoImage: {
     width: 80,
     height: 80,
     resizeMode: 'contain',
+    zIndex: 1,
   },
   titleContainer: {
     alignItems: 'center',

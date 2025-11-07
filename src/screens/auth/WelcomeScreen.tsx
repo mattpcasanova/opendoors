@@ -1,3 +1,4 @@
+import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowRight, Gamepad2, MapPin, Trophy } from 'lucide-react-native';
 import React, { useEffect, useRef } from 'react';
@@ -5,6 +6,7 @@ import {
     Animated,
     Dimensions,
     Image,
+    Platform,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -85,19 +87,28 @@ export default function WelcomeScreen() {
 
         {/* Logo Section with Liquid Glass Effect */}
         <View style={styles.logoSection}>
-          {/* Logo Container */}
+          {/* Logo Container with Liquid Glass */}
           <View style={styles.logoContainer}>
-            <Animated.View 
+            <Animated.View
               style={[
                 styles.logoWrapper,
                 { transform: [{ translateY: logoLift }] }
               ]}
             >
               <View style={styles.logoGlowContainer}>
-                <Image 
-                  source={require('../../../assets/OpenDoorsLogo.png')} 
-                  style={styles.logoImage}
-                />
+                <BlurView
+                  intensity={Platform.OS === 'ios' ? 95 : 100}
+                  tint="light"
+                  style={styles.logoBlur}
+                >
+                  {/* Subtle white overlay for extra depth */}
+                  <View style={styles.logoOverlay} pointerEvents="none" />
+
+                  <Image
+                    source={require('../../../assets/OpenDoorsLogo.png')}
+                    style={styles.logoImage}
+                  />
+                </BlurView>
               </View>
             </Animated.View>
           </View>
@@ -237,21 +248,36 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 90,
+    overflow: 'hidden',
+    shadowColor: '#14B8A6',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.7,
+    shadowRadius: 35,
+    elevation: 25,
+  },
+  logoBlur: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 90,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    shadowColor: '#14B8A6',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 30,
-    elevation: 20,
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  logoOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 90,
   },
   logoImage: {
     width: 120,
     height: 120,
     resizeMode: 'contain',
+    zIndex: 1,
   },
   featuresContainer: {
     flexDirection: 'row',

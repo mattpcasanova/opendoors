@@ -107,7 +107,7 @@ export default function BottomNavBar({}: Props) {
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
-            height: 64,
+            height: 60,
           }}
         >
           {NAV_ITEMS.map((item) => {
@@ -122,8 +122,8 @@ export default function BottomNavBar({}: Props) {
                 flex: 1,
                 alignItems: 'center',
                 justifyContent: 'center',
-                paddingVertical: 8,
-                paddingHorizontal: 10,
+                paddingVertical: 6,
+                paddingHorizontal: 8,
               }}
               activeOpacity={0.65}
             >
@@ -135,11 +135,11 @@ export default function BottomNavBar({}: Props) {
                   style={{
                     alignItems: 'center',
                     justifyContent: 'center',
-                    paddingVertical: 12,
-                    paddingHorizontal: 20,
-                    borderRadius: 26,
-                    minWidth: 76,
-                    minHeight: 56,
+                    paddingVertical: 11,
+                    paddingHorizontal: 18,
+                    borderRadius: 24,
+                    minWidth: 72,
+                    minHeight: 52,
                     overflow: 'hidden',
                     borderWidth: 1,
                     borderColor: 'rgba(20, 184, 166, 0.25)',
@@ -165,14 +165,14 @@ export default function BottomNavBar({}: Props) {
                   <View style={{ alignItems: 'center' }}>
                     <View
                       style={{
-                        marginBottom: 7,
-                        padding: 3,
-                        borderRadius: 10,
+                        marginBottom: 6,
+                        padding: 2,
+                        borderRadius: 9,
                         backgroundColor: 'rgba(20, 184, 166, 0.08)',
                       }}
                     >
                       <IconComponent
-                        size={26}
+                        size={25}
                         color="#14b8a6"
                         strokeWidth={2.5}
                       />
@@ -181,7 +181,7 @@ export default function BottomNavBar({}: Props) {
                     <Text
                       numberOfLines={1}
                       style={{
-                        fontSize: 13,
+                        fontSize: 12.5,
                         fontWeight: '700',
                         color: '#14b8a6',
                         letterSpacing: 0.3,
@@ -196,8 +196,8 @@ export default function BottomNavBar({}: Props) {
                     <View
                       style={{
                         position: 'absolute',
-                        bottom: -10,
-                        width: 36,
+                        bottom: -9,
+                        width: 34,
                         height: 3.5,
                         backgroundColor: '#14b8a6',
                         borderRadius: 2,
@@ -215,16 +215,16 @@ export default function BottomNavBar({}: Props) {
                   style={{
                     alignItems: 'center',
                     justifyContent: 'center',
-                    paddingVertical: 12,
-                    paddingHorizontal: 20,
-                    borderRadius: 26,
-                    minWidth: 76,
-                    minHeight: 56,
+                    paddingVertical: 11,
+                    paddingHorizontal: 18,
+                    borderRadius: 24,
+                    minWidth: 72,
+                    minHeight: 52,
                   }}
                 >
-                  <View style={{ marginBottom: 7 }}>
+                  <View style={{ marginBottom: 6 }}>
                     <IconComponent
-                      size={24}
+                      size={23}
                       color="#6b7280"
                       strokeWidth={2}
                     />
@@ -233,7 +233,7 @@ export default function BottomNavBar({}: Props) {
                   <Text
                     numberOfLines={1}
                     style={{
-                      fontSize: 12,
+                      fontSize: 11.5,
                       fontWeight: '600',
                       color: '#6b7280',
                       letterSpacing: 0.3,
