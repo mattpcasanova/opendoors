@@ -17,7 +17,6 @@ export interface Prize {
   stock_quantity?: number;
   expires_at?: string;
   is_special?: boolean;
-  plays?: number;
   created_at: string;
 }
 
@@ -40,7 +39,7 @@ class GamesService {
     try {
       const { data, error } = await supabase
         .from('active_games')
-        .select('id, name, description, value, logo_url, image_url, prize_type, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, plays, created_at');
+        .select('id, name, description, value, logo_url, image_url, prize_type, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, created_at');
 
       if (error) throw error;
       return { data, error: null };
@@ -56,7 +55,7 @@ class GamesService {
       // First try to get games marked as special
       const { data: specialGames, error: specialError } = await supabase
         .from('active_games')
-        .select('id, name, description, value, logo_url, image_url, prize_type, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, plays, created_at')
+        .select('id, name, description, value, logo_url, image_url, prize_type, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, created_at')
         .eq('is_special', true)
         .order('value', { ascending: false })
         .limit(1);
@@ -72,14 +71,14 @@ class GamesService {
       // Otherwise, fall back to highest value game
       const { data: highestValueGames, error: valueError } = await supabase
         .from('active_games')
-        .select('id, name, description, value, logo_url, image_url, prize_type, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, plays, created_at')
+        .select('id, name, description, value, logo_url, image_url, prize_type, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, created_at')
         .order('value', { ascending: false })
         .limit(1);
 
       if (valueError) throw valueError;
 
       const featuredGame = highestValueGames && highestValueGames.length > 0 ? highestValueGames[0] : null;
-      
+
       return { data: featuredGame, error: null };
     } catch (error: any) {
       console.error('❌ Error fetching featured game:', error);
@@ -93,7 +92,7 @@ class GamesService {
       // Get all active games that are NOT marked as special
       const { data: allGames, error: allGamesError } = await supabase
         .from('active_games')
-        .select('id, name, description, value, logo_url, image_url, prize_type, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, plays, created_at')
+        .select('id, name, description, value, logo_url, image_url, prize_type, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, created_at')
         .eq('is_special', false)
         .order('created_at', { ascending: false });
 
@@ -103,7 +102,7 @@ class GamesService {
         // If no non-special games, get all games and exclude the featured one
         const { data: allAnyGames, error: anyGamesError } = await supabase
           .from('active_games')
-          .select('id, name, description, value, logo_url, image_url, prize_type, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, plays, created_at')
+          .select('id, name, description, value, logo_url, image_url, prize_type, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, created_at')
           .order('created_at', { ascending: false });
 
         if (anyGamesError) throw anyGamesError;
@@ -115,7 +114,7 @@ class GamesService {
         // Exclude the highest value game (which would be featured)
         const sortedByValue = [...allAnyGames].sort((a, b) => (b.value || 0) - (a.value || 0));
         const regularGames = allAnyGames.filter(game => game.id !== sortedByValue[0].id);
-        
+
         return { data: regularGames, error: null };
       }
 

@@ -854,9 +854,8 @@ export default function HomeScreen() {
         } else if (sortBy === 'Highest Value') {
           return (b.prize.value || 0) - (a.prize.value || 0);
         } else if (sortBy === 'Most Popular') {
-          const playsA = a.prize.plays || 0;
-          const playsB = b.prize.plays || 0;
-          return playsB - playsA;
+          // Since plays column doesn't exist, sort by value as fallback
+          return (b.prize.value || 0) - (a.prize.value || 0);
         } else if (sortBy === 'Suggested') {
           // Suggested = closest first, but weighted by value
           const scoreA = (a.prize.value || 0) / Math.max(a.distance, 0.1); // Avoid division by zero
@@ -891,34 +890,20 @@ export default function HomeScreen() {
       // In production, you would return here:
       // return;
     }
-    
-    // Use featured game if available, otherwise use fallback game
-    console.log('🎮 Featured game data:', {
-      featuredGame: JSON.stringify(featuredGame, null, 2),
-      usingFeaturedGame: !!featuredGame
+
+    // Use featured game from database (marked with is_special = true)
+    if (!featuredGame) {
+      console.error('❌ No featured game available');
+      Alert.alert('No Game Available', 'There is no special game available at this time. Please try again later.');
+      return;
+    }
+
+    console.log('🎮 Playing featured game:', {
+      name: featuredGame.name,
+      isSpecial: featuredGame.is_special
     });
 
-    let dailyGame = featuredGame;
-    
-    // If no featured game, use the fallback Target game
-    if (!dailyGame) {
-      dailyGame = {
-        id: 'target-gift-card',
-        name: 'Target Gift Card',
-        description: 'Win a $25 gift card',
-        value: 25,
-        prize_type: 'gift_card',
-        doors: 5,
-        created_at: new Date().toISOString(),
-        location_name: 'Target',
-        address: 'Online',
-        stock_quantity: 10
-      };
-    }
-    
-    console.log('🎮 Using daily game:', JSON.stringify(dailyGame, null, 2));
-    
-    setCurrentGame(dailyGame);
+    setCurrentGame(featuredGame);
     setShowGameScreen(true);
   };
 
@@ -1216,7 +1201,7 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Today's Special - Only show when not searching */}
+        {/* Today's Special - Only show when not searching and a featured game exists */}
         {!searchText && featuredGame && (
           <>
             <Text className="text-gray-900 text-xl font-semibold mb-4">Today's special</Text>
@@ -1225,41 +1210,6 @@ export default function HomeScreen() {
               prize={featuredGame}
               userLocation={location}
               onPress={() => playGame(featuredGame)}
-            />
-          </>
-        )}
-
-        {/* If no featured game from database, show fallback - Only when not searching */}
-        {!searchText && !featuredGame && (
-          <>
-            <Text className="text-gray-900 text-xl font-semibold mb-4">Today's special</Text>
-            <GameCard
-              variant="featured"
-              prize={{
-                id: 'target-gift-card',
-                name: 'Target Gift Card',
-                description: 'Win a $25 gift card',
-                value: 25,
-                prize_type: 'gift_card',
-                doors: 5,
-                created_at: new Date().toISOString(),
-                location_name: 'Target',
-                address: 'Online',
-                stock_quantity: 10
-              }}
-              userLocation={location}
-              onPress={() => playGame({
-                id: 'target-gift-card',
-                name: 'Target Gift Card',
-                description: 'Win a $25 gift card',
-                value: 25,
-                prize_type: 'gift_card',
-                doors: 5,
-                created_at: new Date().toISOString(),
-                location_name: 'Target',
-                address: 'Online',
-                stock_quantity: 10
-              })}
             />
           </>
         )}
