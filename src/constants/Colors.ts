@@ -72,6 +72,16 @@ export const Colors = {
   // Glass/Blur Effects
   glassBackground: 'rgba(255, 255, 255, 0.72)',
   glassBorder: 'rgba(255, 255, 255, 0.3)',
+
+  // Game Door Colors
+  doorBrown: '#8D6E63',
+  doorBrownDark: '#6D4C41',
+  doorHandle: '#DAA520',
+  doorHandleDark: '#B8860B',
+  doorBackground: '#E8F5F4',
+  doorBackgroundEmpty: '#F3F4F6',
+  gold: '#FFD700',
+  goldDark: '#FFA000',
 } as const;
 
 // Helper type for color keys

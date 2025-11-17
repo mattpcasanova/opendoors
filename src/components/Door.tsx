@@ -21,6 +21,9 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
   const doorShakeAnim = React.useRef(new Animated.Value(0)).current;
   const selectionGlowAnim = React.useRef(new Animated.Value(0)).current;
   const celebrationAnim = React.useRef(new Animated.Value(0)).current;
+  const selectionBounceAnim = React.useRef(new Animated.Value(1)).current;
+  const iconPulseAnim = React.useRef(new Animated.Value(1)).current;
+  const emptyShakeAnim = React.useRef(new Animated.Value(0)).current;
   const [isOpening, setIsOpening] = React.useState(false);
   const [hasPlayedResultSound, setHasPlayedResultSound] = React.useState(false);
 
@@ -63,8 +66,26 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
     }
   }, [isOpen, isWinningDoor, isFinalReveal, isSelected]);
 
-  // Handle selection glow
+  // Handle selection glow and bounce
   useEffect(() => {
+    if (isSelected) {
+      // Bounce animation when first selected
+      Animated.sequence([
+        Animated.spring(selectionBounceAnim, {
+          toValue: 1.1,
+          damping: 8,
+          stiffness: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(selectionBounceAnim, {
+          toValue: 1,
+          damping: 10,
+          stiffness: 150,
+          useNativeDriver: true,
+        })
+      ]).start();
+    }
+
     Animated.spring(selectionGlowAnim, {
       toValue: isSelected ? 1 : 0,
       damping: 12,
@@ -86,7 +107,7 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
           console.log(`🎉 Door ${doorNumber} - Playing WIN sound and showing sparkles!`);
           soundService.playCelebration();
 
-          // Start celebration animation
+          // Start celebration border glow animation
           Animated.loop(
             Animated.sequence([
               Animated.timing(celebrationAnim, {
@@ -102,9 +123,40 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
             ]),
             { iterations: 3 }
           ).start();
+
+          // Start icon pulse animation
+          Animated.loop(
+            Animated.sequence([
+              Animated.timing(iconPulseAnim, {
+                toValue: 1.15,
+                duration: 600,
+                useNativeDriver: true,
+              }),
+              Animated.timing(iconPulseAnim, {
+                toValue: 1,
+                duration: 600,
+                useNativeDriver: true,
+              }),
+            ]),
+            { iterations: 4 }
+          ).start();
         } else {
           console.log(`😔 Door ${doorNumber} - Playing LOSS sound`);
           soundService.playLoss();
+
+          // Subtle shake for empty door
+          Animated.sequence([
+            Animated.timing(emptyShakeAnim, {
+              toValue: 1,
+              duration: 100,
+              useNativeDriver: true,
+            }),
+            Animated.timing(emptyShakeAnim, {
+              toValue: 0,
+              duration: 100,
+              useNativeDriver: true,
+            }),
+          ]).start();
         }
         setHasPlayedResultSound(true);
       }, 1000);
@@ -120,6 +172,12 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
   const shakeRotation = doorShakeAnim.interpolate({
     inputRange: [0, 0.25, 0.5, 0.75, 1],
     outputRange: ['0deg', '-1deg', '1deg', '-0.5deg', '0deg']
+  });
+
+  // Empty door shake effect
+  const emptyShakeTranslate = emptyShakeAnim.interpolate({
+    inputRange: [0, 0.25, 0.5, 0.75, 1],
+    outputRange: [0, -3, 3, -2, 0]
   });
 
   // Selection glow effect
@@ -150,20 +208,28 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
     outputRange: [0, -8] // Door moves more left as it opens (realistic hinge effect)
   });
 
+  const isEmptyDoor = content?.name === 'close-circle';
+  const backgroundColorValue = isWinningDoor ? Colors.doorBackground : (isEmptyDoor ? Colors.doorBackgroundEmpty : Colors.doorBackground);
+
   return (
-    <View style={{ alignItems: 'center', marginHorizontal: 8, overflow: 'visible' }}>
+    <Animated.View style={{
+      alignItems: 'center',
+      marginHorizontal: 8,
+      overflow: 'visible',
+      transform: [{ scale: selectionBounceAnim }]
+    }}>
       <View style={{ width: 100, height: 150, position: 'relative', overflow: 'visible', zIndex: 1 }}>
         {/* Content behind the door */}
         <Animated.View style={{
           position: 'absolute',
           width: '100%',
           height: '100%',
-          backgroundColor: '#E8F5F4',
+          backgroundColor: backgroundColorValue,
           borderRadius: 8,
           justifyContent: 'center',
           alignItems: 'center',
           borderWidth: 3,
-          borderColor: isSelected ? '#009688' : '#00796B',
+          borderColor: isSelected ? Colors.primary : Colors.primaryDark,
           opacity: contentAnim.interpolate({
             inputRange: [0, 1],
             outputRange: [0, 1] // Start completely hidden, only show when door opens
@@ -173,14 +239,23 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
               inputRange: [0, 1],
               outputRange: [0.3, 1]
             })
+          }, {
+            translateX: isEmptyDoor ? emptyShakeTranslate : 0
           }]
         }}>
           {content && (
-            <Ionicons
-              name={content.name as any}
-              size={56}
-              color={content.color}
-            />
+            <Animated.View style={{
+              transform: [{ scale: isWinningDoor ? iconPulseAnim : 1 }]
+            }}>
+              <Ionicons
+                name={content.name as any}
+                size={56}
+                color={content.color}
+                style={{
+                  opacity: isEmptyDoor ? 0.4 : 1
+                }}
+              />
+            </Animated.View>
           )}
         </Animated.View>
 
@@ -192,9 +267,9 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
               height: '100%',
               borderRadius: 12,
               borderWidth: 6,
-              borderColor: '#FFD700',
+              borderColor: Colors.gold,
               opacity: selectionGlow,
-              shadowColor: '#FFD700',
+              shadowColor: Colors.gold,
               shadowOffset: { width: 0, height: 0 },
               shadowOpacity: 1,
               shadowRadius: 12,
@@ -212,9 +287,9 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
               left: '-10%',
               borderRadius: 16,
               borderWidth: 6,
-              borderColor: '#FFD700',
+              borderColor: Colors.gold,
               opacity: celebrationGlow,
-              shadowColor: '#FFD700',
+              shadowColor: Colors.gold,
               shadowOffset: { width: 0, height: 0 },
               shadowOpacity: 0.8,
               shadowRadius: 25,
@@ -228,10 +303,10 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
           position: 'absolute',
           width: '100%',
           height: '100%',
-          backgroundColor: '#8D6E63',
+          backgroundColor: Colors.doorBrown,
           borderRadius: 8,
           borderWidth: 3,
-          borderColor: isSelected ? '#009688' : '#00796B',
+          borderColor: isSelected ? Colors.primary : Colors.primaryDark,
           transform: [{
             perspective: 2000,
           }, {
@@ -248,28 +323,27 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
           }],
           transformOrigin: 'left',
           backfaceVisibility: 'hidden',
-          // Enhanced shadow for depth (static values to avoid animation errors)
-          shadowColor: '#000',
+          // Enhanced shadow for depth
+          shadowColor: Colors.black,
           shadowOffset: { width: 4, height: 4 },
           shadowOpacity: 0.3,
           shadowRadius: 8,
           elevation: 12,
         }}>
-          {/* Door handle with better styling - positioned inside the door */}
+          {/* Door handle - larger and more prominent */}
           <View style={{
             position: 'absolute',
-            right: 16,
+            right: 14,
             top: '50%',
-            marginTop: -6,
-            width: 12,
-            height: 12,
-            backgroundColor: '#DAA520', // More realistic gold color
-            borderRadius: 6,
-            borderWidth: 1,
-            borderColor: '#B8860B', // Darker gold border
+            marginTop: -8,
+            width: 16,
+            height: 16,
+            backgroundColor: Colors.doorHandle,
+            borderRadius: 8,
+            borderWidth: 1.5,
+            borderColor: Colors.doorHandleDark,
             zIndex: 1,
-            // Add handle shadow
-            shadowColor: '#000',
+            shadowColor: Colors.black,
             shadowOffset: { width: 1, height: 1 },
             shadowOpacity: 0.3,
             shadowRadius: 2,
@@ -320,7 +394,7 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
           }}
           disabled={disabled}
         />
-        </View>
+      </View>
       <Text style={{
         marginTop: 8,
         fontSize: 14,
@@ -329,6 +403,6 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
       }}>
         Door {doorNumber}
       </Text>
-    </View>
+    </Animated.View>
   );
 }
