@@ -4,6 +4,7 @@ import { BlurView } from 'expo-blur';
 import { Clock, Gift, Home, User } from 'lucide-react-native';
 import React from 'react';
 import { Platform, Text, TouchableOpacity, View } from 'react-native';
+import { Colors } from '../../constants';
 import type { MainTabParamList } from '../../types/navigation';
 
 // Tab config - removed badge completely
@@ -75,7 +76,7 @@ export default function BottomNavBar({}: Props) {
       <View
         style={{
           height: 1,
-          backgroundColor: 'rgba(0,0,0,0.06)',
+          backgroundColor: Colors.border,
         }}
       />
 
@@ -128,7 +129,7 @@ export default function BottomNavBar({}: Props) {
                 <View style={{ marginBottom: 4 }}>
                   <IconComponent
                     size={24}
-                    color={isActive ? '#14b8a6' : '#9ca3af'}
+                    color={isActive ? Colors.primary : Colors.gray400}
                     strokeWidth={isActive ? 2.2 : 1.8}
                   />
                 </View>
@@ -138,7 +139,7 @@ export default function BottomNavBar({}: Props) {
                   style={{
                     fontSize: 11,
                     fontWeight: isActive ? '600' : '500',
-                    color: isActive ? '#14b8a6' : '#9ca3af',
+                    color: isActive ? Colors.primary : Colors.gray400,
                     letterSpacing: -0.1,
                     textAlign: 'center',
                   }}

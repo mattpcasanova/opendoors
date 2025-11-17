@@ -2,6 +2,7 @@
 import { DoorOpen, Heart, MapPin, Star, UtensilsCrossed, Coffee, Dumbbell, Sparkles, ShoppingBag, Film } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { DeviceEventEmitter, Image, Text, TouchableOpacity, View } from 'react-native';
+import { Colors } from '../../constants';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../contexts/ToastContext';
 import { favoritesService } from '../../services/favoritesService';
@@ -113,13 +114,13 @@ const CompanyLogo = ({ prize }: { prize: Prize }) => {
     <View style={{
       width: 64, // Increased from 48
       height: 64, // Increased from 48
-      backgroundColor: 'white',
+      backgroundColor: Colors.white,
       borderRadius: 32, // Half of width/height
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: 16,
       borderWidth: 2,
-      borderColor: '#009688', // Teal border
+      borderColor: Colors.primary,
     }}>
       <Text style={{ fontSize: 32 }}>{icon}</Text>
     </View>
@@ -260,10 +261,10 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
           onPress={onPress}
           activeOpacity={0.85}
           style={{
-            backgroundColor: '#14b8a6',
+            backgroundColor: Colors.primary,
             borderRadius: 24,
             overflow: 'hidden',
-            shadowColor: '#14b8a6',
+            shadowColor: Colors.primary,
             shadowOffset: { width: 0, height: 8 },
             shadowOpacity: 0.18,
             shadowRadius: 24,
@@ -273,21 +274,21 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
           {/* Premium badge */}
           <View style={{ position: 'absolute', top: 16, left: 16, zIndex: 10 }}>
             <View style={{
-              backgroundColor: 'white',
+              backgroundColor: Colors.white,
               paddingHorizontal: 14,
               paddingVertical: 6,
               borderRadius: 20,
               flexDirection: 'row',
               alignItems: 'center',
               gap: 8,
-              shadowColor: '#000',
+              shadowColor: Colors.black,
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.08,
               shadowRadius: 4,
               elevation: 2,
             }}>
-              <Star size={16} color="#14b8a6" />
-              <Text style={{ color: '#14b8a6', fontSize: 14, fontWeight: 'bold' }}>
+              <Star size={16} color={Colors.primary} />
+              <Text style={{ color: Colors.primary, fontSize: 14, fontWeight: 'bold' }}>
                 TODAY'S SPECIAL
               </Text>
             </View>
@@ -310,8 +311,8 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
           >
             <Heart
               size={24}
-              color={favorited ? '#ef4444' : 'white'}
-              fill={favorited ? '#ef4444' : 'none'}
+              color={favorited ? Colors.error : Colors.white}
+              fill={favorited ? Colors.error : 'none'}
             />
           </TouchableOpacity>
 
@@ -395,18 +396,18 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
               onPress={onPress}
               activeOpacity={0.8}
               style={{
-                backgroundColor: 'white',
+                backgroundColor: Colors.white,
                 paddingVertical: 12,
                 borderRadius: 16,
                 alignItems: 'center',
-                shadowColor: '#14b8a6',
+                shadowColor: Colors.primary,
                 shadowOffset: { width: 0, height: 8 },
                 shadowOpacity: 0.18,
                 shadowRadius: 16,
                 elevation: 6,
               }}
             >
-              <Text style={{ color: '#14b8a6', fontSize: 16, fontWeight: 'bold' }}>
+              <Text style={{ color: Colors.primary, fontSize: 16, fontWeight: 'bold' }}>
                 Play Now
               </Text>
             </TouchableOpacity>
@@ -423,17 +424,17 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
         onPress={onPress}
         activeOpacity={0.85}
         style={{
-          backgroundColor: 'white',
+          backgroundColor: Colors.white,
           borderRadius: 24,
           overflow: 'hidden',
           // Apple-style subtle shadow
-          shadowColor: '#000',
+          shadowColor: Colors.black,
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.06,
           shadowRadius: 8,
           elevation: 3,
           borderWidth: 1,
-          borderColor: 'rgba(0,0,0,0.06)',
+          borderColor: Colors.border,
           transform: [{ scale: isPressed ? 0.98 : 1 }],
         }}
         onPressIn={() => setIsPressed(true)}
@@ -450,10 +451,10 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
                 borderRadius: 16,
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: '#f8f9fa',
+                backgroundColor: Colors.gray50,
                 borderWidth: 2,
-                borderColor: 'rgba(20, 184, 166, 0.1)',
-                shadowColor: '#000',
+                borderColor: Colors.primaryLight,
+                shadowColor: Colors.black,
                 shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 0.08,
                 shadowRadius: 4,
@@ -473,11 +474,11 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
 
               <View style={{ flex: 1, marginLeft: 12, minWidth: 0 }}>
                 {/* Main title: free item/service */}
-                <Text style={{ color: '#111827', fontSize: 18, fontWeight: 'bold', marginBottom: 2 }}>
+                <Text style={{ color: Colors.gray900, fontSize: 18, fontWeight: 'bold', marginBottom: 2 }}>
                   {prize.name || 'Free Reward'}
                 </Text>
                 {/* Subtitle: location name */}
-                <Text style={{ color: '#6b7280', fontSize: 15, fontWeight: '500', marginBottom: 8 }}>
+                <Text style={{ color: Colors.gray600, fontSize: 15, fontWeight: '500', marginBottom: 8 }}>
                   {prize.location_name || prize.company_name || 'OpenDoors'}
                 </Text>
                 <View style={{
@@ -512,7 +513,7 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
                 padding: 10,
                 borderRadius: 20,
                 backgroundColor: favorited ? 'rgba(239, 68, 68, 0.1)' : 'transparent',
-                shadowColor: favorited ? '#ef4444' : 'transparent',
+                shadowColor: favorited ? Colors.error : 'transparent',
                 shadowOffset: { width: 0, height: 4 },
                 shadowOpacity: favorited ? 0.2 : 0,
                 shadowRadius: 8,
@@ -522,8 +523,8 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
             >
               <Heart
                 size={24}
-                color={favorited ? '#ef4444' : '#9ca3af'}
-                fill={favorited ? '#ef4444' : 'none'}
+                color={favorited ? Colors.error : Colors.gray400}
+                fill={favorited ? Colors.error : 'none'}
               />
             </TouchableOpacity>
           </View>
@@ -531,14 +532,14 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
           {/* Location and Door Count */}
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-            <MapPin size={18} color="#6b7280" style={{ marginRight: 6 }} />
-            <Text style={{ color: '#6b7280', fontSize: 15, fontWeight: '500' }}>
+            <MapPin size={18} color={Colors.gray600} style={{ marginRight: 6 }} />
+            <Text style={{ color: Colors.gray600, fontSize: 15, fontWeight: '500' }}>
               {distance}
             </Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <DoorOpen size={16} color="#6b7280" style={{ marginRight: 4 }} />
-              <Text style={{ color: '#6b7280', fontSize: 14, fontWeight: '500' }}>
+              <DoorOpen size={16} color={Colors.gray600} style={{ marginRight: 4 }} />
+              <Text style={{ color: Colors.gray600, fontSize: 14, fontWeight: '500' }}>
                 {doorCount} door{doorCount !== 1 ? 's' : ''}
               </Text>
             </View>
@@ -549,18 +550,18 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
             onPress={onPress}
             activeOpacity={0.8}
             style={{
-              backgroundColor: '#14b8a6',
+              backgroundColor: Colors.primary,
               paddingVertical: 12,
               borderRadius: 16,
               alignItems: 'center',
-              shadowColor: '#14b8a6',
+              shadowColor: Colors.primary,
               shadowOffset: { width: 0, height: 8 },
               shadowOpacity: 0.18,
               shadowRadius: 16,
               elevation: 6,
             }}
           >
-            <Text style={{ color: 'white', fontSize: 16, fontWeight: 'bold' }}>
+            <Text style={{ color: Colors.white, fontSize: 16, fontWeight: 'bold' }}>
               Play Now
             </Text>
           </TouchableOpacity>
