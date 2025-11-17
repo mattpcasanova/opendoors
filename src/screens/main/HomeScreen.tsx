@@ -21,6 +21,7 @@ import GameCard from '../../components/game/GameCard';
 import BottomNavBar from '../../components/main/BottomNavBar';
 import { FilterBar } from '../../components/main/FilterBar';
 import Header from "../../components/main/Header";
+import { LoadingSpinner, SkeletonGameCard } from '../../components/ui';
 import EarnRewardModal from '../../components/modals/EarnRewardModal';
 import WatchAdModal from '../../components/modals/WatchAdModal';
 import { useAuth } from '../../hooks/useAuth';
@@ -1145,13 +1146,25 @@ export default function HomeScreen() {
     return user.user_metadata.full_name.split(" ")[0]
   }
 
+  // Show loading spinner on initial load
+  if (loading) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50, justifyContent: 'center', alignItems: 'center' }}>
+        <LoadingSpinner size="large" color={Colors.primary} />
+        <Text style={{ marginTop: Spacing.lg, fontSize: 16, color: Colors.gray600, fontWeight: '500' }}>
+          Loading games...
+        </Text>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50 }}>
       <Header variant="home" userName={getFirstName()} showLogo={true} />
       
       {/* Main Content */}
-      <ScrollView 
-        className="flex-1 px-6"
+      <ScrollView
+        style={{ flex: 1, paddingHorizontal: Spacing.lg }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 }}
       >
@@ -1176,27 +1189,34 @@ export default function HomeScreen() {
         )}
 
         {/* Search Bar - Now positioned after Earned Rewards */}
-        <View className="mb-8 mt-4">
-          <View className="bg-white rounded-3xl px-5 py-3 flex-row items-center shadow-sm"
+        <View style={{ marginBottom: Spacing.xl, marginTop: Spacing.md }}>
+          <View
             style={{
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.08,
-              shadowRadius: 8,
-              elevation: 3,
+              backgroundColor: Colors.white,
+              borderRadius: BorderRadius.full,
+              paddingHorizontal: Spacing.lg,
+              paddingVertical: Spacing.md,
+              flexDirection: 'row',
+              alignItems: 'center',
+              ...Shadows.sm,
             }}
           >
-            <Ionicons name="search" size={20} color="#999999" />
+            <Ionicons name="search" size={20} color={Colors.gray500} />
             <TextInput
-              className="flex-1 ml-3 text-base text-gray-900"
+              style={{
+                flex: 1,
+                marginLeft: Spacing.md,
+                fontSize: 16,
+                color: Colors.gray900,
+              }}
               placeholder="Search games by name or description"
-              placeholderTextColor="#999999"
+              placeholderTextColor={Colors.gray500}
               value={searchText}
               onChangeText={setSearchText}
             />
             {searchText.length > 0 && (
               <TouchableOpacity onPress={() => setSearchText('')}>
-                <Ionicons name="close-circle" size={20} color="#999999" />
+                <Ionicons name="close-circle" size={20} color={Colors.gray500} />
               </TouchableOpacity>
             )}
           </View>
@@ -1204,8 +1224,8 @@ export default function HomeScreen() {
 
         {/* Search Results Info */}
         {searchText.length > 0 && (
-          <View className="mb-4">
-            <Text className="text-gray-600 text-sm">
+          <View style={{ marginBottom: Spacing.md }}>
+            <Text style={{ color: Colors.gray600, fontSize: 14 }}>
               Found {filteredGames.length} game{filteredGames.length !== 1 ? 's' : ''} matching "{searchText}"
             </Text>
           </View>
@@ -1214,7 +1234,14 @@ export default function HomeScreen() {
         {/* Today's Special - Only show when not searching and a featured game exists */}
         {!searchText && featuredGame && (
           <>
-            <Text className="text-gray-900 text-xl font-semibold mb-4">Today's special</Text>
+            <Text style={{
+              color: Colors.gray900,
+              fontSize: 20,
+              fontWeight: '600',
+              marginBottom: Spacing.md,
+            }}>
+              Today's special
+            </Text>
             <GameCard
               variant="featured"
               prize={featuredGame}
@@ -1226,8 +1253,13 @@ export default function HomeScreen() {
 
         {/* Available Games header and Filter button row - Only show when not searching */}
         {!searchText && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, marginTop: 8 }}>
-            <Text className="text-gray-900 text-xl font-semibold" style={{ marginBottom: 0, textAlign: 'left', flex: 1, paddingLeft: 0, marginLeft: 0 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.lg, marginTop: Spacing.base }}>
+            <Text style={{
+              color: Colors.gray900,
+              fontSize: 20,
+              fontWeight: '600',
+              flex: 1,
+            }}>
               Available games
             </Text>
             <TouchableOpacity
@@ -1266,8 +1298,13 @@ export default function HomeScreen() {
 
         {/* Search Results header - Only show when searching */}
         {searchText && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, marginTop: 8 }}>
-            <Text className="text-gray-900 text-xl font-semibold" style={{ marginBottom: 0, textAlign: 'left', flex: 1, paddingLeft: 0, marginLeft: 0 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.lg, marginTop: Spacing.base }}>
+            <Text style={{
+              color: Colors.gray900,
+              fontSize: 20,
+              fontWeight: '600',
+              flex: 1,
+            }}>
               Search Results
             </Text>
           </View>
@@ -1302,10 +1339,78 @@ export default function HomeScreen() {
           
           return (
             gamesToDisplay.length === 0 && searchText.length > 0 ? (
-              <View className="py-8 items-center">
-                <Ionicons name="search" size={48} color="#999999" />
-                <Text className="text-gray-500 text-lg mt-4">No games found</Text>
-                <Text className="text-gray-400 text-sm mt-2">Try searching for something else</Text>
+              <View style={{
+                paddingVertical: Spacing.xxxl,
+                alignItems: 'center',
+                backgroundColor: Colors.white,
+                borderRadius: BorderRadius.lg,
+                marginVertical: Spacing.lg,
+                ...Shadows.sm,
+              }}>
+                <View style={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: BorderRadius.full,
+                  backgroundColor: Colors.gray100,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: Spacing.lg,
+                }}>
+                  <Ionicons name="search" size={40} color={Colors.gray400} />
+                </View>
+                <Text style={{
+                  color: Colors.gray700,
+                  fontSize: 18,
+                  fontWeight: '600',
+                  marginBottom: Spacing.sm,
+                }}>
+                  No games found
+                </Text>
+                <Text style={{
+                  color: Colors.gray500,
+                  fontSize: 14,
+                  textAlign: 'center',
+                  paddingHorizontal: Spacing.xl,
+                }}>
+                  Try searching for something else or adjust your filters
+                </Text>
+              </View>
+            ) : gamesToDisplay.length === 0 && !searchText ? (
+              <View style={{
+                paddingVertical: Spacing.xxxl,
+                alignItems: 'center',
+                backgroundColor: Colors.white,
+                borderRadius: BorderRadius.lg,
+                marginVertical: Spacing.lg,
+                ...Shadows.sm,
+              }}>
+                <View style={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: BorderRadius.full,
+                  backgroundColor: Colors.primaryLight,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: Spacing.lg,
+                }}>
+                  <Ionicons name="game-controller" size={40} color={Colors.primary} />
+                </View>
+                <Text style={{
+                  color: Colors.gray700,
+                  fontSize: 18,
+                  fontWeight: '600',
+                  marginBottom: Spacing.sm,
+                }}>
+                  No games available
+                </Text>
+                <Text style={{
+                  color: Colors.gray500,
+                  fontSize: 14,
+                  textAlign: 'center',
+                  paddingHorizontal: Spacing.xl,
+                }}>
+                  Check back soon for new games and prizes!
+                </Text>
               </View>
             ) : (
               gamesToDisplay.map((prize) => (

@@ -300,8 +300,8 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
             {/* Company logo section */}
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
               <View style={{
-                width: 56,
-                height: 56,
+                width: 72,
+                height: 72,
                 backgroundColor: 'white',
                 borderRadius: 16,
                 alignItems: 'center',
@@ -315,11 +315,11 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
                 {prize.logo_url ? (
                   <Image
                     source={{ uri: prize.logo_url }}
-                    style={{ width: 48, height: 48, resizeMode: 'contain' }}
+                    style={{ width: 64, height: 64, resizeMode: 'contain' }}
                     onError={handleImageError}
                   />
                 ) : (
-                  <Text style={{ fontSize: 32 }}>{getIconForPrize(prize.prize_type, prize.name).icon}</Text>
+                  <Text style={{ fontSize: 40 }}>{getIconForPrize(prize.prize_type, prize.name).icon}</Text>
                 )}
               </View>
 
@@ -398,13 +398,14 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
           backgroundColor: 'white',
           borderRadius: 24,
           overflow: 'hidden',
-          shadowColor: '#14b8a6',
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.18,
-          shadowRadius: 24,
-          elevation: 10,
+          // Apple-style subtle shadow
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.06,
+          shadowRadius: 8,
+          elevation: 3,
           borderWidth: 1,
-          borderColor: 'rgba(0,0,0,0.04)',
+          borderColor: 'rgba(0,0,0,0.06)',
           transform: [{ scale: isPressed ? 0.98 : 1 }],
         }}
         onPressIn={() => setIsPressed(true)}
@@ -416,8 +417,8 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
             <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
               {/* Company logo container - bigger, less padding */}
               <View style={{
-                width: 56,
-                height: 56,
+                width: 72,
+                height: 72,
                 borderRadius: 16,
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -434,11 +435,11 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
                 {prize.logo_url ? (
                   <Image
                     source={{ uri: prize.logo_url }}
-                    style={{ width: 48, height: 48, resizeMode: 'contain' }}
+                    style={{ width: 64, height: 64, resizeMode: 'contain' }}
                     onError={handleImageError}
                   />
                 ) : (
-                  <Text style={{ fontSize: 32 }}>{getIconForPrize(prize.prize_type, prize.name).icon}</Text>
+                  <Text style={{ fontSize: 40 }}>{getIconForPrize(prize.prize_type, prize.name).icon}</Text>
                 )}
               </View>
 
