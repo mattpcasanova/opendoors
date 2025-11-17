@@ -1,5 +1,5 @@
 // src/components/game/GameCard.tsx
-import { DoorOpen, Heart, MapPin, Star } from 'lucide-react-native';
+import { DoorOpen, Heart, MapPin, Star, UtensilsCrossed, Coffee, Dumbbell, Sparkles, ShoppingBag, Film } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { DeviceEventEmitter, Image, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../hooks/useAuth';
@@ -36,18 +36,33 @@ const formatCategory = (category?: string): string => {
   }
 };
 
-// Helper function to get category color
-const getCategoryColor = (category?: string): { bg: string; text: string } => {
-  if (!category) return { bg: '#f0f9ff', text: '#0369a1' };
-  
+// Helper function to get category icon component
+const getCategoryIcon = (category?: string) => {
+  if (!category) return UtensilsCrossed;
+
   switch (category) {
-    case 'food_and_dining': return { bg: '#fef3c7', text: '#d97706' };
-    case 'coffee_and_drinks': return { bg: '#e0f2fe', text: '#0284c7' };
-    case 'shopping': return { bg: '#f3e8ff', text: '#7c3aed' };
-    case 'entertainment': return { bg: '#e0f2fe', text: '#0284c7' };
-    case 'fitness_and_health': return { bg: '#dcfce7', text: '#16a34a' };
-    case 'beauty_and_wellness': return { bg: '#fce7f3', text: '#ec4899' };
-    default: return { bg: '#f0f9ff', text: '#0369a1' };
+    case 'food_and_dining': return UtensilsCrossed;
+    case 'coffee_and_drinks': return Coffee;
+    case 'shopping': return ShoppingBag;
+    case 'entertainment': return Film;
+    case 'fitness_and_health': return Dumbbell;
+    case 'beauty_and_wellness': return Sparkles;
+    default: return UtensilsCrossed;
+  }
+};
+
+// Helper function to get category color
+const getCategoryColor = (category?: string): { bg: string; text: string; icon: string } => {
+  if (!category) return { bg: '#fef3c7', text: '#d97706', icon: '#d97706' };
+
+  switch (category) {
+    case 'food_and_dining': return { bg: '#fef3c7', text: '#d97706', icon: '#ea580c' };
+    case 'coffee_and_drinks': return { bg: '#dbeafe', text: '#0369a1', icon: '#0284c7' };
+    case 'shopping': return { bg: '#f3e8ff', text: '#7c3aed', icon: '#9333ea' };
+    case 'entertainment': return { bg: '#fce7f3', text: '#be185d', icon: '#db2777' };
+    case 'fitness_and_health': return { bg: '#dcfce7', text: '#15803d', icon: '#16a34a' };
+    case 'beauty_and_wellness': return { bg: '#fce7f3', text: '#be185d', icon: '#ec4899' };
+    default: return { bg: '#fef3c7', text: '#d97706', icon: '#ea580c' };
   }
 };
 
@@ -337,13 +352,22 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
                   {prize.location_name || prize.company_name || 'OpenDoors'}
                 </Text>
                 <View style={{
-                  backgroundColor: 'rgba(255,255,255,0.2)',
-                  paddingHorizontal: 10,
-                  paddingVertical: 4,
-                  borderRadius: 12,
+                  backgroundColor: 'rgba(255,255,255,0.25)',
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 14,
                   alignSelf: 'flex-start',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 4,
+                  elevation: 2,
                 }}>
-                  <Text style={{ color: 'white', fontSize: 13, fontWeight: '600' }}>
+                  {React.createElement(getCategoryIcon(prize.category), { size: 14, color: 'white' })}
+                  <Text style={{ color: 'white', fontSize: 13, fontWeight: '700', letterSpacing: 0.3 }}>
                     {formattedCategory}
                   </Text>
                 </View>
@@ -458,12 +482,23 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
                 </Text>
                 <View style={{
                   backgroundColor: categoryColors.bg,
-                  paddingHorizontal: 10,
-                  paddingVertical: 4,
-                  borderRadius: 12,
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 14,
                   alignSelf: 'flex-start',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  borderWidth: 1.5,
+                  borderColor: categoryColors.icon + '30',
+                  shadowColor: categoryColors.icon,
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.12,
+                  shadowRadius: 4,
+                  elevation: 2,
                 }}>
-                  <Text style={{ color: categoryColors.text, fontSize: 13, fontWeight: '600' }}>
+                  {React.createElement(getCategoryIcon(prize.category), { size: 14, color: categoryColors.icon })}
+                  <Text style={{ color: categoryColors.text, fontSize: 13, fontWeight: '700', letterSpacing: 0.3 }}>
                     {formattedCategory}
                   </Text>
                 </View>
