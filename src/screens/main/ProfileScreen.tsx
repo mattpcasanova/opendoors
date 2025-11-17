@@ -22,9 +22,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import BottomNavBar from '../../components/main/BottomNavBar';
 import Header from "../../components/main/Header";
+import { SkeletonProfileSection } from '../../components/ui';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../services/supabase/client';
 import type { MainStackParamList } from "../../types/navigation";
+import { Colors, Spacing, BorderRadius, Shadows } from '../../constants';
 
 interface PreferenceItem {
   id: string;
@@ -545,90 +547,373 @@ export default function ProfileScreen() {
     console.log("Settings pressed")
   }
 
+  // Loading state
+  if (loading) {
+    return (
+      <View style={{ flex: 1 }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50 }}>
+          <Header
+            variant="page"
+            title="Profile"
+            subtitle="Manage your account and preferences"
+          />
+
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: Spacing.lg }}>
+            {/* User Info Skeleton */}
+            <View style={{
+              backgroundColor: Colors.white,
+              borderRadius: BorderRadius.lg,
+              padding: Spacing.lg,
+              marginBottom: Spacing.lg,
+              ...Shadows.sm,
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md }}>
+                <View style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: BorderRadius.full,
+                  backgroundColor: Colors.gray200,
+                  marginRight: Spacing.md,
+                }} />
+                <View style={{ flex: 1 }}>
+                  <View style={{
+                    width: 120,
+                    height: 18,
+                    backgroundColor: Colors.gray200,
+                    borderRadius: BorderRadius.sm,
+                    marginBottom: Spacing.sm,
+                  }} />
+                  <View style={{
+                    width: 180,
+                    height: 14,
+                    backgroundColor: Colors.gray200,
+                    borderRadius: BorderRadius.sm,
+                  }} />
+                </View>
+              </View>
+              <View style={{ flexDirection: 'row', gap: Spacing.md }}>
+                <View style={{ flex: 1 }}>
+                  <View style={{
+                    width: 40,
+                    height: 28,
+                    backgroundColor: Colors.gray200,
+                    borderRadius: BorderRadius.sm,
+                    marginBottom: Spacing.xs,
+                  }} />
+                  <View style={{
+                    width: 80,
+                    height: 12,
+                    backgroundColor: Colors.gray200,
+                    borderRadius: BorderRadius.sm,
+                  }} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View style={{
+                    width: 40,
+                    height: 28,
+                    backgroundColor: Colors.gray200,
+                    borderRadius: BorderRadius.sm,
+                    marginBottom: Spacing.xs,
+                  }} />
+                  <View style={{
+                    width: 80,
+                    height: 12,
+                    backgroundColor: Colors.gray200,
+                    borderRadius: BorderRadius.sm,
+                  }} />
+                </View>
+              </View>
+            </View>
+
+            {/* Game Preferences Skeleton */}
+            <SkeletonProfileSection itemCount={6} />
+
+            {/* Privacy Skeleton */}
+            <SkeletonProfileSection itemCount={2} />
+
+            {/* Account Skeleton */}
+            <SkeletonProfileSection itemCount={1} />
+
+            {/* Support Skeleton */}
+            <SkeletonProfileSection itemCount={4} />
+          </ScrollView>
+          <BottomNavBar />
+        </SafeAreaView>
+      </View>
+    );
+  }
+
   return (
     <View style={{ flex: 1 }}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
-        <Header 
-          variant="page" 
-          title="Profile" 
-          subtitle="Manage your account and preferences" 
+      <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50 }}>
+        <Header
+          variant="page"
+          title="Profile"
+          subtitle="Manage your account and preferences"
         />
 
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20 }}>
-          {/* User Info */}
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: Spacing.lg }}>
+          {/* User Info & Stats Card */}
           <View style={{
-            backgroundColor: 'white',
-            borderRadius: 16,
-            padding: 20,
-            marginBottom: 24,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 4,
-            elevation: 2,
+            backgroundColor: Colors.white,
+            borderRadius: BorderRadius.lg,
+            padding: Spacing.lg,
+            marginBottom: Spacing.lg,
+            ...Shadows.sm,
+            borderWidth: 1,
+            borderColor: Colors.gray100,
           }}>
-            <View style={{ flexDirection: 'column' }}>
-              <Text style={{ fontSize: 18, fontWeight: '600', color: '#374151', marginBottom: 4 }}>
-                {firstName} {lastName}
-              </Text>
-              <Text style={{ fontSize: 14, color: '#6B7280' }}>
-                {user?.email || 'user@example.com'}
-              </Text>
+            {/* User Info Row */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.lg }}>
+              {/* Avatar Circle with Initials */}
+              <View style={{
+                width: 64,
+                height: 64,
+                borderRadius: BorderRadius.full,
+                backgroundColor: Colors.primaryLight,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: Spacing.md,
+              }}>
+                <Text style={{
+                  fontSize: 24,
+                  fontWeight: '700',
+                  color: Colors.primary
+                }}>
+                  {firstName && lastName
+                    ? `${firstName[0]}${lastName[0]}`.toUpperCase()
+                    : user?.email?.[0]?.toUpperCase() || 'U'
+                  }
+                </Text>
+              </View>
+
+              {/* Name & Email */}
+              <View style={{ flex: 1 }}>
+                <Text style={{
+                  fontSize: 18,
+                  fontWeight: '600',
+                  color: Colors.gray900,
+                  marginBottom: 4
+                }}>
+                  {firstName} {lastName}
+                </Text>
+                <Text style={{ fontSize: 14, color: Colors.gray600 }}>
+                  {user?.email || 'user@example.com'}
+                </Text>
+              </View>
+            </View>
+
+            {/* Stats Row */}
+            <View style={{
+              flexDirection: 'row',
+              paddingTop: Spacing.lg,
+              borderTopWidth: 1,
+              borderTopColor: Colors.gray100,
+            }}>
+              {/* Games Played */}
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <View style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: BorderRadius.full,
+                  backgroundColor: Colors.primaryLight,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: Spacing.sm,
+                }}>
+                  <Ionicons name="game-controller" size={24} color={Colors.primary} />
+                </View>
+                <Text style={{
+                  fontSize: 24,
+                  fontWeight: '700',
+                  color: Colors.gray900,
+                  marginBottom: 2,
+                }}>
+                  {userStats?.gamesPlayed ?? 0}
+                </Text>
+                <Text style={{
+                  fontSize: 12,
+                  color: Colors.gray600,
+                  textAlign: 'center',
+                  fontWeight: '500',
+                }}>
+                  Games Played
+                </Text>
+              </View>
+
+              {/* Divider */}
+              <View style={{
+                width: 1,
+                backgroundColor: Colors.gray100,
+                marginHorizontal: Spacing.md,
+              }} />
+
+              {/* Rewards Earned */}
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <View style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: BorderRadius.full,
+                  backgroundColor: '#FEF3C7',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: Spacing.sm,
+                }}>
+                  <Ionicons name="trophy" size={24} color="#F59E0B" />
+                </View>
+                <Text style={{
+                  fontSize: 24,
+                  fontWeight: '700',
+                  color: Colors.gray900,
+                  marginBottom: 2,
+                }}>
+                  {userStats?.rewardsEarned ?? 0}
+                </Text>
+                <Text style={{
+                  fontSize: 12,
+                  color: Colors.gray600,
+                  textAlign: 'center',
+                  fontWeight: '500',
+                }}>
+                  Rewards Earned
+                </Text>
+              </View>
             </View>
           </View>
 
           {/* Game Preferences */}
-          <View style={{ backgroundColor: 'white', borderRadius: 16, padding: 20, marginBottom: 24, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <Text style={{ fontSize: 20, fontWeight: '700', color: '#222' }}>Game Preferences</Text>
-              <TouchableOpacity onPress={() => setEditMode((v) => !v)}>
-                <Text style={{ color: '#009688', fontWeight: '600', fontSize: 16 }}>{editMode ? 'Cancel' : 'Edit'}</Text>
+          <View style={{
+            backgroundColor: Colors.white,
+            borderRadius: BorderRadius.lg,
+            padding: Spacing.lg,
+            marginBottom: Spacing.lg,
+            ...Shadows.sm,
+            borderWidth: 1,
+            borderColor: Colors.gray100,
+          }}>
+            <View style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: Spacing.lg
+            }}>
+              <Text style={{
+                fontSize: 18,
+                fontWeight: '600',
+                color: Colors.gray900
+              }}>
+                Game Preferences
+              </Text>
+              <TouchableOpacity
+                onPress={() => setEditMode((v) => !v)}
+                activeOpacity={0.7}
+              >
+                <Text style={{
+                  color: Colors.primary,
+                  fontWeight: '600',
+                  fontSize: 16
+                }}>
+                  {editMode ? 'Cancel' : 'Edit'}
+                </Text>
               </TouchableOpacity>
             </View>
-            {CATEGORIES.map((cat) => (
-              <View key={cat.key} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 18 }}>
-                <Text style={{ fontSize: 18, color: '#444', width: 32 }}>{/* icon placeholder */}</Text>
-                <Text style={{ flex: 1, fontSize: 16, color: '#222' }}>{cat.label}</Text>
-                <TouchableOpacity
-                  disabled={!editMode}
-                  onPress={() => handleToggle(cat.key as keyof typeof preferences)}
-                  style={{ opacity: editMode ? 1 : 0.5 }}
-                >
-                  <View style={{
-                    width: 48, height: 28, borderRadius: 14, backgroundColor: preferences[cat.key as keyof typeof preferences] ? '#009688' : '#E5E7EB', justifyContent: 'center', padding: 2,
-                  }}>
-                    <View style={{
-                      width: 24, height: 24, borderRadius: 12, backgroundColor: 'white', alignSelf: preferences[cat.key as keyof typeof preferences] ? 'flex-end' : 'flex-start',
-                      shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 2, elevation: 1,
-                    }} />
+
+            {CATEGORIES.map((cat, index) => (
+              <View key={cat.key}>
+                <View style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingVertical: Spacing.md,
+                }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{
+                      fontSize: 16,
+                      color: Colors.gray900,
+                      fontWeight: '500'
+                    }}>
+                      {cat.label}
+                    </Text>
                   </View>
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    disabled={!editMode}
+                    onPress={() => handleToggle(cat.key as keyof typeof preferences)}
+                    style={{ opacity: editMode ? 1 : 0.5 }}
+                    activeOpacity={0.7}
+                  >
+                    <View style={{
+                      width: 48,
+                      height: 28,
+                      borderRadius: 14,
+                      backgroundColor: preferences[cat.key as keyof typeof preferences] ? Colors.primary : Colors.gray200,
+                      justifyContent: 'center',
+                      padding: 2,
+                    }}>
+                      <View style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: 12,
+                        backgroundColor: Colors.white,
+                        alignSelf: preferences[cat.key as keyof typeof preferences] ? 'flex-end' : 'flex-start',
+                        shadowColor: '#000',
+                        shadowOpacity: 0.08,
+                        shadowRadius: 2,
+                        elevation: 1,
+                      }} />
+                    </View>
+                  </TouchableOpacity>
+                </View>
+                {index < CATEGORIES.length - 1 && (
+                  <View style={{
+                    height: 1,
+                    backgroundColor: Colors.gray100,
+                    marginLeft: 0
+                  }} />
+                )}
               </View>
             ))}
+
             {editMode && (
               <TouchableOpacity
                 onPress={handleSave}
-                style={{ marginTop: 20, backgroundColor: '#009688', borderRadius: 8, paddingVertical: 12, alignItems: 'center', opacity: saving ? 0.6 : 1 }}
+                style={{
+                  marginTop: Spacing.lg,
+                  backgroundColor: Colors.primary,
+                  borderRadius: BorderRadius.md,
+                  paddingVertical: Spacing.md,
+                  alignItems: 'center',
+                  opacity: saving ? 0.6 : 1,
+                  ...Shadows.sm,
+                }}
                 disabled={saving}
+                activeOpacity={0.8}
               >
-                <Text style={{ color: 'white', fontWeight: '700', fontSize: 16 }}>{saving ? 'Saving...' : 'Save'}</Text>
+                <Text style={{
+                  color: Colors.white,
+                  fontWeight: '600',
+                  fontSize: 16
+                }}>
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </Text>
               </TouchableOpacity>
             )}
           </View>
 
           {/* Privacy & Notifications */}
           <View style={{
-            backgroundColor: 'white',
-            borderRadius: 16,
-            padding: 20,
-            marginBottom: 24,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 4,
-            elevation: 2,
+            backgroundColor: Colors.white,
+            borderRadius: BorderRadius.lg,
+            padding: Spacing.lg,
+            marginBottom: Spacing.lg,
+            ...Shadows.sm,
+            borderWidth: 1,
+            borderColor: Colors.gray100,
           }}>
-            <Text style={{ fontSize: 18, fontWeight: '600', color: '#374151', marginBottom: 16 }}>
+            <Text style={{
+              fontSize: 18,
+              fontWeight: '600',
+              color: Colors.gray900,
+              marginBottom: Spacing.lg
+            }}>
               Privacy & Notifications
             </Text>
 
@@ -637,20 +922,28 @@ export default function ProfileScreen() {
                 <View style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  paddingVertical: 12,
+                  paddingVertical: Spacing.md,
                 }}>
-                  <Ionicons 
-                    name={setting.icon as any} 
-                    size={20} 
-                    color="#6B7280" 
-                    style={{ marginRight: 12 }} 
+                  <Ionicons
+                    name={setting.icon as any}
+                    size={20}
+                    color={Colors.gray600}
+                    style={{ marginRight: Spacing.md }}
                   />
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 16, color: '#374151', marginBottom: 2 }}>
+                    <Text style={{
+                      fontSize: 16,
+                      color: Colors.gray900,
+                      marginBottom: 2,
+                      fontWeight: '500'
+                    }}>
                       {setting.label}
                     </Text>
                     {setting.subtitle && (
-                      <Text style={{ fontSize: 12, color: '#6B7280' }}>
+                      <Text style={{
+                        fontSize: 12,
+                        color: Colors.gray600
+                      }}>
                         {setting.subtitle}
                       </Text>
                     )}
@@ -658,12 +951,16 @@ export default function ProfileScreen() {
                   <Switch
                     value={setting.enabled}
                     onValueChange={(value) => handlePrivacyToggle(setting.id, value)}
-                    trackColor={{ false: '#E5E7EB', true: '#009688' }}
-                    thumbColor={setting.enabled ? 'white' : '#F3F4F6'}
+                    trackColor={{ false: Colors.gray200, true: Colors.primary }}
+                    thumbColor={setting.enabled ? Colors.white : Colors.gray100}
                   />
                 </View>
                 {index < privacySettings.length - 1 && (
-                  <View style={{ height: 1, backgroundColor: '#F3F4F6', marginLeft: 32 }} />
+                  <View style={{
+                    height: 1,
+                    backgroundColor: Colors.gray100,
+                    marginLeft: 32
+                  }} />
                 )}
               </View>
             ))}
@@ -671,17 +968,20 @@ export default function ProfileScreen() {
 
           {/* Account Settings */}
           <View style={{
-            backgroundColor: 'white',
-            borderRadius: 16,
-            padding: 20,
-            marginBottom: 24,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 4,
-            elevation: 2,
+            backgroundColor: Colors.white,
+            borderRadius: BorderRadius.lg,
+            padding: Spacing.lg,
+            marginBottom: Spacing.lg,
+            ...Shadows.sm,
+            borderWidth: 1,
+            borderColor: Colors.gray100,
           }}>
-            <Text style={{ fontSize: 18, fontWeight: '600', color: '#374151', marginBottom: 16 }}>
+            <Text style={{
+              fontSize: 18,
+              fontWeight: '600',
+              color: Colors.gray900,
+              marginBottom: Spacing.lg
+            }}>
               Account
             </Text>
 
@@ -689,25 +989,39 @@ export default function ProfileScreen() {
               <TouchableOpacity
                 key={setting.id}
                 onPress={() => handleSettingPress(setting.id)}
+                activeOpacity={0.7}
               >
                 <View style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  paddingVertical: 12,
+                  paddingVertical: Spacing.md,
                 }}>
-                  <Ionicons 
-                    name={setting.icon as any} 
-                    size={20} 
-                    color="#6B7280" 
-                    style={{ marginRight: 12 }} 
+                  <Ionicons
+                    name={setting.icon as any}
+                    size={20}
+                    color={Colors.gray600}
+                    style={{ marginRight: Spacing.md }}
                   />
-                  <Text style={{ flex: 1, fontSize: 16, color: '#374151' }}>
+                  <Text style={{
+                    flex: 1,
+                    fontSize: 16,
+                    color: Colors.gray900,
+                    fontWeight: '500'
+                  }}>
                     {setting.label}
                   </Text>
-                  <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color={Colors.gray400}
+                  />
                 </View>
                 {index < accountSettings.length - 1 && (
-                  <View style={{ height: 1, backgroundColor: '#F3F4F6', marginLeft: 32 }} />
+                  <View style={{
+                    height: 1,
+                    backgroundColor: Colors.gray100,
+                    marginLeft: 32
+                  }} />
                 )}
               </TouchableOpacity>
             ))}
@@ -715,17 +1029,20 @@ export default function ProfileScreen() {
 
           {/* Support & Legal */}
           <View style={{
-            backgroundColor: 'white',
-            borderRadius: 16,
-            padding: 20,
-            marginBottom: 24,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 4,
-            elevation: 2,
+            backgroundColor: Colors.white,
+            borderRadius: BorderRadius.lg,
+            padding: Spacing.lg,
+            marginBottom: Spacing.lg,
+            ...Shadows.sm,
+            borderWidth: 1,
+            borderColor: Colors.gray100,
           }}>
-            <Text style={{ fontSize: 18, fontWeight: '600', color: '#374151', marginBottom: 16 }}>
+            <Text style={{
+              fontSize: 18,
+              fontWeight: '600',
+              color: Colors.gray900,
+              marginBottom: Spacing.lg
+            }}>
               Support & Legal
             </Text>
 
@@ -733,25 +1050,39 @@ export default function ProfileScreen() {
               <TouchableOpacity
                 key={setting.id}
                 onPress={() => handleSettingPress(setting.id)}
+                activeOpacity={0.7}
               >
                 <View style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  paddingVertical: 12,
+                  paddingVertical: Spacing.md,
                 }}>
-                  <Ionicons 
-                    name={setting.icon as any} 
-                    size={20} 
-                    color="#6B7280" 
-                    style={{ marginRight: 12 }} 
+                  <Ionicons
+                    name={setting.icon as any}
+                    size={20}
+                    color={Colors.gray600}
+                    style={{ marginRight: Spacing.md }}
                   />
-                  <Text style={{ flex: 1, fontSize: 16, color: '#374151' }}>
+                  <Text style={{
+                    flex: 1,
+                    fontSize: 16,
+                    color: Colors.gray900,
+                    fontWeight: '500'
+                  }}>
                     {setting.label}
                   </Text>
-                  <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color={Colors.gray400}
+                  />
                 </View>
                 {index < supportSettings.length - 1 && (
-                  <View style={{ height: 1, backgroundColor: '#F3F4F6', marginLeft: 32 }} />
+                  <View style={{
+                    height: 1,
+                    backgroundColor: Colors.gray100,
+                    marginLeft: 32
+                  }} />
                 )}
               </TouchableOpacity>
             ))}
@@ -760,33 +1091,47 @@ export default function ProfileScreen() {
           {/* Sign Out Button */}
           <TouchableOpacity
             style={{
-              backgroundColor: 'white',
-              borderRadius: 16,
-              padding: 20,
-              marginBottom: 24,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.05,
-              shadowRadius: 4,
-              elevation: 2,
+              backgroundColor: Colors.white,
+              borderRadius: BorderRadius.lg,
+              padding: Spacing.lg,
+              marginBottom: Spacing.lg,
+              ...Shadows.sm,
+              borderWidth: 1,
+              borderColor: '#FEE2E2',
             }}
             onPress={handleSignOut}
+            activeOpacity={0.7}
           >
             <View style={{
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'center',
             }}>
-              <Ionicons name="log-out" size={20} color="#DC2626" style={{ marginRight: 8 }} />
-              <Text style={{ fontSize: 16, fontWeight: '600', color: '#DC2626' }}>
+              <Ionicons
+                name="log-out"
+                size={20}
+                color="#DC2626"
+                style={{ marginRight: Spacing.sm }}
+              />
+              <Text style={{
+                fontSize: 16,
+                fontWeight: '600',
+                color: '#DC2626'
+              }}>
                 Sign Out
               </Text>
             </View>
           </TouchableOpacity>
 
           {/* App Version */}
-          <View style={{ alignItems: 'center', marginBottom: 20 }}>
-            <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+          <View style={{
+            alignItems: 'center',
+            marginBottom: Spacing.lg
+          }}>
+            <Text style={{
+              fontSize: 12,
+              color: Colors.gray500
+            }}>
               Open Doors v1.0.0
             </Text>
           </View>
@@ -800,26 +1145,37 @@ export default function ProfileScreen() {
         transparent
         animationType="slide"
       >
-        <KeyboardAvoidingView 
-          style={{ flex: 1 }} 
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
           <View style={{
             flex: 1,
             justifyContent: 'center',
             backgroundColor: 'rgba(0,0,0,0.5)',
-            padding: 20,
+            padding: Spacing.lg,
           }}>
             <View style={{
-              backgroundColor: 'white',
-              borderRadius: 16,
-              padding: 24,
+              backgroundColor: Colors.white,
+              borderRadius: BorderRadius.lg,
+              padding: Spacing.xl,
+              ...Shadows.sm,
             }}>
-              <Text style={{ fontSize: 20, fontWeight: '600', marginBottom: 20, textAlign: 'center' }}>
+              <Text style={{
+                fontSize: 20,
+                fontWeight: '600',
+                marginBottom: Spacing.lg,
+                textAlign: 'center',
+                color: Colors.gray900
+              }}>
                 Edit Profile
               </Text>
-              
-              <Text style={{ fontSize: 14, color: '#6B7280', marginBottom: 8 }}>
+
+              <Text style={{
+                fontSize: 14,
+                color: Colors.gray600,
+                marginBottom: Spacing.sm
+              }}>
                 Display Name
               </Text>
               <TextInput
@@ -827,40 +1183,55 @@ export default function ProfileScreen() {
                 onChangeText={setTempUserName}
                 style={{
                   borderWidth: 1,
-                  borderColor: '#E5E7EB',
-                  borderRadius: 8,
-                  padding: 12,
+                  borderColor: Colors.gray200,
+                  borderRadius: BorderRadius.md,
+                  padding: Spacing.md,
                   fontSize: 16,
-                  marginBottom: 20,
+                  marginBottom: Spacing.lg,
+                  color: Colors.gray900
                 }}
                 placeholder="Enter your name"
+                placeholderTextColor={Colors.gray500}
               />
-              
-              <View style={{ flexDirection: 'row', gap: 12 }}>
+
+              <View style={{ flexDirection: 'row', gap: Spacing.md }}>
                 <TouchableOpacity
                   style={{
                     flex: 1,
-                    backgroundColor: '#F3F4F6',
-                    padding: 12,
-                    borderRadius: 8,
+                    backgroundColor: Colors.gray100,
+                    padding: Spacing.md,
+                    borderRadius: BorderRadius.md,
                     alignItems: 'center',
                   }}
                   onPress={() => setShowEditProfile(false)}
+                  activeOpacity={0.7}
                 >
-                  <Text style={{ color: '#374151', fontWeight: '600' }}>Cancel</Text>
+                  <Text style={{
+                    color: Colors.gray700,
+                    fontWeight: '600'
+                  }}>
+                    Cancel
+                  </Text>
                 </TouchableOpacity>
-                
+
                 <TouchableOpacity
                   style={{
                     flex: 1,
-                    backgroundColor: '#009688',
-                    padding: 12,
-                    borderRadius: 8,
+                    backgroundColor: Colors.primary,
+                    padding: Spacing.md,
+                    borderRadius: BorderRadius.md,
                     alignItems: 'center',
+                    ...Shadows.sm,
                   }}
                   onPress={saveProfile}
+                  activeOpacity={0.8}
                 >
-                  <Text style={{ color: 'white', fontWeight: '600' }}>Save</Text>
+                  <Text style={{
+                    color: Colors.white,
+                    fontWeight: '600'
+                  }}>
+                    Save
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -878,55 +1249,95 @@ export default function ProfileScreen() {
           flex: 1,
           justifyContent: 'center',
           backgroundColor: 'rgba(0,0,0,0.5)',
-          padding: 20,
+          padding: Spacing.lg,
         }}>
           <View style={{
-            backgroundColor: 'white',
-            borderRadius: 16,
-            padding: 24,
+            backgroundColor: Colors.white,
+            borderRadius: BorderRadius.lg,
+            padding: Spacing.xl,
             maxHeight: '80%',
+            ...Shadows.sm,
           }}>
-            <Text style={{ fontSize: 20, fontWeight: '600', marginBottom: 20, textAlign: 'center' }}>
+            <Text style={{
+              fontSize: 20,
+              fontWeight: '600',
+              marginBottom: Spacing.lg,
+              textAlign: 'center',
+              color: Colors.gray900
+            }}>
               Game Preferences
             </Text>
-            
+
             <ScrollView style={{ maxHeight: 300 }}>
-              {CATEGORIES.map((cat) => (
-                <View key={cat.key} style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  paddingVertical: 12,
-                }}>
-                  <Text style={{ flex: 1, fontSize: 16, color: '#374151' }}>
-                    {cat.label}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => toggleGamePreference(cat.key)}
-                  >
-                    <View style={{
-                      width: 48, height: 28, borderRadius: 14, backgroundColor: preferences[cat.key as keyof typeof preferences] ? '#009688' : '#E5E7EB', justifyContent: 'center', padding: 2,
+              {CATEGORIES.map((cat, index) => (
+                <View key={cat.key}>
+                  <View style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingVertical: Spacing.md,
+                  }}>
+                    <Text style={{
+                      flex: 1,
+                      fontSize: 16,
+                      color: Colors.gray900,
+                      fontWeight: '500'
                     }}>
+                      {cat.label}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => toggleGamePreference(cat.key)}
+                      activeOpacity={0.7}
+                    >
                       <View style={{
-                        width: 24, height: 24, borderRadius: 12, backgroundColor: 'white', alignSelf: preferences[cat.key as keyof typeof preferences] ? 'flex-end' : 'flex-start',
-                        shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 2, elevation: 1,
-                      }} />
-                    </View>
-                  </TouchableOpacity>
+                        width: 48,
+                        height: 28,
+                        borderRadius: 14,
+                        backgroundColor: preferences[cat.key as keyof typeof preferences] ? Colors.primary : Colors.gray200,
+                        justifyContent: 'center',
+                        padding: 2,
+                      }}>
+                        <View style={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: 12,
+                          backgroundColor: Colors.white,
+                          alignSelf: preferences[cat.key as keyof typeof preferences] ? 'flex-end' : 'flex-start',
+                          shadowColor: '#000',
+                          shadowOpacity: 0.08,
+                          shadowRadius: 2,
+                          elevation: 1,
+                        }} />
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+                  {index < CATEGORIES.length - 1 && (
+                    <View style={{
+                      height: 1,
+                      backgroundColor: Colors.gray100,
+                    }} />
+                  )}
                 </View>
               ))}
             </ScrollView>
-            
+
             <TouchableOpacity
               style={{
-                backgroundColor: '#009688',
-                padding: 12,
-                borderRadius: 8,
+                backgroundColor: Colors.primary,
+                padding: Spacing.md,
+                borderRadius: BorderRadius.md,
                 alignItems: 'center',
-                marginTop: 20,
+                marginTop: Spacing.lg,
+                ...Shadows.sm,
               }}
               onPress={() => setShowGamePrefsEdit(false)}
+              activeOpacity={0.8}
             >
-              <Text style={{ color: 'white', fontWeight: '600' }}>Done</Text>
+              <Text style={{
+                color: Colors.white,
+                fontWeight: '600'
+              }}>
+                Done
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

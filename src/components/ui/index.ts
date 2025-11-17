@@ -6,4 +6,4 @@
 export { TouchableScale } from './TouchableScale';
 export { Button } from './Button';
 export { LoadingSpinner } from './LoadingSpinner';
-export { Skeleton, SkeletonCard, SkeletonGameCard, SkeletonPastGameCard } from './Skeleton';
+export { Skeleton, SkeletonCard, SkeletonGameCard, SkeletonPastGameCard, SkeletonProfileSection } from './Skeleton';

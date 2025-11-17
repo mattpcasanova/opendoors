@@ -185,3 +185,57 @@ export const SkeletonPastGameCard: React.FC<{ style?: ViewStyle }> = ({ style })
     </View>
   );
 };
+
+/**
+ * SkeletonProfileSection Component
+ * Pre-built skeleton for profile settings sections
+ */
+export const SkeletonProfileSection: React.FC<{ itemCount?: number; style?: ViewStyle }> = ({
+  itemCount = 3,
+  style
+}) => {
+  return (
+    <View
+      style={[
+        {
+          backgroundColor: Colors.white,
+          borderRadius: BorderRadius.lg,
+          padding: Spacing.lg,
+          marginBottom: Spacing.lg,
+        },
+        style,
+      ]}
+    >
+      {/* Section title */}
+      <Skeleton width={120} height={18} style={{ marginBottom: Spacing.lg }} />
+
+      {/* Setting items */}
+      {Array.from({ length: itemCount }).map((_, index) => (
+        <View key={index}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingVertical: Spacing.md,
+            }}
+          >
+            {/* Icon */}
+            <Skeleton
+              width={20}
+              height={20}
+              borderRadius="sm"
+              style={{ marginRight: Spacing.md }}
+            />
+            {/* Label */}
+            <Skeleton width="60%" height={16} style={{ flex: 1 }} />
+            {/* Chevron or toggle */}
+            <Skeleton width={16} height={16} borderRadius="sm" />
+          </View>
+          {index < itemCount - 1 && (
+            <View style={{ height: 1, backgroundColor: Colors.gray100, marginLeft: 32 }} />
+          )}
+        </View>
+      ))}
+    </View>
+  );
+};
