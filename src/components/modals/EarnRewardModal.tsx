@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import {
     Alert,
+    Animated,
     Dimensions,
     Modal,
     Share,
@@ -15,7 +16,7 @@ import Constants from 'expo-constants';
 import { useAuth } from '../../hooks/useAuth';
 import { earnedRewardsService } from '../../services/earnedRewardsService';
 import { referralService } from '../../services/referralService';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface EarnRewardModalProps {
   visible: boolean;
@@ -35,11 +36,39 @@ const EarnRewardModal: React.FC<EarnRewardModalProps> = ({
   const { user } = useAuth();
   const [referralCode, setReferralCode] = useState<string | null>(null);
 
+  // Animation values
+  const slideAnim = useRef(new Animated.Value(600)).current;
+  const backdropAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     if (user?.id) {
       referralService.getUserReferralCode(user.id).then(code => setReferralCode(code));
     }
   }, [user?.id]);
+
+  useEffect(() => {
+    if (visible) {
+      // Slide up modal and fade in backdrop
+      Animated.parallel([
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          damping: 25,
+          stiffness: 200,
+          mass: 1,
+          useNativeDriver: true,
+        }),
+        Animated.timing(backdropAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // Reset animations when modal closes
+      slideAnim.setValue(600);
+      backdropAnim.setValue(0);
+    }
+  }, [visible]);
 
   // Use deep link for referral (works without website)
   // Format: opendoors://signup?ref=CODE - navigates directly to signup with code
@@ -104,11 +133,21 @@ const EarnRewardModal: React.FC<EarnRewardModalProps> = ({
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
+      animationType="none"
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
-        <View style={styles.modalContainer}>
+      <Animated.View style={[styles.overlay, { opacity: backdropAnim }]}>
+        <TouchableOpacity
+          style={StyleSheet.absoluteFill}
+          activeOpacity={1}
+          onPress={onClose}
+        />
+        <Animated.View style={[
+          styles.modalContainer,
+          {
+            transform: [{ translateY: slideAnim }],
+          }
+        ]}>
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>Earn a Reward</Text>
@@ -181,8 +220,8 @@ const EarnRewardModal: React.FC<EarnRewardModalProps> = ({
           <Text style={styles.footerText}>
             Choose how you'd like to earn your extra door
           </Text>
-        </View>
-      </View>
+        </Animated.View>
+      </Animated.View>
     </Modal>
   );
 };

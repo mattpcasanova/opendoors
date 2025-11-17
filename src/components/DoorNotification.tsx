@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
     ActivityIndicator,
+    Animated,
     Modal,
     Text,
     TouchableOpacity,
@@ -21,14 +22,37 @@ export default function DoorNotificationComponent({ isVisible, onClose }: DoorNo
   const [loading, setLoading] = useState(false);
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
 
+  // Animation values
+  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     if (isVisible && user?.id) {
       loadNotifications();
+
+      // Animate in
+      Animated.parallel([
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          damping: 15,
+          stiffness: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ]).start();
     } else if (!isVisible) {
       // Reset state when modal is closed to prevent stale data
       setNotifications([]);
       setCurrentNotificationIndex(0);
       setLoading(false);
+
+      // Reset animations
+      scaleAnim.setValue(0.9);
+      fadeAnim.setValue(0);
     }
   }, [isVisible, user?.id]);
 
@@ -110,23 +134,26 @@ export default function DoorNotificationComponent({ isVisible, onClose }: DoorNo
     <Modal
       visible={isVisible && notifications.length > 0}
       transparent
-      animationType="fade"
+      animationType="none"
       onRequestClose={handleClose}
       statusBarTranslucent
     >
-      <TouchableOpacity
+      <Animated.View
         style={{
           flex: 1,
           backgroundColor: 'rgba(0, 0, 0, 0.5)',
           justifyContent: 'center',
           alignItems: 'center',
-          padding: 20
+          padding: 20,
+          opacity: fadeAnim,
         }}
-        activeOpacity={1}
-        onPress={handleClose}
       >
         <TouchableOpacity
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
           activeOpacity={1}
+          onPress={handleClose}
+        />
+        <Animated.View
           style={{
             backgroundColor: 'white',
             borderRadius: 20,
@@ -138,8 +165,8 @@ export default function DoorNotificationComponent({ isVisible, onClose }: DoorNo
             shadowOpacity: 0.3,
             shadowRadius: 8,
             elevation: 8,
+            transform: [{ scale: scaleAnim }],
           }}
-          onPress={(e) => e.stopPropagation()}
         >
           {loading ? (
             <View style={{ alignItems: 'center', padding: 20 }}>
@@ -217,8 +244,8 @@ export default function DoorNotificationComponent({ isVisible, onClose }: DoorNo
               </Text>
             </View>
           )}
-        </TouchableOpacity>
-      </TouchableOpacity>
+        </Animated.View>
+      </Animated.View>
     </Modal>
   );
 }

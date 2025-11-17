@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
     ActivityIndicator,
     Alert,
+    Animated,
     Dimensions,
     Modal,
     StyleSheet,
@@ -31,11 +32,35 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
   const [timeRemaining, setTimeRemaining] = useState(30);
   const [canClose, setCanClose] = useState(false);
 
+  // Animation values
+  const slideAnim = useRef(new Animated.Value(600)).current;
+  const backdropAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     if (visible) {
       setIsWatching(false);
       setTimeRemaining(30);
       setCanClose(false);
+
+      // Animate in
+      Animated.parallel([
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          damping: 25,
+          stiffness: 200,
+          mass: 1,
+          useNativeDriver: true,
+        }),
+        Animated.timing(backdropAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // Reset animations
+      slideAnim.setValue(600);
+      backdropAnim.setValue(0);
     }
   }, [visible]);
 
@@ -65,11 +90,21 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
+      animationType="none"
       onRequestClose={handleClose}
     >
-      <View style={styles.overlay}>
-        <View style={styles.modalContainer}>
+      <Animated.View style={[styles.overlay, { opacity: backdropAnim }]}>
+        <TouchableOpacity
+          style={StyleSheet.absoluteFill}
+          activeOpacity={1}
+          onPress={handleClose}
+        />
+        <Animated.View style={[
+          styles.modalContainer,
+          {
+            transform: [{ translateY: slideAnim }],
+          }
+        ]}>
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>Watch Ad</Text>
@@ -153,8 +188,8 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
               </Text>
             </View>
           )}
-        </View>
-      </View>
+        </Animated.View>
+      </Animated.View>
     </Modal>
   );
 };
