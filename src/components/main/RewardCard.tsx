@@ -308,8 +308,8 @@ export default function RewardCard({ reward, onPress }: Props) {
             <Text
               style={{
                 fontSize: 14,
-                fontWeight: '600',
-                color: Colors.black,
+                fontWeight: '500',
+                color: Colors.gray800,
                 marginBottom: Spacing.sm,
                 lineHeight: 19,
               }}

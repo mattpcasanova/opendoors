@@ -3,7 +3,6 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { CheckCircle, Clock, Gift } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     DeviceEventEmitter,
     Image,
@@ -17,6 +16,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import BottomNavBar from '../../components/main/BottomNavBar';
 import Header from '../../components/main/Header';
 import RewardCard, { Reward } from '../../components/main/RewardCard';
+import { LoadingSpinner, TouchableScale } from '../../components/ui';
+import { Colors, Spacing, BorderRadius, Shadows } from '../../constants';
 import { useAuth } from '../../hooks/useAuth';
 import { rewardsService } from '../../services/rewardsService';
 import type { RootNavigationProp } from '../../types/navigation';
@@ -55,32 +56,32 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
   const rewardCodeText = reward.rewardCode || (reward as any).reward_code;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50 }}>
       {/* Header */}
-      <Header 
-        variant="page" 
-        title={reward.company} 
+      <Header
+        variant="page"
+        title={reward.company}
         subtitle={reward.reward}
         showBackButton
         onBackPress={onBack}
         rightComponent={
           reward.logo_url ? (
-            <Image 
-              source={{ uri: reward.logo_url }} 
-              style={{ 
-                width: 40, 
-                height: 40, 
-                borderRadius: 20, 
-                backgroundColor: 'white' 
-              }} 
+            <Image
+              source={{ uri: reward.logo_url }}
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: Colors.white
+              }}
             />
           ) : null
         }
       />
 
-      <ScrollView 
-        style={{ flex: 1, padding: 20 }}
-        contentContainerStyle={{ paddingBottom: 20 }}
+      <ScrollView
+        style={{ flex: 1, padding: Spacing.lg }}
+        contentContainerStyle={{ paddingBottom: Spacing.lg }}
       >
         {/* Status Badge */}
         <View style={{ alignItems: 'center', marginBottom: 24 }}>
@@ -227,15 +228,15 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
           {!reward.claimed ? (
             <TouchableOpacity
               style={{
-                backgroundColor: '#009688',
-                paddingVertical: 16,
-                borderRadius: 12,
+                backgroundColor: Colors.primary,
+                paddingVertical: Spacing.md,
+                borderRadius: BorderRadius.md,
                 alignItems: 'center',
               }}
               onPress={() => onMarkClaimed(reward.id)}
               activeOpacity={0.8}
             >
-              <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
+              <Text style={{ color: Colors.white, fontSize: 16, fontWeight: '600' }}>
                 Mark as Claimed
               </Text>
             </TouchableOpacity>
@@ -244,10 +245,10 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'center',
-              paddingVertical: 16,
+              paddingVertical: Spacing.md,
             }}>
-              <Ionicons name="checkmark-circle" size={24} color="#10B981" style={{ marginRight: 8 }} />
-              <Text style={{ color: '#10B981', fontSize: 16, fontWeight: '600' }}>
+              <Ionicons name="checkmark-circle" size={24} color={Colors.success} style={{ marginRight: Spacing.sm }} />
+              <Text style={{ color: Colors.success, fontSize: 16, fontWeight: '600' }}>
                 Already claimed
               </Text>
             </View>
@@ -270,6 +271,7 @@ export default function RewardsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'claimed' | 'expiring'>('all');
 
   // Initial load
   useEffect(() => {
@@ -370,11 +372,20 @@ export default function RewardsScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA', justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#009688" />
+      <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50, justifyContent: 'center', alignItems: 'center' }}>
+        <LoadingSpinner size="large" color={Colors.primary} />
       </SafeAreaView>
     );
   }
+
+  // Calculate active count (unclaimed and not expired)
+  const getActiveCount = () => {
+    return rewards.filter(r => {
+      if (r.claimed) return false;
+      const daysUntil = getDaysUntilExpiration(r.expirationDate);
+      return daysUntil >= 0; // Not expired
+    }).length;
+  };
 
   // Calculate expiring soon count
   const getExpiringCount = () => {
@@ -387,28 +398,24 @@ export default function RewardsScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50 }}>
       <Header variant="page" title="My Rewards" />
-      
-      <ScrollView 
+
+      <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: 100 }}
       >
         {/* Search Bar */}
-        <View style={{ padding: 16 }}>
+        <View style={{ padding: Spacing.md }}>
           <View style={{
             flexDirection: 'row',
-            backgroundColor: 'white',
-            borderRadius: 12,
-            padding: 12,
+            backgroundColor: Colors.white,
+            borderRadius: BorderRadius.md,
+            padding: Spacing.base,
             alignItems: 'center',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 4,
-            elevation: 2,
+            ...Shadows.sm,
           }}>
-            <Ionicons name="search" size={20} color="#6B7280" style={{ marginRight: 8 }} />
+            <Ionicons name="search" size={20} color={Colors.gray500} style={{ marginRight: Spacing.sm }} />
             <TextInput
               placeholder="Search rewards..."
               value={searchQuery}
@@ -416,122 +423,145 @@ export default function RewardsScreen() {
               style={{
                 flex: 1,
                 fontSize: 16,
-                color: '#374151',
+                color: Colors.gray800,
               }}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={Colors.gray400}
             />
           </View>
         </View>
 
-        {/* Stats Cards */}
+        {/* Stats Cards - Clickable Filters */}
         <View style={{
           flexDirection: 'row',
-          paddingHorizontal: 16,
-          marginBottom: 16,
-          gap: 12,
+          paddingHorizontal: Spacing.md,
+          marginBottom: Spacing.md,
+          gap: Spacing.base,
         }}>
           {/* Active Rewards Card */}
-          <View style={{
-            flex: 1,
-            backgroundColor: 'white',
-            borderRadius: 16,
-            padding: 16,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 4,
-            elevation: 2,
-          }}>
+          <TouchableScale
+            onPress={() => setStatusFilter(statusFilter === 'active' ? 'all' : 'active')}
+            style={{ flex: 1 }}
+          >
             <View style={{
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              backgroundColor: '#E6FFFA',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 12,
+              backgroundColor: Colors.white,
+              borderRadius: BorderRadius.md,
+              padding: Spacing.md,
+              ...Shadows.sm,
+              borderWidth: 2,
+              borderColor: statusFilter === 'active' ? Colors.primary : 'transparent',
+              minHeight: 110,
             }}>
-              <Gift size={20} color="#009688" />
+              <View style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: 'rgba(20, 184, 166, 0.1)',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: Spacing.base,
+              }}>
+                <Gift size={20} color={Colors.primary} />
+              </View>
+              <Text style={{ fontSize: 24, fontWeight: '700', color: Colors.black, marginBottom: 4 }}>
+                {getActiveCount()}
+              </Text>
+              <Text style={{ fontSize: 14, color: Colors.gray600 }}>Active</Text>
             </View>
-            <Text style={{ fontSize: 24, fontWeight: '700', color: '#111827', marginBottom: 4 }}>
-              {rewards.filter(r => !r.claimed).length}
-            </Text>
-            <Text style={{ fontSize: 14, color: '#6B7280' }}>Active</Text>
-          </View>
+          </TouchableScale>
 
           {/* Claimed Rewards Card */}
-          <View style={{
-            flex: 1,
-            backgroundColor: 'white',
-            borderRadius: 16,
-            padding: 16,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 4,
-            elevation: 2,
-          }}>
+          <TouchableScale
+            onPress={() => setStatusFilter(statusFilter === 'claimed' ? 'all' : 'claimed')}
+            style={{ flex: 1 }}
+          >
             <View style={{
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              backgroundColor: '#DCFCE7',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 12,
+              backgroundColor: Colors.white,
+              borderRadius: BorderRadius.md,
+              padding: Spacing.md,
+              ...Shadows.sm,
+              borderWidth: 2,
+              borderColor: statusFilter === 'claimed' ? Colors.success : 'transparent',
+              minHeight: 110,
             }}>
-              <CheckCircle size={20} color="#16A34A" />
+              <View style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: Spacing.base,
+              }}>
+                <CheckCircle size={20} color={Colors.success} />
+              </View>
+              <Text style={{ fontSize: 24, fontWeight: '700', color: Colors.black, marginBottom: 4 }}>
+                {rewards.filter(r => r.claimed).length}
+              </Text>
+              <Text style={{ fontSize: 14, color: Colors.gray600 }}>Claimed</Text>
             </View>
-            <Text style={{ fontSize: 24, fontWeight: '700', color: '#111827', marginBottom: 4 }}>
-              {rewards.filter(r => r.claimed).length}
-            </Text>
-            <Text style={{ fontSize: 14, color: '#6B7280' }}>Claimed</Text>
-          </View>
+          </TouchableScale>
 
           {/* Expiring Soon Card */}
-          <View style={{
-            flex: 1,
-            backgroundColor: 'white',
-            borderRadius: 16,
-            padding: 16,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 4,
-            elevation: 2,
-          }}>
+          <TouchableScale
+            onPress={() => setStatusFilter(statusFilter === 'expiring' ? 'all' : 'expiring')}
+            style={{ flex: 1 }}
+          >
             <View style={{
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              backgroundColor: '#FEF3C7',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 12,
+              backgroundColor: Colors.white,
+              borderRadius: BorderRadius.md,
+              padding: Spacing.md,
+              ...Shadows.sm,
+              borderWidth: 2,
+              borderColor: statusFilter === 'expiring' ? Colors.warning : 'transparent',
+              minHeight: 110,
             }}>
-              <Clock size={20} color="#D97706" />
+              <View style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: Spacing.base,
+              }}>
+                <Clock size={20} color={Colors.warning} />
+              </View>
+              <Text style={{ fontSize: 24, fontWeight: '700', color: Colors.black, marginBottom: 4 }}>
+                {getExpiringCount()}
+              </Text>
+              <Text style={{ fontSize: 14, color: Colors.gray600, numberOfLines: 1 }}>Expiring</Text>
             </View>
-            <Text style={{ fontSize: 24, fontWeight: '700', color: '#111827', marginBottom: 4 }}>
-              {getExpiringCount()}
-            </Text>
-            <Text style={{ fontSize: 14, color: '#6B7280' }}>Expiring Soon</Text>
-          </View>
+          </TouchableScale>
         </View>
 
         {/* Rewards List */}
-        <View style={{ paddingHorizontal: 16 }}>
+        <View style={{ paddingHorizontal: Spacing.md }}>
           {rewards.length === 0 ? (
-            <View style={{ padding: 20, alignItems: 'center' }}>
-              <Text style={{ fontSize: 16, color: '#6B7280', textAlign: 'center' }}>
+            <View style={{ padding: Spacing.xl, alignItems: 'center' }}>
+              <Text style={{ fontSize: 16, color: Colors.gray600, textAlign: 'center' }}>
                 No rewards found
               </Text>
             </View>
           ) : (
             rewards
-              .filter(reward =>
-                reward.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                reward.reward.toLowerCase().includes(searchQuery.toLowerCase())
-              )
+              .filter(reward => {
+                // Search filter
+                const matchesSearch = reward.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  reward.reward.toLowerCase().includes(searchQuery.toLowerCase());
+
+                // Status filter
+                if (statusFilter === 'active') {
+                  // Active = unclaimed AND not expired
+                  const daysUntil = getDaysUntilExpiration(reward.expirationDate);
+                  return matchesSearch && !reward.claimed && daysUntil >= 0;
+                } else if (statusFilter === 'claimed') {
+                  return matchesSearch && reward.claimed;
+                } else if (statusFilter === 'expiring') {
+                  const daysUntil = getDaysUntilExpiration(reward.expirationDate);
+                  return matchesSearch && daysUntil <= 3 && daysUntil >= 0 && !reward.claimed;
+                }
+                return matchesSearch; // 'all' filter
+              })
               .sort((a, b) => {
                 // Sort by creation date, newest first
                 const dateA = new Date(a.created_at || a.expirationDate);

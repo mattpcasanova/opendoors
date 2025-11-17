@@ -7,7 +7,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   DeviceEventEmitter,
-  ScrollView as RNScrollView,
   ScrollView,
   Text,
   TextInput,
@@ -20,11 +19,13 @@ import DoorNotificationComponent from '../../components/DoorNotification';
 import EarnedRewardNotification from '../../components/EarnedRewardNotification';
 import GameCard from '../../components/game/GameCard';
 import BottomNavBar from '../../components/main/BottomNavBar';
+import { FilterBar } from '../../components/main/FilterBar';
 import Header from "../../components/main/Header";
 import EarnRewardModal from '../../components/modals/EarnRewardModal';
 import WatchAdModal from '../../components/modals/WatchAdModal';
 import { useAuth } from '../../hooks/useAuth';
 import { useLocation } from '../../hooks/useLocation';
+import { Colors, Spacing, BorderRadius, Shadows } from '../../constants';
 import { adsService } from '../../services/adsService';
 import { EarnedReward, earnedRewardsService } from '../../services/earnedRewardsService';
 import { gamesService, Prize } from '../../services/gameLogic/games';
@@ -540,8 +541,17 @@ export default function HomeScreen() {
       refreshListener.remove();
     };
   }, [user?.id]);
-  const distanceOptions = ['5 mi', '10 mi', '25 mi', '50 mi', 'Any'];
+  const distanceOptions = ['Any', '5 mi', '10 mi', '25 mi', '50 mi'];
   const sortOptions = ['Closest', 'Suggested', 'Highest Value', 'Most Popular'];
+
+  // Calculate category counts for badges
+  const categoryCounts = React.useMemo(() => {
+    const counts: Record<string, number> = {};
+    categories.forEach(cat => {
+      counts[cat] = filteredGames.filter(game => game.category === cat).length;
+    });
+    return counts;
+  }, [filteredGames]);
 
   const currentGameIsBonus = useRef(false);
 
@@ -1222,25 +1232,34 @@ export default function HomeScreen() {
             </Text>
             <TouchableOpacity
               style={{
-                backgroundColor: '#E0F7F4',
-                paddingHorizontal: 14,
-                paddingVertical: 12,
-                borderRadius: 20,
+                backgroundColor: showFilters ? Colors.primary : Colors.primaryMuted,
+                paddingHorizontal: Spacing.md,
+                paddingVertical: Spacing.base,
+                borderRadius: BorderRadius.full,
                 flexDirection: 'row',
                 alignItems: 'center',
-                marginLeft: 12,
-                shadowColor: '#009688',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.08,
-                shadowRadius: 4,
-                elevation: 2,
+                marginLeft: Spacing.base,
+                ...Shadows.sm,
                 alignSelf: 'flex-end',
+                borderWidth: showFilters ? 2 : 0,
+                borderColor: Colors.primary,
               }}
               onPress={() => setShowFilters(f => !f)}
               activeOpacity={0.8}
             >
-              <Ionicons name="filter" size={18} color="#009688" style={{ marginRight: 6 }} />
-              <Text style={{ color: '#009688', fontWeight: '600', fontSize: 15 }}>Filter</Text>
+              <Ionicons
+                name={showFilters ? "close" : "filter"}
+                size={18}
+                color={showFilters ? Colors.white : Colors.primary}
+                style={{ marginRight: 6 }}
+              />
+              <Text style={{
+                color: showFilters ? Colors.white : Colors.primary,
+                fontWeight: '600',
+                fontSize: 15
+              }}>
+                {showFilters ? 'Close' : 'Filter'}
+              </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -1254,123 +1273,24 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Collapsible Filter/Sort Bar - Only show when not searching */}
+        {/* Enhanced Filter Bar - Only show when not searching */}
         {!searchText && showFilters && (
-          <View style={{ backgroundColor: '#F8F9FA', borderRadius: 18, padding: 12, marginBottom: 18, marginHorizontal: 12, paddingHorizontal: 12 }}>
-            {/* Row 1: Favorites toggle first, then Category chips */}
-            <RNScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }} contentContainerStyle={{ paddingHorizontal: 12 }}>
-              {/* Favorites toggle chip - First */}
-              <TouchableOpacity
-                style={{
-                  backgroundColor: showOnlyFavorites ? '#009688' : '#E0F7F4',
-                  paddingHorizontal: 14,
-                  paddingVertical: 8,
-                  borderRadius: 16,
-                  marginRight: 8,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  borderWidth: showOnlyFavorites ? 2 : 0,
-                  borderColor: '#009688',
-                }}
-                onPress={() => setShowOnlyFavorites(f => !f)}
-              >
-                <Ionicons name={showOnlyFavorites ? 'star' : 'star-outline'} size={18} color={showOnlyFavorites ? '#FFD700' : '#B0B0B0'} style={{ marginRight: 4 }} />
-                <Text style={{ color: showOnlyFavorites ? 'white' : '#009688', fontWeight: '600' }}>Favorites</Text>
-              </TouchableOpacity>
-              {categories.map(cat => {
-                const isExcluded = excludedCategories.includes(cat); // Category is hidden/off
-                const isUserPreference = userPreferenceCategories.includes(cat);
-                
-                return (
-                  <TouchableOpacity
-                    key={cat}
-                    style={{
-                      backgroundColor: isExcluded ? '#F3F4F6' : (isUserPreference ? '#E0F7F4' : '#E0F7F4'),
-                      paddingHorizontal: 16,
-                      paddingVertical: 8,
-                      borderRadius: 16,
-                      marginRight: 8,
-                      borderWidth: isExcluded ? 1 : (isUserPreference ? 2 : 0),
-                      borderColor: isExcluded ? '#D1D5DB' : (isUserPreference ? '#10B981' : '#009688'),
-                      opacity: isExcluded ? 0.5 : 1,
-                    }}
-                    onPress={() => setExcludedCategories(excludedCategories.includes(cat)
-                      ? excludedCategories.filter(c => c !== cat) // Remove from excluded (show it)
-                      : [...excludedCategories, cat])} // Add to excluded (hide it)
-                  >
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      {isUserPreference && (
-                        <Ionicons 
-                          name="star" 
-                          size={14} 
-                          color={isExcluded ? '#9CA3AF' : '#10B981'} 
-                          style={{ marginRight: 4 }} 
-                        />
-                      )}
-                      <Text style={{ 
-                        color: isExcluded ? '#9CA3AF' : '#009688', 
-                        fontWeight: isUserPreference ? '700' : '600',
-                        textDecorationLine: isExcluded ? 'line-through' : 'none',
-                      }}>
-                        {cat}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-            </RNScrollView>
-
-            {/* Row 2: Distance segmented control */}
-            <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 10, paddingHorizontal: 12 }}>
-              {distanceOptions.map(opt => {
-                const isSelected = distance === opt;
-                return (
-                  <TouchableOpacity
-                    key={opt}
-                    style={{
-                      backgroundColor: isSelected ? '#009688' : '#E0F7F4',
-                      paddingHorizontal: 16,
-                      paddingVertical: 8,
-                      borderRadius: 16,
-                      marginRight: 8,
-                      borderWidth: isSelected ? 2 : 0,
-                      borderColor: '#009688',
-                    }}
-                    onPress={() => setDistance(opt)}
-                    disabled={distance === null}
-                  >
-                    <Text style={{ color: isSelected ? 'white' : '#009688', fontWeight: '600' }}>{opt}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            {/* Row 3: Sorting segmented control (horizontal scroll) */}
-            <RNScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 12 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'flex-start' }}>
-                {sortOptions.map(opt => {
-                  const isSelected = sortBy === opt;
-                  return (
-                    <TouchableOpacity
-                      key={opt}
-                      style={{
-                        backgroundColor: isSelected ? '#009688' : '#E0F7F4',
-                        paddingHorizontal: 16,
-                        paddingVertical: 8,
-                        borderRadius: 16,
-                        marginRight: 8,
-                        borderWidth: isSelected ? 2 : 0,
-                        borderColor: '#009688',
-                      }}
-                      onPress={() => setSortBy(opt)}
-                      disabled={sortBy === null}
-                    >
-                      <Text style={{ color: isSelected ? 'white' : '#009688', fontWeight: '600' }}>{opt}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </RNScrollView>
+          <View style={{ paddingHorizontal: 16 }}>
+            <FilterBar
+              categories={categories}
+              excludedCategories={excludedCategories}
+              onExcludedCategoriesChange={setExcludedCategories}
+              userPreferenceCategories={userPreferenceCategories}
+              showOnlyFavorites={showOnlyFavorites}
+              onFavoritesToggle={() => setShowOnlyFavorites(f => !f)}
+              categoryCounts={categoryCounts}
+              distanceOptions={distanceOptions}
+              selectedDistance={distance}
+              onDistanceChange={setDistance}
+              sortOptions={sortOptions}
+              selectedSort={sortBy}
+              onSortChange={setSortBy}
+            />
           </View>
         )}
         
