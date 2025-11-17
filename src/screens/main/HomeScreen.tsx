@@ -1019,13 +1019,13 @@ export default function HomeScreen() {
         DeviceEventEmitter.emit('REFRESH_REWARDS');
       }
 
-      // Show result alert
+      // Show compact result modal
       Alert.alert(
         won ? 'Congratulations!' : 'Better luck next time!',
         won
           ? `You won ${currentGame.name}!`
           : 'Keep playing to win great prizes!',
-        [{ 
+        [{
           text: 'OK',
           onPress: () => setShowGameScreen(false)
         }]

@@ -1,11 +1,13 @@
 import React, { useEffect } from 'react';
 import { Animated, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { soundService } from '../services/soundService';
+import { Colors } from '../constants';
 
 interface Props {
   doorNumber: number;
   isOpen: boolean;
-  content: string;
+  content: { type: 'icon'; name: string; color: string } | null;
   isSelected: boolean;
   onPress: () => void;
   disabled: boolean;
@@ -173,8 +175,14 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
             })
           }]
         }}>
-                      <Text style={{ fontSize: 48 }}>{content}</Text>
-          </Animated.View>
+          {content && (
+            <Ionicons
+              name={content.name as any}
+              size={56}
+              color={content.color}
+            />
+          )}
+        </Animated.View>
 
           {/* Selection Glow Effect - only show when door is closed and selected */}
           {isSelected && !isOpen && (
@@ -313,11 +321,11 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
           disabled={disabled}
         />
         </View>
-      <Text style={{ 
-        marginTop: 8, 
-        fontSize: 14, 
-        fontWeight: '600', 
-        color: '#333' 
+      <Text style={{
+        marginTop: 8,
+        fontSize: 14,
+        fontWeight: '600',
+        color: Colors.gray900
       }}>
         Door {doorNumber}
       </Text>
