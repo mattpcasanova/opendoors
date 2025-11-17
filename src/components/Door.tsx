@@ -251,9 +251,6 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
                 name={content.name as any}
                 size={56}
                 color={content.color}
-                style={{
-                  opacity: isEmptyDoor ? 0.4 : 1
-                }}
               />
             </Animated.View>
           )}

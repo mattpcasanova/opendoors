@@ -5,6 +5,7 @@ import { Gift, History, Settings, Shield, Users } from "lucide-react-native"
 import type React from "react"
 import { useEffect, useRef } from "react"
 import { Animated, Dimensions, Image, Platform, Text, TouchableOpacity, View } from "react-native"
+import { Colors } from "../../constants"
 
 const { width: screenWidth } = Dimensions.get("window")
 
@@ -134,7 +135,7 @@ export default function Header({
       <View style={{ position: "relative", overflow: "hidden" }}>
         {/* Dynamic Background with Teal Gradients */}
         <LinearGradient
-          colors={["#009688", "#00BCD4", "#26A69A"]}
+          colors={[Colors.primary, Colors.info, Colors.primaryDark]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={{
@@ -210,7 +211,7 @@ export default function Header({
               </Text>
               <Text
                 style={{
-                  color: "white",
+                  color: Colors.white,
                   fontSize: 32,
                   fontWeight: "800",
                   marginBottom: 12,
@@ -231,10 +232,10 @@ export default function Header({
                   gap: 8,
                 }}
               >
-                <Ionicons name="game-controller" size={20} color="white" />
+                <Ionicons name="game-controller" size={20} color={Colors.white} />
                 <Text
                   style={{
-                    color: "white",
+                    color: Colors.white,
                     fontSize: 16,
                     fontWeight: "600",
                   }}
@@ -252,7 +253,7 @@ export default function Header({
                   height: 100,
                   borderRadius: 50,
                   overflow: "hidden",
-                  shadowColor: "#000",
+                  shadowColor: Colors.black,
                   shadowOffset: { width: 0, height: 10 },
                   shadowOpacity: 0.3,
                   shadowRadius: 24,
@@ -304,7 +305,7 @@ export default function Header({
             left: 0,
             right: 0,
             height: 35,
-            backgroundColor: "#F8F9FA",
+            backgroundColor: Colors.gray50,
             borderTopLeftRadius: 35,
             borderTopRightRadius: 35,
           }}
@@ -316,8 +317,8 @@ export default function Header({
   // REWARDS HEADER - Stats-focused with achievement feel
   if (variant === "rewards") {
     return (
-      <View style={{ backgroundColor: "#F8F9FA" }}>
-        <LinearGradient colors={["#009688", "#00796B"]} style={{ paddingBottom: 24 }}>
+      <View style={{ backgroundColor: Colors.gray50 }}>
+        <LinearGradient colors={[Colors.primary, Colors.primaryDark]} style={{ paddingBottom: 24 }}>
           <View style={{ paddingHorizontal: 20, paddingTop: 15 }}>
             <View
               style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}
@@ -335,7 +336,7 @@ export default function Header({
                   }}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="arrow-back" size={24} color="white" />
+                  <Ionicons name="arrow-back" size={24} color={Colors.white} />
                 </TouchableOpacity>
               )}
 
@@ -346,8 +347,8 @@ export default function Header({
                   paddingLeft: showBackButton ? 0 : 0,
                 }}
               >
-                <Text style={{ color: "white", fontSize: 32, fontWeight: "800" }}>Rewards</Text>
-                <Text style={{ color: "#B2DFDB", fontSize: 16, marginTop: 2 }}>Your earned rewards</Text>
+                <Text style={{ color: Colors.white, fontSize: 32, fontWeight: "800" }}>Rewards</Text>
+                <Text style={{ color: Colors.primaryLighter, fontSize: 16, marginTop: 2 }}>Your earned rewards</Text>
               </View>
 
               {rightComponent && <View style={{ width: 40 }}>{rightComponent}</View>}
@@ -367,55 +368,55 @@ export default function Header({
           <View
             style={{
               flex: 1,
-              backgroundColor: "white",
+              backgroundColor: Colors.white,
               borderRadius: 16,
               padding: 16,
               alignItems: "center",
-              shadowColor: "#000",
+              shadowColor: Colors.black,
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.1,
               shadowRadius: 8,
               elevation: 3,
             }}
           >
-            <Text style={{ fontSize: 28, fontWeight: "800", color: "#009688" }}>{stats?.total || 0}</Text>
-            <Text style={{ fontSize: 12, color: "#6B7280", textAlign: "center" }}>Total{"\n"}Rewards</Text>
+            <Text style={{ fontSize: 28, fontWeight: "800", color: Colors.primary }}>{stats?.total || 0}</Text>
+            <Text style={{ fontSize: 12, color: Colors.gray600, textAlign: "center" }}>Total{"\n"}Rewards</Text>
           </View>
 
           <View
             style={{
               flex: 1,
-              backgroundColor: "white",
+              backgroundColor: Colors.white,
               borderRadius: 16,
               padding: 16,
               alignItems: "center",
-              shadowColor: "#000",
+              shadowColor: Colors.black,
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.1,
               shadowRadius: 8,
               elevation: 3,
             }}
           >
-            <Text style={{ fontSize: 28, fontWeight: "800", color: "#009688" }}>{stats?.claimed || 0}</Text>
-            <Text style={{ fontSize: 12, color: "#6B7280", textAlign: "center" }}>Already{"\n"}Claimed</Text>
+            <Text style={{ fontSize: 28, fontWeight: "800", color: Colors.primary }}>{stats?.claimed || 0}</Text>
+            <Text style={{ fontSize: 12, color: Colors.gray600, textAlign: "center" }}>Already{"\n"}Claimed</Text>
           </View>
 
           <View
             style={{
               flex: 1,
-              backgroundColor: "white",
+              backgroundColor: Colors.white,
               borderRadius: 16,
               padding: 16,
               alignItems: "center",
-              shadowColor: "#000",
+              shadowColor: Colors.black,
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.1,
               shadowRadius: 8,
               elevation: 3,
             }}
           >
-            <Text style={{ fontSize: 28, fontWeight: "800", color: "#F59E0B" }}>{stats?.expiring || 0}</Text>
-            <Text style={{ fontSize: 12, color: "#6B7280", textAlign: "center" }}>Expiring{"\n"}Soon</Text>
+            <Text style={{ fontSize: 28, fontWeight: "800", color: Colors.warning }}>{stats?.expiring || 0}</Text>
+            <Text style={{ fontSize: 12, color: Colors.gray600, textAlign: "center" }}>Expiring{"\n"}Soon</Text>
           </View>
         </View>
       </View>
@@ -425,8 +426,8 @@ export default function Header({
   // HISTORY HEADER - Timeline/activity focused
   if (variant === "history") {
     return (
-      <View style={{ backgroundColor: "#F8F9FA" }}>
-        <LinearGradient colors={["#6366F1", "#4F46E5"]} style={{ paddingBottom: 20 }}>
+      <View style={{ backgroundColor: Colors.gray50 }}>
+        <LinearGradient colors={[Colors.secondary, Colors.secondaryDark]} style={{ paddingBottom: 20 }}>
           <View style={{ paddingHorizontal: 20, paddingTop: 15, paddingBottom: 20 }}>
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
               {showBackButton && onBackPress && (
@@ -442,7 +443,7 @@ export default function Header({
                   }}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="arrow-back" size={24} color="white" />
+                  <Ionicons name="arrow-back" size={24} color={Colors.white} />
                 </TouchableOpacity>
               )}
 
@@ -458,11 +459,11 @@ export default function Header({
                       justifyContent: "center",
                     }}
                   >
-                    <Ionicons name="time-outline" size={28} color="white" />
+                    <Ionicons name="time-outline" size={28} color={Colors.white} />
                   </View>
                   <View>
-                    <Text style={{ color: "white", fontSize: 28, fontWeight: "800" }}>History</Text>
-                    <Text style={{ color: "#C7D2FE", fontSize: 14 }}>Your gaming journey</Text>
+                    <Text style={{ color: Colors.white, fontSize: 28, fontWeight: "800" }}>History</Text>
+                    <Text style={{ color: Colors.secondaryLighter, fontSize: 14 }}>Your gaming journey</Text>
                   </View>
                 </View>
               </View>
@@ -482,21 +483,21 @@ export default function Header({
         >
           <View
             style={{
-              backgroundColor: "white",
+              backgroundColor: Colors.white,
               borderRadius: 20,
               paddingVertical: 16,
               paddingHorizontal: 32,
-              shadowColor: "#000",
+              shadowColor: Colors.black,
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.1,
               shadowRadius: 8,
               elevation: 3,
             }}
           >
-            <Text style={{ fontSize: 32, fontWeight: "800", color: "#6366F1", textAlign: "center" }}>
+            <Text style={{ fontSize: 32, fontWeight: "800", color: Colors.secondary, textAlign: "center" }}>
               {stats?.gamesPlayed || 0}
             </Text>
-            <Text style={{ fontSize: 14, color: "#6B7280", textAlign: "center" }}>Games Played</Text>
+            <Text style={{ fontSize: 14, color: Colors.gray600, textAlign: "center" }}>Games Played</Text>
           </View>
         </View>
       </View>
@@ -506,7 +507,7 @@ export default function Header({
   // PROFILE HEADER - Personal/settings focused
   if (variant === "profile") {
     return (
-      <LinearGradient colors={["#EC4899", "#DB2777"]} style={{ paddingBottom: 20 }}>
+      <LinearGradient colors={[Colors.accent, Colors.accentDark]} style={{ paddingBottom: 20 }}>
         <View style={{ paddingHorizontal: 20, paddingTop: 15, paddingBottom: 20 }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
             {showBackButton && onBackPress && (
@@ -522,7 +523,7 @@ export default function Header({
                 }}
                 activeOpacity={0.7}
               >
-                <Ionicons name="arrow-back" size={24} color="white" />
+                <Ionicons name="arrow-back" size={24} color={Colors.white} />
               </TouchableOpacity>
             )}
 
@@ -538,11 +539,11 @@ export default function Header({
                     justifyContent: "center",
                   }}
                 >
-                  <Ionicons name="person" size={32} color="white" />
+                  <Ionicons name="person" size={32} color={Colors.white} />
                 </View>
                 <View>
-                  <Text style={{ color: "white", fontSize: 28, fontWeight: "800" }}>Profile</Text>
-                  <Text style={{ color: "#FBCFE8", fontSize: 14 }}>Manage your account and preferences</Text>
+                  <Text style={{ color: Colors.white, fontSize: 28, fontWeight: "800" }}>Profile</Text>
+                  <Text style={{ color: Colors.accentLighter, fontSize: 14 }}>Manage your account and preferences</Text>
                 </View>
               </View>
             </View>
@@ -556,10 +557,10 @@ export default function Header({
 
   // SIMPLE HEADER - For other pages
   return (
-    <View style={{ backgroundColor: "#F8F9FA", paddingBottom: 12 }}>
+    <View style={{ backgroundColor: Colors.gray50, paddingBottom: 12 }}>
       {/* Background Gradient */}
       <LinearGradient
-        colors={["#009688", "#00BCD4"]}
+        colors={[Colors.primary, Colors.info]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={{
@@ -589,7 +590,7 @@ export default function Header({
               width: 8,
               height: 8,
               borderRadius: 4,
-              backgroundColor: "white",
+              backgroundColor: Colors.white,
             }}
           />
           <View
@@ -600,7 +601,7 @@ export default function Header({
               width: 6,
               height: 6,
               borderRadius: 3,
-              backgroundColor: "white",
+              backgroundColor: Colors.white,
             }}
           />
           <View
@@ -611,7 +612,7 @@ export default function Header({
               width: 10,
               height: 10,
               borderRadius: 5,
-              backgroundColor: "white",
+              backgroundColor: Colors.white,
             }}
           />
         </View>
@@ -641,7 +642,7 @@ export default function Header({
               }}
               activeOpacity={0.7}
             >
-              <Ionicons name="arrow-back" size={26} color="white" />
+              <Ionicons name="arrow-back" size={26} color={Colors.white} />
             </TouchableOpacity>
           )}
 
@@ -654,7 +655,7 @@ export default function Header({
           >
             <Text
               style={{
-                color: "white",
+                color: Colors.white,
                 fontSize: 36,
                 fontWeight: "900",
                 letterSpacing: -1,
@@ -688,11 +689,11 @@ export default function Header({
         style={{
           marginHorizontal: 28,
           marginTop: -16,
-          backgroundColor: "white",
+          backgroundColor: Colors.white,
           borderRadius: 24,
           paddingVertical: 20,
           paddingHorizontal: 24,
-          shadowColor: "#009688",
+          shadowColor: Colors.primary,
           shadowOffset: { width: 0, height: 12 },
           shadowOpacity: 0.18,
           shadowRadius: 24,

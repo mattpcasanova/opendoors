@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef } from 'react';
-import { Animated, Text, View, Platform, TouchableOpacity } from 'react-native';
-import { Colors, Spacing, BorderRadius, Shadows } from '../../constants';
+import { Animated, Platform, Text, TouchableOpacity, View } from 'react-native';
+import { BorderRadius, Colors, Shadows, Spacing } from '../../constants';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 

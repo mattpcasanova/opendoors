@@ -111,7 +111,7 @@ export default function GameScreen({
           return `You chose Door ${selectedDoor}. I've revealed one goat. Would you like to switch to one of the other unopened doors?`;
         }
       case 'finalChoice':
-        return `You ${switchedChoice ? 'switched to' : 'stayed with'} Door ${selectedDoor}. Click it to see what you won!`;
+        return `You ${switchedChoice ? 'switched to' : 'stayed with'} Door ${selectedDoor}. Click it to see what's behind your door.`;
       case 'result':
         return gameResult?.message || 'Opening doors...';
       default:
@@ -232,7 +232,7 @@ export default function GameScreen({
     if (doorNumber === prizeLocation) {
       return { type: 'icon', name: 'gift', color: '#FFD700' };
     }
-    return { type: 'icon', name: 'close-circle', color: Colors.gray400 };
+    return { type: 'icon', name: 'close-circle', color: Colors.error };
   };
 
   const getDoorColor = (doorNumber: number): string => {
