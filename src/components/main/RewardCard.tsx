@@ -1,7 +1,10 @@
 // src/components/RewardCard.tsx
-import { Calendar, ChevronRight } from 'lucide-react-native';
-import React from 'react';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { Calendar, ChevronRight, CheckCircle, Clock, XCircle } from 'lucide-react-native';
+import React, { useEffect, useRef } from 'react';
+import { Animated, Image, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Colors, Spacing, BorderRadius, Shadows, TextStyles } from '../../constants';
+import { TouchableScale } from '../ui';
 
 export interface Reward {
   id: string;
@@ -61,84 +64,281 @@ export default function RewardCard({ reward, onPress }: Props) {
   const isExpired = daysUntilExpiration < 0;
   const isClaimed = reward.claimed;
 
-  const getExpirationColor = () => {
-    if (isExpired) return '#DC2626'; // red-600
-    if (isExpiringSoon) return '#EA580C'; // orange-600
-    return '#6B7280'; // gray-500
+  // Shimmer animation for active rewards
+  const shimmerAnim = useRef(new Animated.Value(0)).current;
+
+  // Pulse animation for expiring soon
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    // Shimmer effect for active, unclaimed rewards (subtle)
+    if (!isClaimed && !isExpired) {
+      const shimmer = Animated.loop(
+        Animated.sequence([
+          Animated.timing(shimmerAnim, {
+            toValue: 1,
+            duration: 3000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(shimmerAnim, {
+            toValue: 0,
+            duration: 3000,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      shimmer.start();
+      return () => shimmer.stop();
+    }
+  }, [isClaimed, isExpired, shimmerAnim]);
+
+  useEffect(() => {
+    // Pulse animation for expiring soon
+    if (isExpiringSoon && !isClaimed) {
+      const pulse = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.05,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      pulse.start();
+      return () => pulse.stop();
+    }
+  }, [isExpiringSoon, isClaimed, pulseAnim]);
+
+  const shimmerTranslate = shimmerAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-200, 200],
+  });
+
+  // Get gradient colors based on state
+  const getGradientColors = (): string[] => {
+    if (isExpired) {
+      return [Colors.gray100, Colors.gray50]; // Grayed out
+    }
+    if (isClaimed) {
+      return [Colors.successLight, Colors.success]; // Green gradient
+    }
+    if (isExpiringSoon) {
+      return [Colors.warningLight, Colors.warning]; // Orange gradient
+    }
+    return [Colors.primaryLight, Colors.primary]; // Default teal gradient
+  };
+
+  const getStatusIcon = () => {
+    if (isExpired) {
+      return <XCircle size={20} color={Colors.error} strokeWidth={2.5} />;
+    }
+    if (isClaimed) {
+      return <CheckCircle size={20} color={Colors.success} strokeWidth={2.5} />;
+    }
+    if (isExpiringSoon) {
+      return <Clock size={20} color={Colors.warning} strokeWidth={2.5} />;
+    }
+    return <Calendar size={18} color={Colors.gray500} strokeWidth={2} />;
+  };
+
+  const getStatusBadge = () => {
+    if (isExpired) {
+      return (
+        <View style={{
+          backgroundColor: Colors.error,
+          paddingHorizontal: Spacing.sm,
+          paddingVertical: 4,
+          borderRadius: BorderRadius.sm,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 4,
+        }}>
+          <XCircle size={14} color={Colors.white} strokeWidth={2.5} />
+          <Text style={{ color: Colors.white, fontSize: 11, fontWeight: '700' }}>EXPIRED</Text>
+        </View>
+      );
+    }
+    if (isClaimed) {
+      return (
+        <View style={{
+          backgroundColor: Colors.success,
+          paddingHorizontal: Spacing.sm,
+          paddingVertical: 4,
+          borderRadius: BorderRadius.sm,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 4,
+        }}>
+          <CheckCircle size={14} color={Colors.white} strokeWidth={2.5} />
+          <Text style={{ color: Colors.white, fontSize: 11, fontWeight: '700' }}>CLAIMED</Text>
+        </View>
+      );
+    }
+    if (isExpiringSoon) {
+      return (
+        <Animated.View style={{
+          backgroundColor: Colors.warning,
+          paddingHorizontal: Spacing.sm,
+          paddingVertical: 4,
+          borderRadius: BorderRadius.sm,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 4,
+          transform: [{ scale: pulseAnim }],
+        }}>
+          <Clock size={14} color={Colors.white} strokeWidth={2.5} />
+          <Text style={{ color: Colors.white, fontSize: 11, fontWeight: '700' }}>
+            {daysUntilExpiration === 0 ? 'TODAY' : `${daysUntilExpiration}D LEFT`}
+          </Text>
+        </Animated.View>
+      );
+    }
+    return null;
   };
 
   return (
-    <TouchableOpacity
-      style={{
-        backgroundColor: 'white',
-        borderRadius: 20,
-        padding: 24,
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-        elevation: 2,
-        borderWidth: (isExpired || isClaimed) ? 2 : 1,
-        borderColor: isExpired ? '#DC2626' : (isClaimed ? '#16A34A' : '#F3F4F6'),
-      }}
+    <TouchableScale
       onPress={() => onPress(reward)}
-      activeOpacity={0.85}
-    >
-      {/* Logo */}
-      <View style={{
-        width: 64,
-        height: 64,
-        borderRadius: 16,
+      scaleValue={0.97}
+      hapticFeedback={!isExpired}
+      style={{
+        marginBottom: Spacing.md,
         overflow: 'hidden',
-        backgroundColor: '#F3F4F6',
-        marginRight: 18,
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
+        borderRadius: BorderRadius.lg,
+      }}
+    >
+      <View style={{
+        backgroundColor: Colors.white,
+        borderRadius: BorderRadius.lg,
+        overflow: 'hidden',
+        ...Shadows.md,
+        opacity: isExpired ? 0.6 : 1,
+        borderWidth: 1,
+        borderColor: Colors.gray200,
       }}>
-        {reward.logo_url ? (
-          <Image
-            source={{ uri: reward.logo_url }}
-            style={{ width: 64, height: 64, resizeMode: 'cover' }}
-          />
-        ) : (
-          <Text style={{ fontSize: 32 }}>{reward.icon}</Text>
+        {/* Gradient top bar */}
+        <LinearGradient
+          colors={getGradientColors()}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={{
+            height: 6,
+            width: '100%',
+          }}
+        />
+
+        {/* Subtle shimmer overlay for active rewards */}
+        {!isClaimed && !isExpired && (
+          <Animated.View
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              transform: [{ translateX: shimmerTranslate }],
+              opacity: 0.15,
+            }}
+            pointerEvents="none"
+          >
+            <LinearGradient
+              colors={['transparent', 'rgba(255, 255, 255, 0.6)', 'transparent']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{ width: 150, height: '100%' }}
+            />
+          </Animated.View>
         )}
-      </View>
 
-      {/* Info */}
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-          <Text style={{ fontWeight: 'bold', fontSize: 18, color: '#111827', flexShrink: 1 }} numberOfLines={1}>
-            {reward.company}
-          </Text>
-          {reward.claimed && (
-            <View style={{ backgroundColor: '#DCFCE7', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2, marginLeft: 8 }}>
-              <Text style={{ color: '#16A34A', fontSize: 12, fontWeight: 'bold' }}>Claimed</Text>
-            </View>
-          )}
-        </View>
-        <Text style={{ color: '#6B7280', fontSize: 14, marginBottom: 8 }} numberOfLines={2}>
-          {reward.reward}
-        </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Calendar size={16} color={isExpired ? '#DC2626' : (isClaimed ? '#16A34A' : '#9CA3AF')} />
-          <Text style={{ 
-            fontSize: 13, 
-            color: isExpired ? '#DC2626' : (isClaimed ? '#16A34A' : (isExpiringSoon ? '#DC2626' : '#6B7280')), 
-            fontWeight: (isExpired || isExpiringSoon || isClaimed) ? '600' : '400', 
-            marginLeft: 4 
+        {/* Card content */}
+        <View style={{
+          padding: Spacing.md,
+          flexDirection: 'row',
+          alignItems: 'center',
+        }}>
+          {/* Logo with glow */}
+          <View style={{
+            width: 72,
+            height: 72,
+            borderRadius: BorderRadius.md,
+            overflow: 'hidden',
+            backgroundColor: Colors.white,
+            marginRight: Spacing.md,
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            borderWidth: 1,
+            borderColor: Colors.gray200,
+            ...(!isExpired && !isClaimed && Shadows.primarySm),
           }}>
-            {formatExpirationText(reward.expirationDate)}
-          </Text>
+            {reward.logo_url ? (
+              <Image
+                source={{ uri: reward.logo_url }}
+                style={{ width: 72, height: 72, resizeMode: 'cover' }}
+              />
+            ) : (
+              <Text style={{ fontSize: 36 }}>{reward.icon}</Text>
+            )}
+          </View>
+
+          {/* Info */}
+          <View style={{ flex: 1, minWidth: 0 }}>
+            {/* Company name and badge */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.xs }}>
+              <Text
+                style={{
+                  fontSize: 17,
+                  fontWeight: '700',
+                  color: Colors.black,
+                  flex: 1,
+                }}
+                numberOfLines={1}
+              >
+                {reward.company}
+              </Text>
+              {getStatusBadge()}
+            </View>
+
+            {/* Reward description */}
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: '600',
+                color: Colors.black,
+                marginBottom: Spacing.sm,
+                lineHeight: 19,
+              }}
+              numberOfLines={2}
+            >
+              {reward.reward}
+            </Text>
+
+            {/* Expiration info */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              {getStatusIcon()}
+              <Text style={{
+                fontSize: 13,
+                color: isExpired ? Colors.error : (isClaimed ? Colors.success : (isExpiringSoon ? Colors.warningDark : Colors.black)),
+                fontWeight: '600',
+              }}>
+                {isClaimed ? 'Claimed' : formatExpirationText(reward.expirationDate)}
+              </Text>
+            </View>
+          </View>
+
+          {/* Chevron */}
+          <ChevronRight
+            size={22}
+            color={isExpired ? Colors.gray400 : Colors.gray500}
+            style={{ marginLeft: Spacing.sm }}
+          />
         </View>
       </View>
-
-      {/* Chevron */}
-      <ChevronRight size={20} color="#9CA3AF" style={{ marginLeft: 12 }} />
-    </TouchableOpacity>
+    </TouchableScale>
   );
 }
