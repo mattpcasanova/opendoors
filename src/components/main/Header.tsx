@@ -3,7 +3,8 @@ import { BlurView } from "expo-blur"
 import { LinearGradient } from "expo-linear-gradient"
 import { Gift, History, Settings, Shield, Users } from "lucide-react-native"
 import type React from "react"
-import { Dimensions, Image, Platform, Text, TouchableOpacity, View } from "react-native"
+import { useEffect, useRef } from "react"
+import { Animated, Dimensions, Image, Platform, Text, TouchableOpacity, View } from "react-native"
 
 const { width: screenWidth } = Dimensions.get("window")
 
@@ -44,6 +45,91 @@ export default function Header({
 
   // HOME HEADER - Unique with logo and personalized greeting
   if (variant === "home") {
+    // Animation refs for floating orbs
+    const orb1Y = useRef(new Animated.Value(0)).current;
+    const orb1Scale = useRef(new Animated.Value(1)).current;
+    const orb2Y = useRef(new Animated.Value(0)).current;
+    const orb2Scale = useRef(new Animated.Value(1)).current;
+
+    // Setup floating animations
+    useEffect(() => {
+      // Orb 1 - Slower, larger movement
+      const orb1Animation = Animated.loop(
+        Animated.sequence([
+          Animated.parallel([
+            Animated.timing(orb1Y, {
+              toValue: -15,
+              duration: 3500,
+              useNativeDriver: true,
+              easing: (t) => t * (2 - t), // ease-out-quad for smooth deceleration
+            }),
+            Animated.timing(orb1Scale, {
+              toValue: 1.05,
+              duration: 3500,
+              useNativeDriver: true,
+              easing: (t) => t * (2 - t),
+            }),
+          ]),
+          Animated.parallel([
+            Animated.timing(orb1Y, {
+              toValue: 0,
+              duration: 3500,
+              useNativeDriver: true,
+              easing: (t) => t * (2 - t),
+            }),
+            Animated.timing(orb1Scale, {
+              toValue: 1,
+              duration: 3500,
+              useNativeDriver: true,
+              easing: (t) => t * (2 - t),
+            }),
+          ]),
+        ])
+      );
+
+      // Orb 2 - Faster, smaller movement (offset timing)
+      const orb2Animation = Animated.loop(
+        Animated.sequence([
+          Animated.parallel([
+            Animated.timing(orb2Y, {
+              toValue: 12,
+              duration: 2800,
+              useNativeDriver: true,
+              easing: (t) => t * (2 - t),
+            }),
+            Animated.timing(orb2Scale, {
+              toValue: 1.03,
+              duration: 2800,
+              useNativeDriver: true,
+              easing: (t) => t * (2 - t),
+            }),
+          ]),
+          Animated.parallel([
+            Animated.timing(orb2Y, {
+              toValue: 0,
+              duration: 2800,
+              useNativeDriver: true,
+              easing: (t) => t * (2 - t),
+            }),
+            Animated.timing(orb2Scale, {
+              toValue: 1,
+              duration: 2800,
+              useNativeDriver: true,
+              easing: (t) => t * (2 - t),
+            }),
+          ]),
+        ])
+      );
+
+      orb1Animation.start();
+      orb2Animation.start();
+
+      return () => {
+        orb1Animation.stop();
+        orb2Animation.stop();
+      };
+    }, []);
+
     return (
       <View style={{ position: "relative", overflow: "hidden" }}>
         {/* Dynamic Background with Teal Gradients */}
@@ -61,7 +147,7 @@ export default function Header({
         />
 
         {/* Floating Orbs for Visual Interest */}
-        <View
+        <Animated.View
           style={{
             position: "absolute",
             top: -40,
@@ -70,9 +156,13 @@ export default function Header({
             height: 140,
             borderRadius: 70,
             backgroundColor: "rgba(255, 255, 255, 0.12)",
+            transform: [
+              { translateY: orb1Y },
+              { scale: orb1Scale },
+            ],
           }}
         />
-        <View
+        <Animated.View
           style={{
             position: "absolute",
             bottom: -50,
@@ -81,6 +171,10 @@ export default function Header({
             height: 120,
             borderRadius: 60,
             backgroundColor: "rgba(255, 255, 255, 0.08)",
+            transform: [
+              { translateY: orb2Y },
+              { scale: orb2Scale },
+            ],
           }}
         />
 
