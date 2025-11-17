@@ -124,7 +124,20 @@ const DailyGameButton: React.FC<DailyGameButtonProps> = ({ hasPlayedToday, onPre
           colors={["#2dd4bf", "#14b8a6"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
-          style={{ borderRadius: 24, padding: 24, position: 'relative', overflow: 'hidden', width: '100%', maxWidth: 480, alignSelf: 'center' }}
+          style={{
+            borderRadius: 24,
+            padding: 24,
+            position: 'relative',
+            overflow: 'hidden',
+            width: '100%',
+            maxWidth: 480,
+            alignSelf: 'center',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.08,
+            shadowRadius: 8,
+            elevation: 3,
+          }}
         >
           <View style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(45,212,191,0.12)' }} />
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
@@ -244,7 +257,20 @@ const ProgressSection: React.FC<ProgressSectionProps> = ({
           colors={["#2dd4bf", "#14b8a6"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
-          style={{ borderRadius: 24, padding: 24, position: 'relative', overflow: 'hidden', width: '100%', maxWidth: 480, alignSelf: 'center' }}
+          style={{
+            borderRadius: 24,
+            padding: 24,
+            position: 'relative',
+            overflow: 'hidden',
+            width: '100%',
+            maxWidth: 480,
+            alignSelf: 'center',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.08,
+            shadowRadius: 8,
+            elevation: 3,
+          }}
         >
           <View style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(45,212,191,0.12)' }} />
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
@@ -543,7 +569,7 @@ export default function HomeScreen() {
     };
   }, [user?.id]);
   const distanceOptions = ['Any', '5 mi', '10 mi', '25 mi', '50 mi'];
-  const sortOptions = ['Closest', 'Suggested', 'Highest Value', 'Most Popular'];
+  const sortOptions = ['Closest', 'Highest Value', 'Most Popular', 'Suggested'];
 
   // Calculate category counts for badges
   const categoryCounts = React.useMemo(() => {
@@ -1340,7 +1366,7 @@ export default function HomeScreen() {
           return (
             gamesToDisplay.length === 0 && searchText.length > 0 ? (
               <View style={{
-                paddingVertical: Spacing.xxxl,
+                paddingVertical: Spacing['3xl'],
                 alignItems: 'center',
                 backgroundColor: Colors.white,
                 borderRadius: BorderRadius.lg,
@@ -1377,7 +1403,7 @@ export default function HomeScreen() {
               </View>
             ) : gamesToDisplay.length === 0 && !searchText ? (
               <View style={{
-                paddingVertical: Spacing.xxxl,
+                paddingVertical: Spacing['3xl'],
                 alignItems: 'center',
                 backgroundColor: Colors.white,
                 borderRadius: BorderRadius.lg,
