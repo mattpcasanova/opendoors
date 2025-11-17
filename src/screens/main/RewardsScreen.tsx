@@ -16,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import BottomNavBar from '../../components/main/BottomNavBar';
 import Header from '../../components/main/Header';
 import RewardCard, { Reward } from '../../components/main/RewardCard';
-import { LoadingSpinner, TouchableScale } from '../../components/ui';
+import { LoadingSpinner, TouchableScale, EmptyState } from '../../components/ui';
 import { Colors, Spacing, BorderRadius, Shadows } from '../../constants';
 import { useAuth } from '../../hooks/useAuth';
 import { rewardsService } from '../../services/rewardsService';
@@ -537,11 +537,11 @@ export default function RewardsScreen() {
         {/* Rewards List */}
         <View style={{ paddingHorizontal: Spacing.md }}>
           {rewards.length === 0 ? (
-            <View style={{ padding: Spacing.xl, alignItems: 'center' }}>
-              <Text style={{ fontSize: 16, color: Colors.gray600, textAlign: 'center' }}>
-                No rewards found
-              </Text>
-            </View>
+            <EmptyState
+              variant="no-rewards"
+              actionLabel="Browse Games"
+              onAction={() => navigation.navigate('Home')}
+            />
           ) : (
             rewards
               .filter(reward => {
