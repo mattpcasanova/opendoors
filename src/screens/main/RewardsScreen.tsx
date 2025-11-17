@@ -563,9 +563,37 @@ export default function RewardsScreen() {
                 return matchesSearch; // 'all' filter
               })
               .sort((a, b) => {
-                // Sort by creation date, newest first
-                const dateA = new Date(a.created_at || a.expirationDate);
-                const dateB = new Date(b.created_at || b.expirationDate);
+                // Priority-based sorting: expiring soon > active > claimed > expired
+                const daysA = getDaysUntilExpiration(a.expirationDate);
+                const daysB = getDaysUntilExpiration(b.expirationDate);
+
+                const isExpiredA = daysA < 0;
+                const isExpiredB = daysB < 0;
+                const isExpiringSoonA = daysA <= 3 && daysA >= 0 && !a.claimed;
+                const isExpiringSoonB = daysB <= 3 && daysB >= 0 && !b.claimed;
+                const isClaimedA = a.claimed;
+                const isClaimedB = b.claimed;
+
+                // 1. Expired items go to bottom
+                if (isExpiredA && !isExpiredB) return 1;
+                if (!isExpiredA && isExpiredB) return -1;
+
+                // 2. Expiring soon goes to top (among non-expired)
+                if (isExpiringSoonA && !isExpiringSoonB) return -1;
+                if (!isExpiringSoonA && isExpiringSoonB) return 1;
+
+                // 3. Claimed goes after active
+                if (isClaimedA && !isClaimedB && !isExpiredB) return 1;
+                if (!isClaimedA && isClaimedB && !isExpiredA) return -1;
+
+                // 4. Within same priority, sort by expiration date (soonest first)
+                if (!isExpiredA && !isExpiredB) {
+                  return daysA - daysB;
+                }
+
+                // 5. For expired items, sort by expiration date (most recently expired first)
+                const dateA = new Date(a.expirationDate);
+                const dateB = new Date(b.expirationDate);
                 return dateB.getTime() - dateA.getTime();
               })
               .map(reward => (
