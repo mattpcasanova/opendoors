@@ -21,7 +21,7 @@ import GameCard from '../../components/game/GameCard';
 import BottomNavBar from '../../components/main/BottomNavBar';
 import { FilterBar } from '../../components/main/FilterBar';
 import Header from "../../components/main/Header";
-import { LoadingSpinner, SkeletonGameCard } from '../../components/ui';
+import { LoadingSpinner, SkeletonGameCard, EmptyState } from '../../components/ui';
 import EarnRewardModal from '../../components/modals/EarnRewardModal';
 import WatchAdModal from '../../components/modals/WatchAdModal';
 import { useAuth } from '../../hooks/useAuth';
@@ -1365,79 +1365,25 @@ export default function HomeScreen() {
           
           return (
             gamesToDisplay.length === 0 && searchText.length > 0 ? (
-              <View style={{
-                paddingVertical: Spacing['3xl'],
-                alignItems: 'center',
-                backgroundColor: Colors.white,
-                borderRadius: BorderRadius.lg,
-                marginVertical: Spacing.lg,
-                ...Shadows.sm,
-              }}>
-                <View style={{
-                  width: 80,
-                  height: 80,
-                  borderRadius: BorderRadius.full,
-                  backgroundColor: Colors.gray100,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: Spacing.lg,
-                }}>
-                  <Ionicons name="search" size={40} color={Colors.gray400} />
-                </View>
-                <Text style={{
-                  color: Colors.gray700,
-                  fontSize: 18,
-                  fontWeight: '600',
-                  marginBottom: Spacing.sm,
-                }}>
-                  No games found
-                </Text>
-                <Text style={{
-                  color: Colors.gray500,
-                  fontSize: 14,
-                  textAlign: 'center',
-                  paddingHorizontal: Spacing.xl,
-                }}>
-                  Try searching for something else or adjust your filters
-                </Text>
-              </View>
+              <EmptyState
+                variant="no-results"
+                style={{
+                  backgroundColor: Colors.white,
+                  borderRadius: BorderRadius.lg,
+                  marginVertical: Spacing.lg,
+                  ...Shadows.sm,
+                }}
+              />
             ) : gamesToDisplay.length === 0 && !searchText ? (
-              <View style={{
-                paddingVertical: Spacing['3xl'],
-                alignItems: 'center',
-                backgroundColor: Colors.white,
-                borderRadius: BorderRadius.lg,
-                marginVertical: Spacing.lg,
-                ...Shadows.sm,
-              }}>
-                <View style={{
-                  width: 80,
-                  height: 80,
-                  borderRadius: BorderRadius.full,
-                  backgroundColor: Colors.primaryLight,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: Spacing.lg,
-                }}>
-                  <Ionicons name="game-controller" size={40} color={Colors.primary} />
-                </View>
-                <Text style={{
-                  color: Colors.gray700,
-                  fontSize: 18,
-                  fontWeight: '600',
-                  marginBottom: Spacing.sm,
-                }}>
-                  No games available
-                </Text>
-                <Text style={{
-                  color: Colors.gray500,
-                  fontSize: 14,
-                  textAlign: 'center',
-                  paddingHorizontal: Spacing.xl,
-                }}>
-                  Check back soon for new games and prizes!
-                </Text>
-              </View>
+              <EmptyState
+                variant="no-games"
+                style={{
+                  backgroundColor: Colors.white,
+                  borderRadius: BorderRadius.lg,
+                  marginVertical: Spacing.lg,
+                  ...Shadows.sm,
+                }}
+              />
             ) : (
               gamesToDisplay.map((prize) => (
                 <GameCard

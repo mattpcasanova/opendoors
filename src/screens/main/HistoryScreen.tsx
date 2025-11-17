@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import PastGameCard from '../../components/PastGameCard';
 import BottomNavBar from '../../components/main/BottomNavBar';
 import Header from '../../components/main/Header';
-import { LoadingSpinner, SkeletonPastGameCard } from '../../components/ui';
+import { LoadingSpinner, SkeletonPastGameCard, EmptyState } from '../../components/ui';
 import DistributorHistoryView from '../../components/organization/DistributorHistoryView';
 import { useAuth } from '../../hooks/useAuth';
 import { GamePlay, historyService, UserStats } from '../../services/historyService';
@@ -211,41 +211,7 @@ export default function HistoryScreen() {
     <View style={styles.historyContainer}>
       <Text style={styles.sectionTitle}>Recent Games</Text>
       {gamePlays.length === 0 ? (
-        <View style={{
-          paddingVertical: Spacing['3xl'],
-          alignItems: 'center',
-          backgroundColor: Colors.white,
-          borderRadius: BorderRadius.lg,
-          ...Shadows.sm,
-        }}>
-          <View style={{
-            width: 80,
-            height: 80,
-            borderRadius: BorderRadius.full,
-            backgroundColor: Colors.primaryLight,
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: Spacing.lg,
-          }}>
-            <Ionicons name="game-controller-outline" size={40} color={Colors.primary} />
-          </View>
-          <Text style={{
-            color: Colors.gray700,
-            fontSize: 18,
-            fontWeight: '600',
-            marginBottom: Spacing.sm,
-          }}>
-            No games played yet
-          </Text>
-          <Text style={{
-            color: Colors.gray500,
-            fontSize: 14,
-            textAlign: 'center',
-            paddingHorizontal: Spacing.xl,
-          }}>
-            Start playing games to see your history here!
-          </Text>
-        </View>
+        <EmptyState variant="no-history" />
       ) : (
         gamePlays.map((game) => (
           <PastGameCard
