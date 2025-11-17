@@ -2,8 +2,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import { GamepadIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
     DeviceEventEmitter,
+    RefreshControl,
     ScrollView,
     StyleSheet,
     Text,
@@ -11,13 +11,16 @@ import {
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import PastGameCard from '../../components/PastGameCard';
 import BottomNavBar from '../../components/main/BottomNavBar';
 import Header from '../../components/main/Header';
+import { LoadingSpinner, SkeletonPastGameCard } from '../../components/ui';
 import DistributorHistoryView from '../../components/organization/DistributorHistoryView';
 import { useAuth } from '../../hooks/useAuth';
 import { GamePlay, historyService, UserStats } from '../../services/historyService';
 import { getUserProfileWithRetry, testSupabaseConnection } from '../../utils/supabaseHelpers';
+import { Colors, Spacing, BorderRadius, Shadows } from '../../constants';
 
 export default function HistoryScreen() {
   const { user } = useAuth();
@@ -164,42 +167,38 @@ export default function HistoryScreen() {
 
   const renderStats = () => (
     <View style={{
-      backgroundColor: 'white',
-      borderRadius: 16,
-      padding: 24,
-      marginHorizontal: 20,
-      marginBottom: 20,
+      backgroundColor: Colors.white,
+      borderRadius: BorderRadius.lg,
+      padding: Spacing.xl,
+      marginHorizontal: Spacing.lg,
+      marginBottom: Spacing.lg,
       alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.1,
-      shadowRadius: 12,
-      elevation: 6,
+      ...Shadows.sm,
       borderWidth: 1,
-      borderColor: '#F1F5F9',
+      borderColor: Colors.gray100,
     }}>
       <View style={{
         width: 64,
         height: 64,
-        backgroundColor: '#E6FFFA',
-        borderRadius: 32,
+        backgroundColor: Colors.primaryLight,
+        borderRadius: BorderRadius.full,
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 16,
+        marginBottom: Spacing.md,
       }}>
-        <GamepadIcon size={32} color="#009688" strokeWidth={2} />
+        <GamepadIcon size={32} color={Colors.primary} strokeWidth={2} />
       </View>
-      <Text style={{ 
-        fontSize: 36, 
-        fontWeight: '800', 
-        color: '#009688',
+      <Text style={{
+        fontSize: 36,
+        fontWeight: '800',
+        color: Colors.primary,
         marginBottom: 6,
       }}>
         {stats?.gamesPlayed || 0}
       </Text>
-      <Text style={{ 
-        fontSize: 16, 
-        color: '#64748B', 
+      <Text style={{
+        fontSize: 16,
+        color: Colors.gray600,
         textAlign: 'center',
         fontWeight: '500',
       }}>
@@ -212,9 +211,40 @@ export default function HistoryScreen() {
     <View style={styles.historyContainer}>
       <Text style={styles.sectionTitle}>Recent Games</Text>
       {gamePlays.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyStateText}>No games played yet</Text>
-          <Text style={styles.emptyStateSubtext}>Start playing games to see your history here!</Text>
+        <View style={{
+          paddingVertical: Spacing['3xl'],
+          alignItems: 'center',
+          backgroundColor: Colors.white,
+          borderRadius: BorderRadius.lg,
+          ...Shadows.sm,
+        }}>
+          <View style={{
+            width: 80,
+            height: 80,
+            borderRadius: BorderRadius.full,
+            backgroundColor: Colors.primaryLight,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: Spacing.lg,
+          }}>
+            <Ionicons name="game-controller-outline" size={40} color={Colors.primary} />
+          </View>
+          <Text style={{
+            color: Colors.gray700,
+            fontSize: 18,
+            fontWeight: '600',
+            marginBottom: Spacing.sm,
+          }}>
+            No games played yet
+          </Text>
+          <Text style={{
+            color: Colors.gray500,
+            fontSize: 14,
+            textAlign: 'center',
+            paddingHorizontal: Spacing.xl,
+          }}>
+            Start playing games to see your history here!
+          </Text>
         </View>
       ) : (
         gamePlays.map((game) => (
@@ -233,19 +263,117 @@ export default function HistoryScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA', justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#009688" />
+      <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50 }}>
+        <Header variant="page" title="History" subtitle="Your game history" />
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 100 }}>
+          {/* Stats skeleton */}
+          <View style={{
+            backgroundColor: Colors.white,
+            borderRadius: BorderRadius.lg,
+            padding: Spacing.xl,
+            marginHorizontal: Spacing.lg,
+            marginBottom: Spacing.lg,
+            alignItems: 'center',
+            ...Shadows.sm,
+            borderWidth: 1,
+            borderColor: Colors.gray100,
+          }}>
+            <View style={{
+              width: 64,
+              height: 64,
+              backgroundColor: Colors.gray200,
+              borderRadius: BorderRadius.full,
+              marginBottom: Spacing.md,
+            }} />
+            <View style={{
+              width: 80,
+              height: 36,
+              backgroundColor: Colors.gray200,
+              borderRadius: BorderRadius.sm,
+              marginBottom: 6,
+            }} />
+            <View style={{
+              width: 120,
+              height: 16,
+              backgroundColor: Colors.gray200,
+              borderRadius: BorderRadius.sm,
+            }} />
+          </View>
+
+          {/* Game history skeleton */}
+          <View style={styles.historyContainer}>
+            <View style={{
+              width: 150,
+              height: 20,
+              backgroundColor: Colors.gray200,
+              borderRadius: BorderRadius.sm,
+              marginBottom: Spacing.md,
+            }} />
+            <SkeletonPastGameCard />
+            <SkeletonPastGameCard />
+            <SkeletonPastGameCard />
+          </View>
+        </ScrollView>
+        <BottomNavBar />
       </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-        <Text style={{ color: 'red', marginBottom: 20 }}>Error: {error}</Text>
-        <TouchableOpacity style={{ backgroundColor: '#009688', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 5 }} onPress={fetchHistory}>
-          <Text style={{ color: 'white', fontWeight: 'bold' }}>Retry</Text>
-        </TouchableOpacity>
+      <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50, justifyContent: 'center', alignItems: 'center', padding: Spacing.lg }}>
+        <View style={{
+          backgroundColor: Colors.white,
+          borderRadius: BorderRadius.lg,
+          padding: Spacing.xl,
+          alignItems: 'center',
+          ...Shadows.sm,
+          maxWidth: 400,
+        }}>
+          <View style={{
+            width: 80,
+            height: 80,
+            borderRadius: BorderRadius.full,
+            backgroundColor: '#FEE2E2',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: Spacing.lg,
+          }}>
+            <Ionicons name="alert-circle" size={40} color="#DC2626" />
+          </View>
+          <Text style={{
+            color: Colors.gray900,
+            fontSize: 18,
+            fontWeight: '600',
+            marginBottom: Spacing.sm,
+            textAlign: 'center',
+          }}>
+            Something went wrong
+          </Text>
+          <Text style={{
+            color: Colors.gray600,
+            fontSize: 14,
+            marginBottom: Spacing.xl,
+            textAlign: 'center',
+          }}>
+            {error}
+          </Text>
+          <TouchableOpacity
+            style={{
+              backgroundColor: Colors.primary,
+              paddingHorizontal: Spacing.xl,
+              paddingVertical: Spacing.md,
+              borderRadius: BorderRadius.md,
+              ...Shadows.sm,
+            }}
+            onPress={() => fetchHistory()}
+            activeOpacity={0.8}
+          >
+            <Text style={{ color: Colors.white, fontWeight: '600', fontSize: 16 }}>
+              Try Again
+            </Text>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     );
   }
@@ -256,9 +384,9 @@ export default function HistoryScreen() {
   if (userType === 'distributor' && organizationId) {
     console.log('✅ Showing Distributor Dashboard');
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50 }}>
         <Header variant="page" title="Distributor Dashboard" subtitle="Manage door distributions" />
-        <DistributorHistoryView 
+        <DistributorHistoryView
           organizationId={organizationId}
           doorsAvailable={doorsAvailable}
           doorsDistributed={doorsDistributed}
@@ -273,9 +401,20 @@ export default function HistoryScreen() {
   // Default: Regular user view
   console.log('✅ Showing Regular User History');
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50 }}>
       <Header variant="page" title="History" subtitle="Your game history" />
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 100 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => fetchHistory(true)}
+            tintColor={Colors.primary}
+            colors={[Colors.primary]}
+          />
+        }
+      >
         {renderStats()}
         {renderGameHistory()}
       </ScrollView>
@@ -285,72 +424,13 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  header: {
-    paddingTop: 60,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'white',
-    textAlign: 'center',
-  },
-  content: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  errorText: {
-    color: 'red',
-    marginBottom: 20,
-  },
-  retryButton: {
-    backgroundColor: '#4c669f',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 5,
-  },
-  retryButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
   historyContainer: {
-    padding: 20,
+    padding: Spacing.lg,
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#333',
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  emptyStateText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10,
-  },
-  emptyStateSubtext: {
-    fontSize: 14,
-    color: '#666',
+    fontWeight: '600',
+    marginBottom: Spacing.md,
+    color: Colors.gray900,
   },
 }); 

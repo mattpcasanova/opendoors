@@ -140,3 +140,48 @@ export const SkeletonGameCard: React.FC<{ style?: ViewStyle }> = ({ style }) => 
     </View>
   );
 };
+
+/**
+ * SkeletonPastGameCard Component
+ * Pre-built skeleton specifically for past game cards in history
+ */
+export const SkeletonPastGameCard: React.FC<{ style?: ViewStyle }> = ({ style }) => {
+  return (
+    <View
+      style={[
+        {
+          backgroundColor: Colors.white,
+          borderRadius: BorderRadius.lg,
+          padding: Spacing.lg,
+          marginBottom: Spacing.md,
+          flexDirection: 'row',
+          alignItems: 'center',
+        },
+        style,
+      ]}
+    >
+      {/* Logo */}
+      <Skeleton
+        width={72}
+        height={72}
+        borderRadius="md"
+        style={{ marginRight: Spacing.md }}
+      />
+
+      {/* Content */}
+      <View style={{ flex: 1 }}>
+        {/* Header row with date and badge */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: Spacing.sm }}>
+          <Skeleton width={80} height={14} />
+          <Skeleton width={50} height={20} borderRadius="sm" />
+        </View>
+
+        {/* Prize name */}
+        <Skeleton width="90%" height={16} style={{ marginBottom: 6 }} />
+
+        {/* Location */}
+        <Skeleton width="70%" height={14} />
+      </View>
+    </View>
+  );
+};

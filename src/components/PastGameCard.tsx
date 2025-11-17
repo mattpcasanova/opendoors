@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Colors, Spacing, BorderRadius, Shadows } from '../constants';
 
 export interface PastGame {
   id: string;
@@ -103,42 +104,38 @@ export default function PastGameCard({ game, onPress }: PastGameCardProps) {
 
 const styles = StyleSheet.create({
   gameCard: {
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 12,
+    backgroundColor: Colors.white,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    marginBottom: Spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    ...Shadows.sm,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
+    borderColor: Colors.gray200,
   },
   leftSection: {
     position: 'relative',
-    marginRight: 16,
+    marginRight: Spacing.md,
   },
   logoContainer: {
-    width: 56,
-    height: 56,
-    backgroundColor: '#F8F9FA',
-    borderRadius: 16,
+    width: 72,
+    height: 72,
+    backgroundColor: Colors.gray50,
+    borderRadius: BorderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
     overflow: 'hidden',
   },
   logoImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
+    width: 64,
+    height: 64,
+    borderRadius: BorderRadius.sm,
     resizeMode: 'contain',
   },
   logoEmoji: {
-    fontSize: 24,
+    fontSize: 32,
   },
   resultIndicator: {
     position: 'absolute',
@@ -150,7 +147,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: 'white',
+    borderColor: Colors.white,
   },
   rightSection: {
     flex: 1,
@@ -160,17 +157,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: Spacing.sm,
   },
   gameDate: {
     fontSize: 13,
-    color: '#6B7280',
+    color: Colors.gray600,
     fontWeight: '500',
   },
   resultBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.sm,
   },
   resultText: {
     fontSize: 12,
@@ -179,7 +176,7 @@ const styles = StyleSheet.create({
   prizeName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1F2937',
+    color: Colors.gray900,
     marginBottom: 6,
     lineHeight: 20,
   },
@@ -190,8 +187,8 @@ const styles = StyleSheet.create({
   },
   locationName: {
     fontSize: 14,
-    color: '#6B7280',
-    marginLeft: 4,
+    color: Colors.gray600,
+    marginLeft: Spacing.xs,
     flex: 1,
     fontWeight: '500',
   },
