@@ -19,6 +19,7 @@ import RewardCard, { Reward } from '../../components/main/RewardCard';
 import { LoadingSpinner, TouchableScale, EmptyState } from '../../components/ui';
 import { Colors, Spacing, BorderRadius, Shadows } from '../../constants';
 import { useAuth } from '../../hooks/useAuth';
+import { useToast } from '../../contexts/ToastContext';
 import { rewardsService } from '../../services/rewardsService';
 import type { RootNavigationProp } from '../../types/navigation';
 
@@ -265,6 +266,7 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
 export default function RewardsScreen() {
   const navigation = useNavigation<RootNavigationProp>();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -340,18 +342,19 @@ export default function RewardsScreen() {
     try {
       const { success, error } = await rewardsService.claimRewardById(rewardId);
       if (success) {
-        setRewards((prev: Reward[]) => prev.map(r => 
+        setRewards((prev: Reward[]) => prev.map(r =>
           r.id === rewardId ? { ...r, claimed: true } : r
         ));
-        setSelectedReward((prev: Reward | null) => 
+        setSelectedReward((prev: Reward | null) =>
           prev?.id === rewardId ? { ...prev, claimed: true } : prev
         );
-        Alert.alert('Success', 'Reward marked as claimed!');
+        showToast('Reward claimed successfully!', 'success');
+        setSelectedReward(null); // Close the modal
       } else {
-        Alert.alert('Error', error || 'Failed to mark reward as claimed. Please try again.');
+        showToast(error || 'Failed to claim reward', 'error');
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to mark reward as claimed. Please try again.');
+      showToast('Failed to claim reward. Please try again.', 'error');
     }
   };
 

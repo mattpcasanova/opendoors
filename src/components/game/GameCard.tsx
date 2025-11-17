@@ -3,6 +3,7 @@ import { DoorOpen, Heart, MapPin, Star } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { DeviceEventEmitter, Image, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../hooks/useAuth';
+import { useToast } from '../../contexts/ToastContext';
 import { favoritesService } from '../../services/favoritesService';
 import { Prize } from '../../services/gameLogic/games';
 import { supabase } from '../../services/supabase/client';
@@ -113,6 +114,7 @@ const CompanyLogo = ({ prize }: { prize: Prize }) => {
 
 export default function GameCard({ prize, onPress, userLocation, variant = "default" }: Props) {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [favorited, setFavorited] = useState(false);
   const [loadingFavorite, setLoadingFavorite] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
@@ -222,10 +224,12 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
     if (favorited) {
       await favoritesService.removeFavorite(user.id, prize.id);
       setFavorited(false);
+      showToast('Removed from favorites', 'info', 2000);
       console.log(`Removed favorite for prize ${prize.id}`);
     } else {
       await favoritesService.addFavorite(user.id, prize.id);
       setFavorited(true);
+      showToast('Added to favorites!', 'success', 2000);
       console.log(`Added favorite for prize ${prize.id}`);
     }
     setLoadingFavorite(false);

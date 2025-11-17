@@ -5,6 +5,7 @@ import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import './global.css';
 import { AuthProvider } from './src/hooks/useAuth';
+import { ToastProvider } from './src/contexts/ToastContext';
 import RootNavigator from './src/navigation/RootNavigator';
 
 console.log('!!! APP ENTRY !!!');
@@ -46,10 +47,12 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <NavigationContainer linking={linking}>
-          <RootNavigator />
-          <StatusBar style="auto" />
-        </NavigationContainer>
+        <ToastProvider>
+          <NavigationContainer linking={linking}>
+            <RootNavigator />
+            <StatusBar style="auto" />
+          </NavigationContainer>
+        </ToastProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );
