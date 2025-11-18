@@ -1,16 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import {
     Animated,
     Dimensions,
     Image,
+    Platform,
     StatusBar,
     StyleSheet,
     Text,
     TouchableOpacity,
     View
 } from 'react-native';
+import { Colors } from '../constants';
 import MiniGame from './MiniGame';
 import TutorialVisuals from './TutorialVisuals';
 
@@ -159,7 +162,7 @@ export default function TutorialOverlay({ isVisible, onComplete, onSkip }: Tutor
         ]}
       >
         <LinearGradient
-          colors={['#14B8A6', '#0D9488', '#059669']}
+          colors={[Colors.primary, Colors.primaryDark, Colors.success]}
           style={styles.tutorialCard}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -176,15 +179,22 @@ export default function TutorialOverlay({ isVisible, onComplete, onSkip }: Tutor
 
           {/* Step Content */}
           <View style={styles.stepContent}>
-            <View style={styles.iconContainer}>
-              {step.icon === 'logo' ? (
-                <Image 
-                  source={require('../../assets/OpenDoorsLogo.png')} 
-                  style={styles.logoImage}
-                />
-              ) : (
-                <Ionicons name={step.icon as any} size={60} color="white" />
-              )}
+            <View style={styles.iconContainerOuter}>
+              <BlurView
+                intensity={Platform.OS === 'ios' ? 95 : 100}
+                tint="light"
+                style={styles.iconContainer}
+              >
+                <View style={styles.iconOverlay} pointerEvents="none" />
+                {step.icon === 'logo' ? (
+                  <Image
+                    source={require('../../assets/OpenDoorsLogo.png')}
+                    style={styles.logoImage}
+                  />
+                ) : (
+                  <Ionicons name={step.icon as any} size={60} color={Colors.white} />
+                )}
+              </BlurView>
             </View>
             
             <Text style={styles.stepTitle}>{step.title}</Text>
@@ -207,20 +217,26 @@ export default function TutorialOverlay({ isVisible, onComplete, onSkip }: Tutor
           <View style={styles.navigationContainer}>
             {currentStep > 0 && (
               <TouchableOpacity style={styles.previousButton} onPress={handlePrevious}>
-                <Ionicons name="chevron-back" size={20} color="#14B8A6" />
+                <Ionicons name="chevron-back" size={20} color={Colors.primary} />
                 <Text style={styles.previousText}>Previous</Text>
               </TouchableOpacity>
             )}
-            
+
             <View style={styles.nextButtonContainer}>
-              <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+              <TouchableOpacity
+                style={[
+                  styles.nextButton,
+                  currentStep === tutorialSteps.length - 1 && styles.finishButton
+                ]}
+                onPress={handleNext}
+              >
                 <Text style={styles.nextText}>
                   {currentStep === tutorialSteps.length - 1 ? 'Get Started!' : 'Next'}
                 </Text>
-                <Ionicons 
-                  name={currentStep === tutorialSteps.length - 1 ? "checkmark" : "chevron-forward"} 
-                  size={20} 
-                  color="white" 
+                <Ionicons
+                  name={currentStep === tutorialSteps.length - 1 ? "checkmark" : "chevron-forward"}
+                  size={20}
+                  color={Colors.white}
                 />
               </TouchableOpacity>
             </View>
@@ -238,7 +254,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
     zIndex: 1000,
     justifyContent: 'center',
     alignItems: 'center',
@@ -250,18 +266,18 @@ const styles = StyleSheet.create({
     zIndex: 1001,
     paddingHorizontal: 20,
     paddingVertical: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 25,
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
-    shadowColor: '#000',
+    borderColor: Colors.white,
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
   },
   skipText: {
-    color: 'white',
+    color: Colors.white,
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -270,11 +286,11 @@ const styles = StyleSheet.create({
     maxWidth: 400,
   },
   tutorialCard: {
-    borderRadius: 24,
+    borderRadius: 32,
     padding: 32,
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.4,
     shadowRadius: 40,
     elevation: 20,
   },
@@ -282,64 +298,94 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   progressBar: {
-    height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 2,
-    marginBottom: 8,
+    height: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 4,
+    marginBottom: 12,
+    overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: 'white',
-    borderRadius: 2,
+    backgroundColor: Colors.warning,
+    borderRadius: 4,
   },
   progressText: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 12,
+    color: Colors.white,
+    fontSize: 14,
     textAlign: 'center',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   stepContent: {
     alignItems: 'center',
     marginBottom: 32,
   },
-  iconContainer: {
-    width: 100,
-    height: 100,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
+  iconContainerOuter: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    overflow: 'hidden',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.5,
+    shadowRadius: 24,
+    elevation: 15,
     marginBottom: 24,
   },
+  iconContainer: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  iconOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderRadius: 60,
+  },
   stepTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: 'white',
+    color: Colors.white,
     textAlign: 'center',
     marginBottom: 16,
   },
   stepDescription: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 17,
+    color: Colors.primaryLightest,
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 26,
+    fontWeight: '500',
   },
   navigationContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 12,
   },
   previousButton: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
-    backgroundColor: 'white',
+    backgroundColor: Colors.white,
     borderRadius: 25,
     gap: 8,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+    minHeight: 48,
   },
   previousText: {
-    color: '#14B8A6',
+    color: Colors.primary,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -351,22 +397,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingVertical: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: 25,
     borderWidth: 2,
-    borderColor: 'white',
+    borderColor: Colors.white,
     gap: 8,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
+    minHeight: 48,
+  },
+  finishButton: {
+    backgroundColor: Colors.success,
+    borderColor: Colors.success,
   },
   nextText: {
-    color: 'white',
+    color: Colors.white,
     fontSize: 16,
     fontWeight: 'bold',
   },
   logoImage: {
-    width: 80,
-    height: 80,
+    width: 90,
+    height: 90,
     resizeMode: 'contain',
+    zIndex: 1,
   },
   miniGameContainer: {
     marginTop: 20,

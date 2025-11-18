@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Colors } from '../constants';
 
 interface TutorialVisualsProps {
   stepId: number;
@@ -11,7 +12,7 @@ export default function TutorialVisuals({ stepId }: TutorialVisualsProps) {
     <View style={styles.playCounterContainer}>
       <View style={styles.playCounterCard}>
         <View style={styles.playCounterIcon}>
-          <Ionicons name="play-circle" size={24} color="#14B8A6" />
+          <Ionicons name="play-circle" size={24} color={Colors.primary} />
         </View>
         <View style={styles.playCounterText}>
           <Text style={styles.playCounterTitle}>1 Play Available</Text>
@@ -38,13 +39,13 @@ export default function TutorialVisuals({ stepId }: TutorialVisualsProps) {
               <Text style={styles.gameTagText}>Coffee & Drinks</Text>
             </View>
           </View>
-          <Ionicons name="heart" size={20} color="#F44336" />
+          <Ionicons name="heart" size={20} color={Colors.error} />
         </View>
         <TouchableOpacity style={styles.gamePlayButton}>
           <Text style={styles.gamePlayButtonText}>Play Now</Text>
         </TouchableOpacity>
       </View>
-      
+
       <View style={styles.gameCard}>
         <View style={styles.gameCardHeader}>
           <View style={styles.gameLogo}>
@@ -57,7 +58,7 @@ export default function TutorialVisuals({ stepId }: TutorialVisualsProps) {
               <Text style={styles.gameTagText}>Food & Dining</Text>
             </View>
           </View>
-          <Ionicons name="heart-outline" size={20} color="#666" />
+          <Ionicons name="heart-outline" size={20} color={Colors.gray500} />
         </View>
         <TouchableOpacity style={styles.gamePlayButton}>
           <Text style={styles.gamePlayButtonText}>Play Now</Text>
@@ -78,7 +79,7 @@ export default function TutorialVisuals({ stepId }: TutorialVisualsProps) {
           <Text style={styles.rewardCodeLabel}>Reward Code</Text>
           <Text style={styles.rewardCode}>REWARD_1760547603933_rewdwd</Text>
         </View>
-        
+
         <View style={styles.rewardDetails}>
           <View style={styles.rewardBusiness}>
             <View style={styles.rewardLogo}>
@@ -89,9 +90,9 @@ export default function TutorialVisuals({ stepId }: TutorialVisualsProps) {
               <Text style={styles.rewardDescription}>Upgrade any drink to the next size free</Text>
             </View>
           </View>
-          
+
           <View style={styles.expirationContainer}>
-            <Ionicons name="calendar" size={16} color="#FF9800" />
+            <Ionicons name="calendar" size={16} color={Colors.warning} />
             <View style={styles.expirationText}>
               <Text style={styles.expirationLabel}>Expiration</Text>
               <Text style={styles.expirationDate}>10/21/2025</Text>
@@ -106,15 +107,15 @@ export default function TutorialVisuals({ stepId }: TutorialVisualsProps) {
     <View style={styles.morePlaysContainer}>
       <View style={styles.morePlaysCard}>
         <View style={styles.morePlaysOption}>
-          <Ionicons name="play-circle" size={24} color="#14B8A6" />
+          <Ionicons name="play-circle" size={24} color={Colors.primary} />
           <View style={styles.morePlaysText}>
             <Text style={styles.morePlaysTitle}>Watch Ad</Text>
             <Text style={styles.morePlaysSubtitle}>Get 1 free play (3 per day)</Text>
           </View>
         </View>
-        
+
         <View style={styles.morePlaysOption}>
-          <Ionicons name="people" size={24} color="#14B8A6" />
+          <Ionicons name="people" size={24} color={Colors.primary} />
           <View style={styles.morePlaysText}>
             <Text style={styles.morePlaysTitle}>Refer Friend</Text>
             <Text style={styles.morePlaysSubtitle}>Both get 1 play</Text>
@@ -144,16 +145,17 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   playCounterCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 18,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
+    height: 220,
   },
   playCounterIcon: {
     marginRight: 12,
@@ -164,89 +166,101 @@ const styles = StyleSheet.create({
   playCounterTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: Colors.gray900,
   },
   playCounterSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: Colors.gray600,
   },
   playCounterButton: {
-    backgroundColor: '#14B8A6',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
     borderRadius: 20,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   playCounterButtonText: {
-    color: 'white',
+    color: Colors.white,
     fontSize: 14,
     fontWeight: 'bold',
   },
   gameListContainer: {
     marginTop: 20,
     width: '100%',
+    height: 220,
   },
   gameCard: {
-    backgroundColor: 'white',
+    backgroundColor: Colors.white,
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
+    padding: 12,
+    marginBottom: 8,
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 2,
   },
   gameCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   gameLogo: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F5F5F5',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.gray100,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
   gameLogoText: {
-    fontSize: 20,
+    fontSize: 18,
   },
   gameInfo: {
     flex: 1,
   },
   gameTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
-    color: '#333',
+    color: Colors.gray900,
   },
   gameBusiness: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
+    fontSize: 12,
+    color: Colors.gray600,
+    marginBottom: 3,
   },
   gameTag: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: Colors.infoLight,
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
+    paddingVertical: 3,
+    borderRadius: 10,
     alignSelf: 'flex-start',
   },
   gameTagText: {
-    fontSize: 12,
-    color: '#1976D2',
+    fontSize: 10,
+    color: Colors.infoDark,
+    fontWeight: '600',
   },
   gamePlayButton: {
-    backgroundColor: '#14B8A6',
+    backgroundColor: Colors.primary,
     paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
+    paddingHorizontal: 14,
+    borderRadius: 16,
     alignSelf: 'flex-start',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   gamePlayButtonText: {
-    color: 'white',
-    fontSize: 14,
+    color: Colors.white,
+    fontSize: 12,
     fontWeight: 'bold',
   },
   rewardsContainer: {
@@ -254,72 +268,73 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   rewardsCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 18,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
+    height: 220,
   },
   qrCodeContainer: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   qrCode: {
-    width: 120,
-    height: 120,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
+    width: 90,
+    height: 90,
+    backgroundColor: Colors.gray100,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   qrCodePattern: {
-    width: 100,
-    height: 100,
-    backgroundColor: '#333',
-    borderRadius: 4,
+    width: 70,
+    height: 70,
+    backgroundColor: Colors.gray900,
+    borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
   },
   qrCodeText: {
-    color: 'white',
-    fontSize: 12,
+    color: Colors.white,
+    fontSize: 14,
     fontWeight: 'bold',
   },
   rewardCodeLabel: {
     fontSize: 12,
-    color: '#666',
+    color: Colors.gray600,
     marginBottom: 4,
   },
   rewardCode: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#333',
+    color: Colors.gray900,
   },
   rewardDetails: {
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    paddingTop: 16,
+    borderTopColor: Colors.gray200,
+    paddingTop: 10,
   },
   rewardBusiness: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   rewardLogo: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F5F5F5',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.gray100,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   rewardLogoText: {
-    fontSize: 16,
+    fontSize: 18,
   },
   rewardInfo: {
     flex: 1,
@@ -327,11 +342,11 @@ const styles = StyleSheet.create({
   rewardBusinessName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: Colors.gray900,
   },
   rewardDescription: {
     fontSize: 14,
-    color: '#666',
+    color: Colors.gray600,
   },
   expirationContainer: {
     flexDirection: 'row',
@@ -342,11 +357,12 @@ const styles = StyleSheet.create({
   },
   expirationLabel: {
     fontSize: 14,
-    color: '#333',
+    color: Colors.gray700,
+    fontWeight: '600',
   },
   expirationDate: {
     fontSize: 14,
-    color: '#FF9800',
+    color: Colors.warning,
     fontWeight: 'bold',
   },
   morePlaysContainer: {
@@ -354,21 +370,22 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   morePlaysCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 18,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
+    height: 220,
   },
   morePlaysOption: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: Colors.gray200,
   },
   morePlaysText: {
     marginLeft: 12,
@@ -377,10 +394,10 @@ const styles = StyleSheet.create({
   morePlaysTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: Colors.gray900,
   },
   morePlaysSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: Colors.gray600,
   },
 });

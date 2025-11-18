@@ -8,17 +8,22 @@ export const Colors = {
   // Brand Colors (Primary - Teal)
   primary: '#14b8a6',
   primaryLight: '#5eead4',
+  primaryLighter: '#99f6e4',
+  primaryLightest: '#ccfbf1',
   primaryDark: '#0d9488',
   primaryMuted: 'rgba(20, 184, 166, 0.12)',
 
   // Secondary Colors (Orange)
   secondary: '#FF9800',
   secondaryLight: '#FFB74D',
+  secondaryLighter: '#FFCC80',
   secondaryDark: '#F57C00',
 
   // Accent Colors
   accent: '#3F51B5',
   accentLight: '#7986CB',
+  accentLighter: '#9FA8DA',
+  accentDark: '#303F9F',
 
   // Neutral Colors (Grays)
   white: '#FFFFFF',
