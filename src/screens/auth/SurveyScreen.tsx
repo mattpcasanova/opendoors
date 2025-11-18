@@ -3,7 +3,40 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Location from 'expo-location';
 import * as Notifications from 'expo-notifications';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowDown, ArrowUp, Check, ChevronLeft, ChevronRight, Star } from 'lucide-react-native';
+import {
+  ArrowDown,
+  ArrowUp,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Star,
+  UtensilsCrossed,
+  ShoppingBag,
+  Coffee,
+  Film,
+  Dumbbell,
+  Sparkles,
+  Footprints,
+  Car,
+  Plane,
+  MapPin,
+  Shield,
+  Scale,
+  Target,
+  Gift,
+  Percent,
+  Repeat,
+  Crown,
+  Zap,
+  Volume2,
+  MessageCircle,
+  Lock,
+  Smartphone,
+  Users,
+  Search,
+  Tv,
+  HelpCircle
+} from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   Alert,
@@ -29,6 +62,41 @@ import { RootStackParamList } from '../../types/navigation';
 const { width, height } = Dimensions.get('window');
 
 type SurveyScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Survey'>;
+
+// Icon component helper
+const IconComponent = ({ name, size = 24, color = Colors.primary }: { name: string; size?: number; color?: string }) => {
+  const iconProps = { size, color };
+
+  switch (name) {
+    case 'UtensilsCrossed': return <UtensilsCrossed {...iconProps} />;
+    case 'ShoppingBag': return <ShoppingBag {...iconProps} />;
+    case 'Coffee': return <Coffee {...iconProps} />;
+    case 'Film': return <Film {...iconProps} />;
+    case 'Dumbbell': return <Dumbbell {...iconProps} />;
+    case 'Sparkles': return <Sparkles {...iconProps} />;
+    case 'Footprints': return <Footprints {...iconProps} />;
+    case 'Car': return <Car {...iconProps} />;
+    case 'MapPin': return <MapPin {...iconProps} />;
+    case 'Plane': return <Plane {...iconProps} />;
+    case 'Shield': return <Shield {...iconProps} />;
+    case 'Scale': return <Scale {...iconProps} />;
+    case 'Target': return <Target {...iconProps} />;
+    case 'Gift': return <Gift {...iconProps} />;
+    case 'Percent': return <Percent {...iconProps} />;
+    case 'Repeat': return <Repeat {...iconProps} />;
+    case 'Crown': return <Crown {...iconProps} />;
+    case 'Zap': return <Zap {...iconProps} />;
+    case 'Volume2': return <Volume2 {...iconProps} />;
+    case 'MessageCircle': return <MessageCircle {...iconProps} />;
+    case 'Lock': return <Lock {...iconProps} />;
+    case 'Smartphone': return <Smartphone {...iconProps} />;
+    case 'Users': return <Users {...iconProps} />;
+    case 'Search': return <Search {...iconProps} />;
+    case 'Tv': return <Tv {...iconProps} />;
+    case 'HelpCircle': return <HelpCircle {...iconProps} />;
+    default: return <HelpCircle {...iconProps} />;
+  }
+};
 
 export default function SurveyScreen({ onComplete }: { onComplete: () => void }) {
   const navigation = useNavigation<SurveyScreenNavigationProp>();
@@ -92,54 +160,54 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
   };
 
   const categories = [
-    { key: 'food', label: 'Food & Dining', icon: '🍕', color: 'from-orange-400 to-red-500' },
-    { key: 'shopping', label: 'Shopping', icon: '🛍️', color: 'from-pink-400 to-purple-500' },
-    { key: 'coffee', label: 'Coffee & Drinks', icon: '☕', color: 'from-amber-400 to-orange-500' },
-    { key: 'entertainment', label: 'Entertainment', icon: '🎬', color: 'from-blue-400 to-indigo-500' },
-    { key: 'fitness', label: 'Fitness & Health', icon: '💪', color: 'from-green-400 to-emerald-500' },
-    { key: 'beauty', label: 'Beauty & Wellness', icon: '💄', color: 'from-rose-400 to-pink-500' },
+    { key: 'food', label: 'Food & Dining', icon: 'UtensilsCrossed', color: 'from-orange-400 to-red-500' },
+    { key: 'shopping', label: 'Shopping', icon: 'ShoppingBag', color: 'from-pink-400 to-purple-500' },
+    { key: 'coffee', label: 'Coffee & Drinks', icon: 'Coffee', color: 'from-amber-400 to-orange-500' },
+    { key: 'entertainment', label: 'Entertainment', icon: 'Film', color: 'from-blue-400 to-indigo-500' },
+    { key: 'fitness', label: 'Fitness & Health', icon: 'Dumbbell', color: 'from-green-400 to-emerald-500' },
+    { key: 'beauty', label: 'Beauty & Wellness', icon: 'Sparkles', color: 'from-rose-400 to-pink-500' },
   ];
 
   const distanceOptions = [
-    { value: 'Within 5 miles', icon: '🚶', description: 'Walking distance' },
-    { value: 'Between 5-10 miles', icon: '🚗', description: 'Short drive' },
-    { value: 'Between 10-25 miles', icon: '🛣️', description: 'Longer trip' },
-    { value: 'Any distance', icon: '✈️', description: 'Worth the journey' },
+    { value: 'Within 5 miles', icon: 'Footprints', description: 'Walking distance' },
+    { value: 'Between 5-10 miles', icon: 'Car', description: 'Short drive' },
+    { value: 'Between 10-25 miles', icon: 'MapPin', description: 'Longer trip' },
+    { value: 'Any distance', icon: 'Plane', description: 'Worth the journey' },
   ];
 
   const rewardStyleOptions = [
     {
       value: 'Safer bets with smaller rewards',
-      icon: '🛡️',
+      icon: 'Shield',
       description: 'Consistent wins, lower risk',
       color: 'from-green-400 to-emerald-500',
     },
     {
       value: 'Something in the middle',
-      icon: '⚖️',
+      icon: 'Scale',
       description: 'Balanced approach',
       color: 'from-blue-400 to-indigo-500',
     },
     {
       value: 'High-risk/high-reward',
-      icon: '🎯',
+      icon: 'Target',
       description: 'Big wins, higher stakes',
       color: 'from-purple-400 to-pink-500',
     },
   ];
 
   const rewardTypeOptions = [
-    { value: 'Free items', icon: '🎁' },
-    { value: 'Percentage discounts', icon: '💰' },
-    { value: 'BOGO offers', icon: '🔄' },
-    { value: 'Exclusive experiences', icon: '⭐' },
-    { value: 'Early access deals', icon: '⚡' },
+    { value: 'Free items', icon: 'Gift' },
+    { value: 'Percentage discounts', icon: 'Percent' },
+    { value: 'BOGO offers', icon: 'Repeat' },
+    { value: 'Exclusive experiences', icon: 'Crown' },
+    { value: 'Early access deals', icon: 'Zap' },
   ];
 
   const socialOptions = [
-    { value: "Yes, I'd love to share", icon: '📢', description: 'Share the excitement!' },
-    { value: 'Maybe occasionally', icon: '🤔', description: 'Sometimes' },
-    { value: 'Prefer to keep private', icon: '🔒', description: 'Just for me' },
+    { value: "Yes, I'd love to share", icon: 'Volume2', description: 'Share the excitement!' },
+    { value: 'Maybe occasionally', icon: 'MessageCircle', description: 'Sometimes' },
+    { value: 'Prefer to keep private', icon: 'Lock', description: 'Just for me' },
   ];
 
   const ratingCategories = [
@@ -152,12 +220,12 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
   ];
 
   const discoveryOptions = [
-    { value: 'Social media', icon: '📱' },
-    { value: 'Friend or family', icon: '👥' },
-    { value: 'App store browsing', icon: '📲' },
-    { value: 'Online search', icon: '🔍' },
-    { value: 'Advertisement', icon: '📺' },
-    { value: 'Other', icon: '❓' },
+    { value: 'Social media', icon: 'Smartphone' },
+    { value: 'Friend or family', icon: 'Users' },
+    { value: 'App store browsing', icon: 'Smartphone' },
+    { value: 'Online search', icon: 'Search' },
+    { value: 'Advertisement', icon: 'Tv' },
+    { value: 'Other', icon: 'HelpCircle' },
   ];
 
   const handleCategoryToggle = (category: string) => {
@@ -304,7 +372,15 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
             activeOpacity={0.8}
           >
             <View style={styles.categoryContent}>
-              <Text style={styles.categoryIcon}>{category.icon}</Text>
+              <View style={styles.categoryIconContainerOuter}>
+                <View style={styles.categoryIconContainer}>
+                  <IconComponent
+                    name={category.icon}
+                    size={32}
+                    color={selectedCategories.includes(category.key) ? Colors.primary : Colors.white}
+                  />
+                </View>
+              </View>
               <Text style={[
                 styles.categoryLabel,
                 selectedCategories.includes(category.key) && styles.categoryLabelSelected
@@ -342,7 +418,15 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
             activeOpacity={0.8}
           >
             <View style={styles.optionContent}>
-              <Text style={styles.optionIcon}>{option.icon}</Text>
+              <View style={styles.optionIconContainerOuter}>
+                <View style={styles.optionIconContainer}>
+                  <IconComponent
+                    name={option.icon}
+                    size={24}
+                    color={distance === option.value ? Colors.primary : Colors.white}
+                  />
+                </View>
+              </View>
               <View style={styles.optionTextContainer}>
                 <Text style={[
                   styles.optionTitle,
@@ -388,7 +472,15 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
             activeOpacity={0.8}
           >
             <View style={styles.optionContent}>
-              <Text style={styles.optionIcon}>{option.icon}</Text>
+              <View style={styles.optionIconContainerOuter}>
+                <View style={styles.optionIconContainer}>
+                  <IconComponent
+                    name={option.icon}
+                    size={24}
+                    color={rewardStyle === option.value ? Colors.primary : Colors.white}
+                  />
+                </View>
+              </View>
               <View style={styles.optionTextContainer}>
                 <Text style={[
                   styles.optionTitle,
@@ -436,11 +528,19 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
               ]}
             >
               <View style={styles.optionContent}>
-                <TouchableOpacity 
-                  onPress={() => handleRewardTypeToggle(option.value)} 
+                <TouchableOpacity
+                  onPress={() => handleRewardTypeToggle(option.value)}
                   style={[styles.optionTextContainer, { flexDirection: 'row', alignItems: 'center' }]}
                 >
-                  <Text style={[styles.optionIcon, { marginRight: 12 }]}>{option.icon}</Text>
+                  <View style={[styles.optionIconContainerOuter, { marginRight: 12 }]}>
+                    <View style={styles.optionIconContainer}>
+                      <IconComponent
+                        name={option.icon}
+                        size={24}
+                        color={isSelected ? Colors.primary : Colors.white}
+                      />
+                    </View>
+                  </View>
                   <Text style={[
                     styles.optionTitle,
                     isSelected && styles.optionTitleSelected
@@ -520,8 +620,16 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
             ]}
             activeOpacity={0.8}
           >
-            <View style={[styles.optionContent, { flexDirection: 'row', alignItems: 'center' }]}>
-              <Text style={[styles.optionIcon, { marginRight: 12 }]}>{option.icon}</Text>
+            <View style={styles.optionContent}>
+              <View style={styles.optionIconContainerOuter}>
+                <View style={styles.optionIconContainer}>
+                  <IconComponent
+                    name={option.icon}
+                    size={24}
+                    color={socialSharing === option.value ? Colors.primary : Colors.white}
+                  />
+                </View>
+              </View>
               <View style={styles.optionTextContainer}>
                 <Text style={[
                   styles.optionTitle,
@@ -605,7 +713,15 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
             activeOpacity={0.8}
           >
             <View style={styles.categoryContent}>
-              <Text style={styles.categoryIcon}>{option.icon}</Text>
+              <View style={styles.categoryIconContainerOuter}>
+                <View style={styles.categoryIconContainer}>
+                  <IconComponent
+                    name={option.icon}
+                    size={32}
+                    color={discovery === option.value ? Colors.primary : Colors.white}
+                  />
+                </View>
+              </View>
               <Text style={[
                 styles.categoryLabel,
                 discovery === option.value && styles.categoryLabelSelected
@@ -928,23 +1044,21 @@ const styles = StyleSheet.create({
   categoryContent: {
     alignItems: 'center',
   },
-  categoryIcon: {
-    fontSize: 32,
+  categoryIconContainerOuter: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
     marginBottom: 16,
   },
   categoryIconContainer: {
-    width: 64,
-    height: 64,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    width: '100%',
+    height: '100%',
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
   },
   categoryLabel: {
     fontSize: 16,
@@ -986,23 +1100,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  optionIcon: {
-    fontSize: 24,
+  optionIconContainerOuter: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     marginRight: 16,
   },
   optionIconContainer: {
-    width: 48,
-    height: 48,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    width: '100%',
+    height: '100%',
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
   },
   optionTextContainer: {
     flex: 1,
