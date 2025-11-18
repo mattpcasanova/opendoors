@@ -288,7 +288,7 @@ export default function Header({
                   />
 
                   <Image
-                    source={require("../../../assets/OpenDoorsLogo.png")}
+                    source={require("../../../assets/images/OpenDoorsLogo.png")}
                     style={{ width: 80, height: 80, resizeMode: "contain", zIndex: 1 }}
                   />
                 </BlurView>

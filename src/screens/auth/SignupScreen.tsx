@@ -282,7 +282,7 @@ export default function SignupScreen() {
                     >
                       <View style={styles.logoOverlay} pointerEvents="none" />
                       <Image
-                        source={require('../../../assets/OpenDoorsLogo.png')}
+                        source={require('../../../assets/images/OpenDoorsLogo.png')}
                         style={styles.logoImage}
                       />
                     </BlurView>

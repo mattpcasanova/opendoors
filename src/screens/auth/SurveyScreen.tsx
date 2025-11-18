@@ -679,7 +679,7 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
                 </View>
                 <View style={styles.logoContainer}>
                   <Image 
-                    source={require('../../../assets/OpenDoorsLogo.png')} 
+                    source={require('../../../assets/images/OpenDoorsLogo.png')} 
                     style={styles.logoImage}
                   />
                 </View>

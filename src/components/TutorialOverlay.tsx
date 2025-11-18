@@ -188,7 +188,7 @@ export default function TutorialOverlay({ isVisible, onComplete, onSkip }: Tutor
                 <View style={styles.iconOverlay} pointerEvents="none" />
                 {step.icon === 'logo' ? (
                   <Image
-                    source={require('../../assets/OpenDoorsLogo.png')}
+                    source={require('../../assets/images/OpenDoorsLogo.png')}
                     style={styles.logoImage}
                   />
                 ) : (

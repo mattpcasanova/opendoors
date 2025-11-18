@@ -9,6 +9,14 @@ export const useLocation = () => {
 
   const fetchLocation = async () => {
     try {
+      // Check if location services are enabled
+      const servicesEnabled = await Location.hasServicesEnabledAsync();
+      if (!servicesEnabled) {
+        setErrorMsg('Location services are disabled. Please enable them in Settings.');
+        setLocation(null);
+        return;
+      }
+
       // Check current permission
       const perm = await Location.getForegroundPermissionsAsync();
       if (perm.status !== 'granted') {
@@ -28,9 +36,20 @@ export const useLocation = () => {
 
       setLocation({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
       setErrorMsg(null);
-    } catch (error) {
-      setErrorMsg('Error getting location');
-      console.error('Location error:', error);
+    } catch (error: any) {
+      // Handle specific error cases
+      const errorMessage = error?.message || 'Unknown error';
+      
+      // Don't log as error if it's a common/expected issue
+      if (errorMessage.includes('Cannot obtain current location') || 
+          errorMessage.includes('timeout') ||
+          errorMessage.includes('Location unavailable')) {
+        console.warn('Location unavailable:', errorMessage);
+        setErrorMsg('Location unavailable. Please check your GPS settings.');
+      } else {
+        console.error('Location error:', error);
+        setErrorMsg('Error getting location');
+      }
       setLocation(null);
     }
   };

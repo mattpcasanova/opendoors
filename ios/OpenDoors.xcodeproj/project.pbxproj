@@ -9,24 +9,24 @@
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		6E91C2F95895527B3250CB6F /* libPods-OpenDoors.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AABFC80C3FB2C876A0BAFC8A /* libPods-OpenDoors.a */; };
-		8D992A96DA62D3F2E01C6E42 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1A206A3BB5305D155BCCD9 /* ExpoModulesProvider.swift */; };
+		54C743026A5C9BF77253E0BA /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 927928AD77C85F0E39416152 /* ExpoModulesProvider.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		D957FC405C95BAB3C2F613FD /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 83E521B01FCF0CD6D664777E /* PrivacyInfo.xcprivacy */; };
+		DE98664A10DE9D923EF7EF18 /* libPods-OpenDoors.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8AED678564EA0C0BA590980C /* libPods-OpenDoors.a */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
+		F289D5001B59CDE341ACCDF1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = ED20A4DBC00F1CF2BD0C1BEA /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		02644A909DFEC0761A8C3D2B /* Pods-OpenDoors.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OpenDoors.release.xcconfig"; path = "Target Support Files/Pods-OpenDoors/Pods-OpenDoors.release.xcconfig"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* OpenDoors.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenDoors.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = OpenDoors/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = OpenDoors/Info.plist; sourceTree = "<group>"; };
-		2A1A206A3BB5305D155BCCD9 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-OpenDoors/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		30673856BDCA92C7C250D648 /* Pods-OpenDoors.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OpenDoors.release.xcconfig"; path = "Target Support Files/Pods-OpenDoors/Pods-OpenDoors.release.xcconfig"; sourceTree = "<group>"; };
-		83E521B01FCF0CD6D664777E /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = OpenDoors/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		6D6DB15C1F5433D70BFB1192 /* Pods-OpenDoors.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OpenDoors.debug.xcconfig"; path = "Target Support Files/Pods-OpenDoors/Pods-OpenDoors.debug.xcconfig"; sourceTree = "<group>"; };
+		8AED678564EA0C0BA590980C /* libPods-OpenDoors.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-OpenDoors.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		927928AD77C85F0E39416152 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-OpenDoors/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = OpenDoors/SplashScreen.storyboard; sourceTree = "<group>"; };
-		AABFC80C3FB2C876A0BAFC8A /* libPods-OpenDoors.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-OpenDoors.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		D77979908D0B9A4B2016D4B9 /* Pods-OpenDoors.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OpenDoors.debug.xcconfig"; path = "Target Support Files/Pods-OpenDoors/Pods-OpenDoors.debug.xcconfig"; sourceTree = "<group>"; };
+		ED20A4DBC00F1CF2BD0C1BEA /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = OpenDoors/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = OpenDoors/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* OpenDoors-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "OpenDoors-Bridging-Header.h"; path = "OpenDoors/OpenDoors-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -37,17 +37,17 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6E91C2F95895527B3250CB6F /* libPods-OpenDoors.a in Frameworks */,
+				DE98664A10DE9D923EF7EF18 /* libPods-OpenDoors.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		10A4CC85973D4F525F2A8C09 /* OpenDoors */ = {
+		0738531BA7667B658A190C4E /* OpenDoors */ = {
 			isa = PBXGroup;
 			children = (
-				2A1A206A3BB5305D155BCCD9 /* ExpoModulesProvider.swift */,
+				927928AD77C85F0E39416152 /* ExpoModulesProvider.swift */,
 			);
 			name = OpenDoors;
 			sourceTree = "<group>";
@@ -61,33 +61,24 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				83E521B01FCF0CD6D664777E /* PrivacyInfo.xcprivacy */,
+				ED20A4DBC00F1CF2BD0C1BEA /* PrivacyInfo.xcprivacy */,
 			);
 			name = OpenDoors;
-			sourceTree = "<group>";
-		};
-		18EB27D549649BB656BA4B0C /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				D77979908D0B9A4B2016D4B9 /* Pods-OpenDoors.debug.xcconfig */,
-				30673856BDCA92C7C250D648 /* Pods-OpenDoors.release.xcconfig */,
-			);
-			path = Pods;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				AABFC80C3FB2C876A0BAFC8A /* libPods-OpenDoors.a */,
+				8AED678564EA0C0BA590980C /* libPods-OpenDoors.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		6A44750A978D92FED503B6C8 /* ExpoModulesProviders */ = {
+		379CEFF4C1F1E93694672BAA /* ExpoModulesProviders */ = {
 			isa = PBXGroup;
 			children = (
-				10A4CC85973D4F525F2A8C09 /* OpenDoors */,
+				0738531BA7667B658A190C4E /* OpenDoors */,
 			);
 			name = ExpoModulesProviders;
 			sourceTree = "<group>";
@@ -106,8 +97,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				18EB27D549649BB656BA4B0C /* Pods */,
-				6A44750A978D92FED503B6C8 /* ExpoModulesProviders */,
+				A240B004D4CB2DC2D304C9EF /* Pods */,
+				379CEFF4C1F1E93694672BAA /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -120,6 +111,16 @@
 				13B07F961A680F5B00A75B9A /* OpenDoors.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		A240B004D4CB2DC2D304C9EF /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				6D6DB15C1F5433D70BFB1192 /* Pods-OpenDoors.debug.xcconfig */,
+				02644A909DFEC0761A8C3D2B /* Pods-OpenDoors.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
 			sourceTree = "<group>";
 		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
@@ -139,14 +140,14 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "OpenDoors" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				098129D06A85CF26C9113EA8 /* [Expo] Configure project */,
+				156896666208F6BF6A7ADA04 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				1AFBC237392A36E7ECF02978 /* [CP] Embed Pods Frameworks */,
-				79EB2E05FF69BE67A491C074 /* [CP-User] [RNGoogleMobileAds] Configuration */,
+				2F48EA2531BBE7785299F26D /* [CP] Embed Pods Frameworks */,
+				630A55D49C64F7C2758F68DB /* [CP-User] [RNGoogleMobileAds] Configuration */,
 			);
 			buildRules = (
 			);
@@ -196,7 +197,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				D957FC405C95BAB3C2F613FD /* PrivacyInfo.xcprivacy in Resources */,
+				F289D5001B59CDE341ACCDF1 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -240,7 +241,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		098129D06A85CF26C9113EA8 /* [Expo] Configure project */ = {
+		156896666208F6BF6A7ADA04 /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -259,7 +260,7 @@
 			shellPath = /bin/sh;
 			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-OpenDoors/expo-configure-project.sh\"\n";
 		};
-		1AFBC237392A36E7ECF02978 /* [CP] Embed Pods Frameworks */ = {
+		2F48EA2531BBE7785299F26D /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -277,7 +278,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-OpenDoors/Pods-OpenDoors-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		79EB2E05FF69BE67A491C074 /* [CP-User] [RNGoogleMobileAds] Configuration */ = {
+		630A55D49C64F7C2758F68DB /* [CP-User] [RNGoogleMobileAds] Configuration */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -350,7 +351,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				8D992A96DA62D3F2E01C6E42 /* ExpoModulesProvider.swift in Sources */,
+				54C743026A5C9BF77253E0BA /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -359,13 +360,12 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = D77979908D0B9A4B2016D4B9 /* Pods-OpenDoors.debug.xcconfig */;
+			baseConfigurationReference = 6D6DB15C1F5433D70BFB1192 /* Pods-OpenDoors.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = OpenDoors/OpenDoors.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = DA62SPBM3M;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -396,13 +396,12 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 30673856BDCA92C7C250D648 /* Pods-OpenDoors.release.xcconfig */;
+			baseConfigurationReference = 02644A909DFEC0761A8C3D2B /* Pods-OpenDoors.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = OpenDoors/OpenDoors.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = DA62SPBM3M;
 				INFOPLIST_FILE = OpenDoors/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
