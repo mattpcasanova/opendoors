@@ -7,6 +7,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import { Colors } from '../constants';
 
 interface EarnedRewardNotificationProps {
   isVisible: boolean;
@@ -73,12 +74,12 @@ export default function EarnedRewardNotification({
           onPress={onClose}
         />
         <Animated.View style={{
-          backgroundColor: 'white',
+          backgroundColor: Colors.white,
           borderRadius: 20,
           padding: 24,
           width: '100%',
           maxWidth: 400,
-          shadowColor: '#000',
+          shadowColor: Colors.black,
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.3,
           shadowRadius: 8,
@@ -91,27 +92,27 @@ export default function EarnedRewardNotification({
               width: 60,
               height: 60,
               borderRadius: 30,
-              backgroundColor: '#E6FFFA',
+              backgroundColor: Colors.primaryLightest,
               alignItems: 'center',
               justifyContent: 'center',
               marginBottom: 12
             }}>
-              <Ionicons name="gift" size={30} color="#009688" />
+              <Ionicons name="gift" size={30} color={Colors.primary} />
             </View>
-            <Text style={{ fontSize: 20, fontWeight: '600', color: '#111827', textAlign: 'center' }}>
+            <Text style={{ fontSize: 20, fontWeight: '600', color: Colors.gray900, textAlign: 'center' }}>
               Door Earned! 🎉
             </Text>
           </View>
 
           {/* Notification Content */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 18, fontWeight: '600', color: '#111827', textAlign: 'center', marginBottom: 8 }}>
+            <Text style={{ fontSize: 18, fontWeight: '600', color: Colors.gray900, textAlign: 'center', marginBottom: 8 }}>
               +{doorsEarned} Door{doorsEarned > 1 ? 's' : ''}
             </Text>
-            <Text style={{ fontSize: 16, color: '#6B7280', textAlign: 'center', marginBottom: 12 }}>
+            <Text style={{ fontSize: 16, color: Colors.gray600, textAlign: 'center', marginBottom: 12 }}>
               From: {sourceName}
             </Text>
-            <Text style={{ fontSize: 14, color: '#9CA3AF', textAlign: 'center' }}>
+            <Text style={{ fontSize: 14, color: Colors.gray400, textAlign: 'center' }}>
               You can now use this door to play any game!
             </Text>
           </View>
@@ -119,14 +120,14 @@ export default function EarnedRewardNotification({
           {/* Action Button */}
           <TouchableOpacity
             style={{
-              backgroundColor: '#009688',
+              backgroundColor: Colors.primary,
               paddingVertical: 16,
               borderRadius: 12,
               alignItems: 'center'
             }}
             onPress={onClose}
           >
-            <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
+            <Text style={{ color: Colors.white, fontSize: 16, fontWeight: '600' }}>
               Got it!
             </Text>
           </TouchableOpacity>

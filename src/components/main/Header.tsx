@@ -707,15 +707,15 @@ export default function Header({
             justifyContent: "center",
           }}
         >
-          {(title === "Rewards" || title === "My Rewards") && <Gift size={20} color="#009688" style={{ marginRight: 12 }} />}
-          {title === "History" && <History size={20} color="#009688" style={{ marginRight: 12 }} />}
-          {title === "Distributor Dashboard" && <Users size={20} color="#009688" style={{ marginRight: 12 }} />}
-          {title === "Admin Dashboard" && <Shield size={20} color="#009688" style={{ marginRight: 12 }} />}
-          {title === "Profile" && <Settings size={20} color="#009688" style={{ marginRight: 12 }} />}
-          {!["Rewards", "My Rewards", "History", "Distributor Dashboard", "Admin Dashboard", "Profile"].includes(title || "") && <Ionicons name="sparkles" size={20} color="#009688" style={{ marginRight: 12 }} />}
+          {(title === "Rewards" || title === "My Rewards") && <Gift size={20} color={Colors.primary} style={{ marginRight: 12 }} />}
+          {title === "History" && <History size={20} color={Colors.primary} style={{ marginRight: 12 }} />}
+          {title === "Distributor Dashboard" && <Users size={20} color={Colors.primary} style={{ marginRight: 12 }} />}
+          {title === "Admin Dashboard" && <Shield size={20} color={Colors.primary} style={{ marginRight: 12 }} />}
+          {title === "Profile" && <Settings size={20} color={Colors.primary} style={{ marginRight: 12 }} />}
+          {!["Rewards", "My Rewards", "History", "Distributor Dashboard", "Admin Dashboard", "Profile"].includes(title || "") && <Ionicons name="sparkles" size={20} color={Colors.primary} style={{ marginRight: 12 }} />}
           <Text
             style={{
-              color: "#009688",
+              color: Colors.primary,
               fontSize: 18,
               fontWeight: "700",
               letterSpacing: 0.5,
