@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { CheckCircle, Clock, Gift } from 'lucide-react-native';
+import { CheckCircle, Clock, Gift, Search, X } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
     Alert,
@@ -411,25 +411,56 @@ export default function RewardsScreen() {
         {/* Search Bar */}
         <View style={{ padding: Spacing.md }}>
           <View style={{
-            flexDirection: 'row',
             backgroundColor: Colors.white,
-            borderRadius: BorderRadius.md,
-            padding: Spacing.base,
+            borderRadius: BorderRadius.full,
+            paddingHorizontal: Spacing.lg,
+            paddingVertical: 14,
+            flexDirection: 'row',
             alignItems: 'center',
+            borderWidth: 2,
+            borderColor: searchQuery.length > 0 ? Colors.primary : Colors.gray200,
             ...Shadows.sm,
           }}>
-            <Ionicons name="search" size={20} color={Colors.gray500} style={{ marginRight: Spacing.sm }} />
+            <View style={{
+              width: 36,
+              height: 36,
+              borderRadius: 18,
+              backgroundColor: searchQuery.length > 0 ? Colors.primary : Colors.gray100,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: Spacing.sm,
+            }}>
+              <Search size={20} color={searchQuery.length > 0 ? Colors.white : Colors.gray600} />
+            </View>
             <TextInput
-              placeholder="Search rewards..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
               style={{
                 flex: 1,
                 fontSize: 16,
-                color: Colors.gray800,
+                color: Colors.gray900,
+                fontWeight: '500',
               }}
-              placeholderTextColor={Colors.gray400}
+              placeholder="Search rewards by company or prize"
+              placeholderTextColor={Colors.gray500}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
             />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity
+                onPress={() => setSearchQuery('')}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 16,
+                  backgroundColor: Colors.gray100,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginLeft: Spacing.sm,
+                }}
+                activeOpacity={0.7}
+              >
+                <X size={18} color={Colors.gray600} />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 

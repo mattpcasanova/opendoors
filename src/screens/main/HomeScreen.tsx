@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Gift, Zap } from 'lucide-react-native';
+import { Gift, Zap, Search, X } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -1221,28 +1221,52 @@ export default function HomeScreen() {
               backgroundColor: Colors.white,
               borderRadius: BorderRadius.full,
               paddingHorizontal: Spacing.lg,
-              paddingVertical: Spacing.md,
+              paddingVertical: 14,
               flexDirection: 'row',
               alignItems: 'center',
+              borderWidth: 2,
+              borderColor: searchText.length > 0 ? Colors.primary : Colors.gray200,
               ...Shadows.sm,
             }}
           >
-            <Ionicons name="search" size={20} color={Colors.gray500} />
+            <View style={{
+              width: 36,
+              height: 36,
+              borderRadius: 18,
+              backgroundColor: searchText.length > 0 ? Colors.primary : Colors.gray100,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: Spacing.sm,
+            }}>
+              <Search size={20} color={searchText.length > 0 ? Colors.white : Colors.gray600} />
+            </View>
             <TextInput
               style={{
                 flex: 1,
-                marginLeft: Spacing.md,
                 fontSize: 16,
                 color: Colors.gray900,
+                fontWeight: '500',
               }}
-              placeholder="Search games by name or description"
+              placeholder="Search games by name or location"
               placeholderTextColor={Colors.gray500}
               value={searchText}
               onChangeText={setSearchText}
             />
             {searchText.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchText('')}>
-                <Ionicons name="close-circle" size={20} color={Colors.gray500} />
+              <TouchableOpacity
+                onPress={() => setSearchText('')}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 16,
+                  backgroundColor: Colors.gray100,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginLeft: Spacing.sm,
+                }}
+                activeOpacity={0.7}
+              >
+                <X size={18} color={Colors.gray600} />
               </TouchableOpacity>
             )}
           </View>
