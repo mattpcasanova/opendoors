@@ -1,6 +1,7 @@
-import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Clock, Gift, Heart, Play, Users, Tv } from 'lucide-react-native';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Colors } from '../constants';
 
 interface TutorialVisualsProps {
@@ -8,94 +9,165 @@ interface TutorialVisualsProps {
 }
 
 export default function TutorialVisuals({ stepId }: TutorialVisualsProps) {
+  // Step 2: Daily Game Button (like HomeScreen)
   const renderPlayCounter = () => (
     <View style={styles.playCounterContainer}>
-      <View style={styles.playCounterCard}>
-        <View style={styles.playCounterIcon}>
-          <Ionicons name="play-circle" size={24} color={Colors.primary} />
+      <LinearGradient
+        colors={[Colors.primary, Colors.primaryDark]}
+        style={styles.dailyGameButton}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+      >
+        {/* Floating particles */}
+        <View style={[styles.particle, styles.particle1]} />
+        <View style={[styles.particle, styles.particle2]} />
+        <View style={[styles.particle, styles.particle3]} />
+
+        <View style={styles.dailyGameContent}>
+          <View style={styles.dailyGameIcon}>
+            <Play size={32} color={Colors.white} />
+          </View>
+
+          <View style={styles.dailyGameText}>
+            <Text style={styles.dailyGameTitle}>Daily Free Play</Text>
+            <Text style={styles.dailyGameSubtitle}>Play now to win prizes!</Text>
+          </View>
         </View>
-        <View style={styles.playCounterText}>
-          <Text style={styles.playCounterTitle}>1 Play Available</Text>
-          <Text style={styles.playCounterSubtitle}>Use it to win prizes!</Text>
+
+        <View style={styles.playNowButton}>
+          <Text style={styles.playNowButtonText}>Play Now</Text>
         </View>
-        <TouchableOpacity style={styles.playCounterButton}>
-          <Text style={styles.playCounterButtonText}>Play Now</Text>
-        </TouchableOpacity>
-      </View>
+      </LinearGradient>
     </View>
   );
 
+  // Step 3: Game Cards (like GameCard component)
   const renderGameList = () => (
     <View style={styles.gameListContainer}>
+      {/* Game Card 1 */}
       <View style={styles.gameCard}>
-        <View style={styles.gameCardHeader}>
-          <View style={styles.gameLogo}>
-            <Text style={styles.gameLogoText}>☕</Text>
-          </View>
-          <View style={styles.gameInfo}>
-            <Text style={styles.gameTitle}>Free Drink Upgrade</Text>
-            <Text style={styles.gameBusiness}>Starbucks</Text>
-            <View style={styles.gameTag}>
-              <Text style={styles.gameTagText}>Coffee & Drinks</Text>
+        <View style={styles.gradientTopBar}>
+          <LinearGradient
+            colors={[Colors.primaryLight, Colors.primary]}
+            style={styles.gradientBar}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+          />
+        </View>
+
+        <View style={styles.gameCardContent}>
+          <View style={styles.gameCardHeader}>
+            <View style={styles.gameLogoContainer}>
+              <Text style={styles.gameLogoText}>☕</Text>
+            </View>
+
+            <View style={styles.gameInfo}>
+              <Text style={styles.gameTitle}>Free Coffee Upgrade</Text>
+              <Text style={styles.gameBusiness}>Local Coffee Shop</Text>
+              <View style={[styles.categoryBadge, { backgroundColor: Colors.infoLight }]}>
+                <Text style={[styles.categoryBadgeText, { color: Colors.infoDark }]}>Coffee & Drinks</Text>
+              </View>
+            </View>
+
+            <View style={styles.favoriteButton}>
+              <Heart size={20} color={Colors.error} fill={Colors.error} />
             </View>
           </View>
-          <Ionicons name="heart" size={20} color={Colors.error} />
+
+          <View style={styles.gameCardFooter}>
+            <View style={styles.playGameButton}>
+              <Play size={16} color={Colors.white} />
+              <Text style={styles.playGameButtonText}>Play Game</Text>
+            </View>
+          </View>
         </View>
-        <TouchableOpacity style={styles.gamePlayButton}>
-          <Text style={styles.gamePlayButtonText}>Play Now</Text>
-        </TouchableOpacity>
       </View>
 
+      {/* Game Card 2 */}
       <View style={styles.gameCard}>
-        <View style={styles.gameCardHeader}>
-          <View style={styles.gameLogo}>
-            <Text style={styles.gameLogoText}>🍟</Text>
-          </View>
-          <View style={styles.gameInfo}>
-            <Text style={styles.gameTitle}>Free Medium Fries</Text>
-            <Text style={styles.gameBusiness}>McDonald's</Text>
-            <View style={styles.gameTag}>
-              <Text style={styles.gameTagText}>Food & Dining</Text>
+        <View style={styles.gradientTopBar}>
+          <LinearGradient
+            colors={[Colors.primaryLight, Colors.primary]}
+            style={styles.gradientBar}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+          />
+        </View>
+
+        <View style={styles.gameCardContent}>
+          <View style={styles.gameCardHeader}>
+            <View style={styles.gameLogoContainer}>
+              <Text style={styles.gameLogoText}>🍕</Text>
+            </View>
+
+            <View style={styles.gameInfo}>
+              <Text style={styles.gameTitle}>Free Appetizer</Text>
+              <Text style={styles.gameBusiness}>Pizza Palace</Text>
+              <View style={[styles.categoryBadge, { backgroundColor: Colors.warningLight }]}>
+                <Text style={[styles.categoryBadgeText, { color: Colors.warningDark }]}>Food & Dining</Text>
+              </View>
+            </View>
+
+            <View style={styles.favoriteButton}>
+              <Heart size={20} color={Colors.gray400} />
             </View>
           </View>
-          <Ionicons name="heart-outline" size={20} color={Colors.gray500} />
+
+          <View style={styles.gameCardFooter}>
+            <View style={styles.playGameButton}>
+              <Play size={16} color={Colors.white} />
+              <Text style={styles.playGameButtonText}>Play Game</Text>
+            </View>
+          </View>
         </View>
-        <TouchableOpacity style={styles.gamePlayButton}>
-          <Text style={styles.gamePlayButtonText}>Play Now</Text>
-        </TouchableOpacity>
       </View>
     </View>
   );
 
+  // Step 5: Reward Card (like RewardCard component)
   const renderRewardsScreen = () => (
     <View style={styles.rewardsContainer}>
-      <View style={styles.rewardsCard}>
-        <View style={styles.qrCodeContainer}>
-          <View style={styles.qrCode}>
-            <View style={styles.qrCodePattern}>
-              <Text style={styles.qrCodeText}>QR</Text>
-            </View>
-          </View>
-          <Text style={styles.rewardCodeLabel}>Reward Code</Text>
-          <Text style={styles.rewardCode}>REWARD_1760547603933_rewdwd</Text>
+      <View style={styles.rewardCard}>
+        {/* Gradient top bar */}
+        <View style={styles.rewardTopBar}>
+          <LinearGradient
+            colors={[Colors.primaryLight, Colors.primary]}
+            style={styles.rewardGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+          />
         </View>
 
-        <View style={styles.rewardDetails}>
-          <View style={styles.rewardBusiness}>
-            <View style={styles.rewardLogo}>
-              <Text style={styles.rewardLogoText}>☕</Text>
+        <View style={styles.rewardContent}>
+          {/* QR Code Section */}
+          <View style={styles.qrSection}>
+            <View style={styles.qrCode}>
+              <View style={styles.qrPattern}>
+                <Text style={styles.qrText}>QR</Text>
+              </View>
             </View>
-            <View style={styles.rewardInfo}>
-              <Text style={styles.rewardBusinessName}>Starbucks</Text>
-              <Text style={styles.rewardDescription}>Upgrade any drink to the next size free</Text>
-            </View>
+            <Text style={styles.rewardCodeLabel}>Reward Code</Text>
+            <Text style={styles.rewardCode}>RWD_ABC123XYZ</Text>
           </View>
 
-          <View style={styles.expirationContainer}>
-            <Ionicons name="calendar" size={16} color={Colors.warning} />
-            <View style={styles.expirationText}>
-              <Text style={styles.expirationLabel}>Expiration</Text>
-              <Text style={styles.expirationDate}>10/21/2025</Text>
+          {/* Reward Details */}
+          <View style={styles.rewardDetailsSection}>
+            <View style={styles.rewardHeader}>
+              <View style={styles.rewardLogoContainer}>
+                <Text style={styles.rewardLogoText}>☕</Text>
+              </View>
+              <View style={styles.rewardInfoText}>
+                <Text style={styles.rewardBusinessName}>Local Coffee Shop</Text>
+                <Text style={styles.rewardDescription}>Upgrade any drink size for free</Text>
+              </View>
+            </View>
+
+            {/* Status Badge */}
+            <View style={styles.statusBadgeContainer}>
+              <View style={styles.statusBadge}>
+                <Clock size={14} color={Colors.white} />
+                <Text style={styles.statusBadgeText}>Expires in 7 days</Text>
+              </View>
             </View>
           </View>
         </View>
@@ -103,24 +175,56 @@ export default function TutorialVisuals({ stepId }: TutorialVisualsProps) {
     </View>
   );
 
+  // Step 6: Earn More Plays Modal (like EarnRewardModal)
   const renderMorePlays = () => (
     <View style={styles.morePlaysContainer}>
-      <View style={styles.morePlaysCard}>
-        <View style={styles.morePlaysOption}>
-          <Ionicons name="play-circle" size={24} color={Colors.primary} />
-          <View style={styles.morePlaysText}>
-            <Text style={styles.morePlaysTitle}>Watch Ad</Text>
-            <Text style={styles.morePlaysSubtitle}>Get 1 free play (3 per day)</Text>
+      <View style={styles.earnRewardCard}>
+        <Text style={styles.earnRewardTitle}>Get More Plays</Text>
+
+        <View style={styles.earnOptions}>
+          {/* Watch Ad Option */}
+          <View style={styles.earnOption}>
+            <View style={styles.earnIconContainer}>
+              <Tv size={24} color={Colors.white} />
+            </View>
+            <View style={styles.earnOptionText}>
+              <Text style={styles.earnOptionTitle}>Watch Ad</Text>
+              <Text style={styles.earnOptionDescription}>Get 1 free play (3 per day)</Text>
+            </View>
+          </View>
+
+          {/* Refer Friend Option */}
+          <View style={styles.earnOption}>
+            <View style={styles.earnIconContainer}>
+              <Users size={24} color={Colors.white} />
+            </View>
+            <View style={styles.earnOptionText}>
+              <Text style={styles.earnOptionTitle}>Refer Friend</Text>
+              <Text style={styles.earnOptionDescription}>Both get 1 play when they sign up</Text>
+            </View>
+          </View>
+
+          {/* Receive Gift Option */}
+          <View style={styles.earnOption}>
+            <View style={styles.earnIconContainer}>
+              <Gift size={24} color={Colors.white} />
+            </View>
+            <View style={styles.earnOptionText}>
+              <Text style={styles.earnOptionTitle}>Receive Gift</Text>
+              <Text style={styles.earnOptionDescription}>Friends can gift you plays</Text>
+            </View>
           </View>
         </View>
 
-        <View style={styles.morePlaysOption}>
-          <Ionicons name="people" size={24} color={Colors.primary} />
-          <View style={styles.morePlaysText}>
-            <Text style={styles.morePlaysTitle}>Refer Friend</Text>
-            <Text style={styles.morePlaysSubtitle}>Both get 1 play</Text>
-          </View>
-        </View>
+        {/* Gradient Button */}
+        <LinearGradient
+          colors={[Colors.primary, Colors.primaryDark]}
+          style={styles.earnButton}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+        >
+          <Text style={styles.earnButtonText}>Choose Option</Text>
+        </LinearGradient>
       </View>
     </View>
   );
@@ -140,271 +244,372 @@ export default function TutorialVisuals({ stepId }: TutorialVisualsProps) {
 }
 
 const styles = StyleSheet.create({
+  // Step 2: Daily Game Button Styles
   playCounterContainer: {
     marginTop: 20,
     width: '100%',
-    height: 220,
-    justifyContent: 'center',
   },
-  playCounterCard: {
-    backgroundColor: Colors.white,
-    borderRadius: 16,
-    padding: 18,
+  dailyGameButton: {
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+    overflow: 'hidden',
+  },
+  particle: {
+    position: 'absolute',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  particle1: {
+    top: 20,
+    right: 30,
+  },
+  particle2: {
+    bottom: 40,
+    left: 40,
+  },
+  particle3: {
+    top: 60,
+    right: 60,
+  },
+  dailyGameContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
+    marginBottom: 16,
+  },
+  dailyGameIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  dailyGameText: {
     flex: 1,
   },
-  playCounterIcon: {
-    marginRight: 12,
+  dailyGameTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.white,
+    marginBottom: 4,
   },
-  playCounterText: {
-    flex: 1,
+  dailyGameSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.9)',
   },
-  playCounterTitle: {
+  playBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.warning,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  playBadgeText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.white,
+  },
+  playNowButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 16,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  playNowButtonText: {
+    color: Colors.white,
     fontSize: 16,
     fontWeight: 'bold',
-    color: Colors.gray900,
   },
-  playCounterSubtitle: {
-    fontSize: 14,
-    color: Colors.gray600,
-  },
-  playCounterButton: {
-    backgroundColor: Colors.primary,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 20,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  playCounterButtonText: {
-    color: Colors.white,
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
+
+  // Step 3: Game Cards Styles
   gameListContainer: {
     marginTop: 20,
     width: '100%',
-    height: 220,
-    justifyContent: 'center',
+    gap: 12,
   },
   gameCard: {
     backgroundColor: Colors.white,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
+    borderRadius: 16,
     shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowRadius: 8,
+    elevation: 3,
+    overflow: 'hidden',
+  },
+  gradientTopBar: {
+    height: 6,
+  },
+  gradientBar: {
+    flex: 1,
+  },
+  gameCardContent: {
+    padding: 16,
   },
   gameCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
-  gameLogo: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  gameLogoContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: Colors.gray100,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
+    borderWidth: 2,
+    borderColor: Colors.primaryLight,
+    marginRight: 12,
   },
   gameLogoText: {
-    fontSize: 18,
+    fontSize: 28,
   },
   gameInfo: {
     flex: 1,
   },
   gameTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
     color: Colors.gray900,
+    marginBottom: 4,
   },
   gameBusiness: {
-    fontSize: 12,
+    fontSize: 14,
     color: Colors.gray600,
-    marginBottom: 3,
+    marginBottom: 6,
   },
-  gameTag: {
-    backgroundColor: Colors.infoLight,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
+  categoryBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
     alignSelf: 'flex-start',
   },
-  gameTagText: {
-    fontSize: 10,
-    color: Colors.infoDark,
+  categoryBadgeText: {
+    fontSize: 11,
     fontWeight: '600',
   },
-  gamePlayButton: {
+  favoriteButton: {
+    padding: 8,
+  },
+  gameCardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+  },
+  playGameButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: Colors.primary,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 16,
-    alignSelf: 'flex-start',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    gap: 6,
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 3,
   },
-  gamePlayButtonText: {
-    color: Colors.white,
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  rewardsContainer: {
-    marginTop: 20,
-    width: '100%',
-    height: 220,
-    justifyContent: 'center',
-  },
-  rewardsCard: {
-    backgroundColor: Colors.white,
-    borderRadius: 16,
-    padding: 14,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
-    flex: 1,
-  },
-  qrCodeContainer: {
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  qrCode: {
-    width: 90,
-    height: 90,
-    backgroundColor: Colors.gray100,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 6,
-  },
-  qrCodePattern: {
-    width: 70,
-    height: 70,
-    backgroundColor: Colors.gray900,
-    borderRadius: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  qrCodeText: {
+  playGameButtonText: {
     color: Colors.white,
     fontSize: 14,
     fontWeight: 'bold',
   },
+
+  // Step 5: Reward Card Styles
+  rewardsContainer: {
+    marginTop: 20,
+    width: '100%',
+  },
+  rewardCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 6,
+    overflow: 'hidden',
+  },
+  rewardTopBar: {
+    height: 6,
+  },
+  rewardGradient: {
+    flex: 1,
+  },
+  rewardContent: {
+    padding: 16,
+  },
+  qrSection: {
+    alignItems: 'center',
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.gray200,
+    marginBottom: 16,
+  },
+  qrCode: {
+    width: 100,
+    height: 100,
+    backgroundColor: Colors.gray100,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  qrPattern: {
+    width: 80,
+    height: 80,
+    backgroundColor: Colors.gray900,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qrText: {
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   rewardCodeLabel: {
-    fontSize: 10,
+    fontSize: 11,
     color: Colors.gray600,
-    marginBottom: 2,
+    marginBottom: 4,
   },
   rewardCode: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: 'bold',
     color: Colors.gray900,
   },
-  rewardDetails: {
-    borderTopWidth: 1,
-    borderTopColor: Colors.gray200,
-    paddingTop: 10,
+  rewardDetailsSection: {
+    gap: 12,
   },
-  rewardBusiness: {
+  rewardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
   },
-  rewardLogo: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  rewardLogoContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: Colors.gray100,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   rewardLogoText: {
-    fontSize: 18,
+    fontSize: 24,
   },
-  rewardInfo: {
+  rewardInfoText: {
     flex: 1,
   },
   rewardBusinessName: {
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: 'bold',
     color: Colors.gray900,
+    marginBottom: 4,
   },
   rewardDescription: {
-    fontSize: 11,
+    fontSize: 13,
     color: Colors.gray600,
   },
-  expirationContainer: {
+  statusBadgeContainer: {
+    flexDirection: 'row',
+  },
+  statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: Colors.warning,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    gap: 6,
   },
-  expirationText: {
-    marginLeft: 8,
-  },
-  expirationLabel: {
-    fontSize: 11,
-    color: Colors.gray700,
+  statusBadgeText: {
+    fontSize: 12,
     fontWeight: '600',
+    color: Colors.white,
   },
-  expirationDate: {
-    fontSize: 11,
-    color: Colors.warning,
-    fontWeight: 'bold',
-  },
+
+  // Step 6: Earn More Plays Styles
   morePlaysContainer: {
     marginTop: 20,
     width: '100%',
-    height: 220,
-    justifyContent: 'center',
   },
-  morePlaysCard: {
+  earnRewardCard: {
     backgroundColor: Colors.white,
-    borderRadius: 16,
-    padding: 18,
+    borderRadius: 20,
+    padding: 24,
     shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
-    flex: 1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  morePlaysOption: {
+  earnRewardTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.gray900,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  earnOptions: {
+    gap: 16,
+    marginBottom: 20,
+  },
+  earnOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.gray200,
   },
-  morePlaysText: {
-    marginLeft: 12,
+  earnIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  earnOptionText: {
     flex: 1,
   },
-  morePlaysTitle: {
+  earnOptionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: Colors.gray900,
+    marginBottom: 4,
   },
-  morePlaysSubtitle: {
-    fontSize: 14,
+  earnOptionDescription: {
+    fontSize: 13,
     color: Colors.gray600,
+  },
+  earnButton: {
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  earnButtonText: {
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

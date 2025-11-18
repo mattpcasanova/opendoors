@@ -1,6 +1,16 @@
-import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import {
+  PlayCircle,
+  List,
+  Gamepad2,
+  Gift,
+  PlusCircle,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Check
+} from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
     Animated,
@@ -49,37 +59,37 @@ const tutorialSteps: TutorialStep[] = [
     id: 2,
     title: "Check Your Plays",
     description: "You get 1 free play per day. Here's what the play counter looks like when you have plays available:",
-    icon: "play-circle-outline"
+    icon: "play-circle"
   },
   {
     id: 3,
     title: "Browse Available Games",
     description: "Scroll through the list of games from local businesses. Each game shows the prize you can win:",
-    icon: "list-outline"
+    icon: "list"
   },
   {
     id: 4,
     title: "How the Game Works",
     description: "Try this mini-game to see how it works! Choose a door and follow the steps.",
-    icon: "game-controller-outline"
+    icon: "gamepad2"
   },
   {
     id: 5,
     title: "Claim Your Rewards",
     description: "If you win, your reward will appear in the Rewards tab with a QR code to show the business:",
-    icon: "gift-outline"
+    icon: "gift"
   },
   {
     id: 6,
     title: "Get More Plays",
     description: "Watch ads, refer friends, or receive gifted plays to get more chances to win:",
-    icon: "add-circle-outline"
+    icon: "plus-circle"
   },
   {
     id: 7,
     title: "You're All Set!",
     description: "Now you know how to play! Start exploring games and winning prizes. Good luck!",
-    icon: "checkmark-circle-outline"
+    icon: "check-circle"
   }
 ];
 
@@ -180,21 +190,35 @@ export default function TutorialOverlay({ isVisible, onComplete, onSkip }: Tutor
           {/* Step Content */}
           <View style={styles.stepContent}>
             <View style={styles.iconContainerOuter}>
-              <BlurView
-                intensity={Platform.OS === 'ios' ? 95 : 100}
-                tint="light"
-                style={styles.iconContainer}
-              >
-                <View style={styles.iconOverlay} pointerEvents="none" />
-                {step.icon === 'logo' ? (
+              {step.icon === 'logo' ? (
+                <BlurView
+                  intensity={Platform.OS === 'ios' ? 95 : 100}
+                  tint="light"
+                  style={styles.iconContainer}
+                >
+                  <View style={styles.iconOverlay} pointerEvents="none" />
                   <Image
                     source={require('../../assets/images/OpenDoorsLogo.png')}
                     style={styles.logoImage}
                   />
-                ) : (
-                  <Ionicons name={step.icon as any} size={60} color={Colors.primary} />
-                )}
-              </BlurView>
+                </BlurView>
+              ) : (
+                <View style={styles.iconContainer}>
+                  {step.icon === 'play-circle' ? (
+                    <PlayCircle size={60} color={Colors.white} />
+                  ) : step.icon === 'list' ? (
+                    <List size={60} color={Colors.white} />
+                  ) : step.icon === 'gamepad2' ? (
+                    <Gamepad2 size={60} color={Colors.white} />
+                  ) : step.icon === 'gift' ? (
+                    <Gift size={60} color={Colors.white} />
+                  ) : step.icon === 'plus-circle' ? (
+                    <PlusCircle size={60} color={Colors.white} />
+                  ) : step.icon === 'check-circle' ? (
+                    <CheckCircle size={60} color={Colors.white} />
+                  ) : null}
+                </View>
+              )}
             </View>
             
             <Text style={styles.stepTitle}>{step.title}</Text>
@@ -217,7 +241,7 @@ export default function TutorialOverlay({ isVisible, onComplete, onSkip }: Tutor
           <View style={styles.navigationContainer}>
             {currentStep > 0 && (
               <TouchableOpacity style={styles.previousButton} onPress={handlePrevious}>
-                <Ionicons name="chevron-back" size={20} color={Colors.primary} />
+                <ChevronLeft size={20} color={Colors.primary} />
                 <Text style={styles.previousText}>Previous</Text>
               </TouchableOpacity>
             )}
@@ -233,11 +257,11 @@ export default function TutorialOverlay({ isVisible, onComplete, onSkip }: Tutor
                 <Text style={styles.nextText}>
                   {currentStep === tutorialSteps.length - 1 ? 'Get Started!' : 'Next'}
                 </Text>
-                <Ionicons
-                  name={currentStep === tutorialSteps.length - 1 ? "checkmark" : "chevron-forward"}
-                  size={20}
-                  color={Colors.white}
-                />
+                {currentStep === tutorialSteps.length - 1 ? (
+                  <Check size={20} color={Colors.white} />
+                ) : (
+                  <ChevronRight size={20} color={Colors.white} />
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -337,6 +361,7 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.4)',
   },
