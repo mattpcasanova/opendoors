@@ -19,6 +19,7 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Colors } from '../../constants';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../services/supabase/client';
 import { pushNotificationService } from '../../services/pushNotificationService';
@@ -312,7 +313,7 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
               </Text>
               {selectedCategories.includes(category.key) && (
                 <View style={styles.checkmarkContainer}>
-                  <Check size={16} color="white" />
+                  <Check size={16} color={Colors.white} />
                 </View>
               )}
             </View>
@@ -358,7 +359,7 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
               </View>
               {distance === option.value && (
                 <View style={styles.checkmarkContainer}>
-                  <Check size={20} color="white" />
+                  <Check size={20} color={Colors.white} />
                 </View>
               )}
             </View>
@@ -404,7 +405,7 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
               </View>
               {rewardStyle === option.value && (
                 <View style={styles.checkmarkContainer}>
-                  <Check size={20} color="white" />
+                  <Check size={20} color={Colors.white} />
                 </View>
               )}
             </View>
@@ -459,7 +460,7 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
                           rankPosition === 1 && styles.arrowButtonDisabled
                         ]}
                       >
-                        <ArrowUp size={16} color={rankPosition === 1 ? '#9CA3AF' : '#6B7280'} />
+                        <ArrowUp size={16} color={rankPosition === 1 ? Colors.gray400 : Colors.gray500} />
                       </TouchableOpacity>
                       <TouchableOpacity
                         onPress={() => moveRewardType(option.value, 'down')}
@@ -469,7 +470,7 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
                           rankPosition === rewardTypes.length && styles.arrowButtonDisabled
                         ]}
                       >
-                        <ArrowDown size={16} color={rankPosition === rewardTypes.length ? '#9CA3AF' : '#6B7280'} />
+                        <ArrowDown size={16} color={rankPosition === rewardTypes.length ? Colors.gray400 : Colors.gray500} />
                       </TouchableOpacity>
                     </View>
                     <View style={styles.rankBadge}>
@@ -537,7 +538,7 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
               </View>
               {socialSharing === option.value && (
                 <View style={styles.checkmarkContainer}>
-                  <Check size={20} color="white" />
+                  <Check size={20} color={Colors.white} />
                 </View>
               )}
             </View>
@@ -613,7 +614,7 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
               </Text>
               {discovery === option.value && (
                 <View style={styles.checkmarkContainer}>
-                  <Check size={16} color="white" />
+                  <Check size={16} color={Colors.white} />
                 </View>
               )}
             </View>
@@ -646,7 +647,7 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
 
   return (
     <LinearGradient
-      colors={['#14B8A6', '#0D9488', '#059669']}
+      colors={[Colors.primary, Colors.primaryDark, Colors.success]}
       style={styles.container}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
@@ -713,7 +714,7 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
                     ]}
                     activeOpacity={0.8}
                   >
-                    <ChevronLeft size={20} color={currentSlide === 1 ? 'rgba(255,255,255,0.5)' : 'white'} />
+                    <ChevronLeft size={20} color={currentSlide === 1 ? 'rgba(255,255,255,0.5)' : Colors.white} />
                     <Text style={[
                       styles.navButtonText,
                       currentSlide === 1 && styles.navButtonTextDisabled
@@ -734,7 +735,7 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
                       ) : (
                         <>
                           <Text style={styles.completeButtonText}>Get Started!</Text>
-                          <Star size={20} color="white" />
+                          <Star size={20} color={Colors.white} />
                         </>
                       )}
                     </TouchableOpacity>
@@ -745,7 +746,7 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
                       activeOpacity={0.8}
                     >
                       <Text style={styles.nextButtonText}>Next</Text>
-                      <ChevronRight size={20} color="#0D9488" />
+                      <ChevronRight size={20} color={Colors.primaryDark} />
                     </TouchableOpacity>
                   )}
                 </View>
@@ -819,12 +820,12 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: 'white',
+    color: Colors.white,
     marginBottom: 8,
   },
   headerSubtitle: {
     fontSize: 18,
-    color: '#E0F2F1',
+    color: Colors.primaryLightest,
   },
   logoContainer: {
     width: 80,
@@ -835,7 +836,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.6)',
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -854,11 +855,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   progressText: {
-    color: 'white',
+    color: Colors.white,
     fontWeight: '500',
   },
   progressPercentage: {
-    color: '#E0F2F1',
+    color: Colors.primaryLightest,
   },
   progressBarContainer: {
     marginBottom: 32,
@@ -872,7 +873,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#FCD34D',
+    backgroundColor: Colors.warning,
     borderRadius: 4,
   },
   content: {
@@ -894,13 +895,13 @@ const styles = StyleSheet.create({
   slideTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: 'white',
+    color: Colors.white,
     textAlign: 'center',
     marginBottom: 16,
   },
   slideSubtitle: {
     fontSize: 18,
-    color: '#E0F2F1',
+    color: Colors.primaryLightest,
     textAlign: 'center',
   },
   categoriesGrid: {
@@ -917,8 +918,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   categoryCardSelected: {
-    backgroundColor: 'white',
-    shadowColor: '#000',
+    backgroundColor: Colors.white,
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
     shadowRadius: 16,
@@ -939,7 +940,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -948,16 +949,16 @@ const styles = StyleSheet.create({
   categoryLabel: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: 'white',
+    color: Colors.white,
     textAlign: 'center',
   },
   categoryLabelSelected: {
-    color: '#1E293B',
+    color: Colors.gray900,
   },
   checkmarkContainer: {
     width: 24,
     height: 24,
-    backgroundColor: '#14B8A6',
+    backgroundColor: Colors.primary,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -974,8 +975,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   optionCardSelected: {
-    backgroundColor: 'white',
-    shadowColor: '#000',
+    backgroundColor: Colors.white,
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
     shadowRadius: 16,
@@ -997,7 +998,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -1009,18 +1010,18 @@ const styles = StyleSheet.create({
   optionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: 'white',
+    color: Colors.white,
     marginBottom: 4,
   },
   optionTitleSelected: {
-    color: '#1E293B',
+    color: Colors.gray900,
   },
   optionDescription: {
     fontSize: 14,
-    color: '#E0F2F1',
+    color: Colors.primaryLightest,
   },
   optionDescriptionSelected: {
-    color: '#6B7280',
+    color: Colors.gray500,
   },
   rankingControls: {
     flexDirection: 'row',
@@ -1040,13 +1041,13 @@ const styles = StyleSheet.create({
   rankBadge: {
     width: 40,
     height: 40,
-    backgroundColor: '#14B8A6',
+    backgroundColor: Colors.primary,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
   rankNumber: {
-    color: 'white',
+    color: Colors.white,
     fontWeight: 'bold',
     fontSize: 16,
   },
@@ -1059,7 +1060,7 @@ const styles = StyleSheet.create({
   },
   rankingTitle: {
     fontWeight: 'bold',
-    color: 'white',
+    color: Colors.white,
     marginBottom: 16,
   },
   rankingList: {
@@ -1070,7 +1071,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   rankingText: {
-    color: 'white',
+    color: Colors.white,
     marginLeft: 12,
   },
   ratingsList: {
@@ -1085,7 +1086,7 @@ const styles = StyleSheet.create({
   ratingTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: 'white',
+    color: Colors.white,
     marginBottom: 16,
   },
   ratingButtonsContainer: {
@@ -1105,17 +1106,17 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.4)',
   },
   ratingButtonSelected: {
-    backgroundColor: 'white',
-    borderColor: 'white',
+    backgroundColor: Colors.white,
+    borderColor: Colors.white,
     transform: [{scale: 1.1}],
   },
   ratingButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: 'white',
+    color: Colors.white,
   },
   ratingButtonTextSelected: {
-    color: '#14B8A6',
+    color: Colors.primary,
   },
   navigation: {
     flexDirection: 'row',
@@ -1142,24 +1143,24 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   navButtonText: {
-    color: 'white',
+    color: Colors.white,
     fontWeight: '600',
   },
   navButtonTextDisabled: {
     color: 'rgba(255, 255, 255, 0.5)',
   },
   nextButton: {
-    backgroundColor: 'white',
+    backgroundColor: Colors.white,
   },
   nextButtonText: {
-    color: '#0D9488',
+    color: Colors.primaryDark,
     fontWeight: '600',
   },
   completeButton: {
-    backgroundColor: '#10B981',
+    backgroundColor: Colors.success,
   },
   completeButtonText: {
-    color: 'white',
+    color: Colors.white,
     fontWeight: '600',
   },
   loadingSpinner: {
@@ -1167,7 +1168,7 @@ const styles = StyleSheet.create({
     height: 20,
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.3)',
-    borderTopColor: 'white',
+    borderTopColor: Colors.white,
     borderRadius: 10,
   },
 });

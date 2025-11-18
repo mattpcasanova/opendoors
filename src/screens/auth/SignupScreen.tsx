@@ -20,6 +20,7 @@ import {
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Colors } from '../../constants';
 import { useAuth } from '../../hooks/useAuth';
 import { useReferralLink } from '../../hooks/useReferralLink';
 import { AuthStackParamList } from '../../types/navigation';
@@ -227,7 +228,7 @@ export default function SignupScreen() {
 
   return (
     <LinearGradient
-      colors={['#14B8A6', '#0D9488', '#059669']}
+      colors={[Colors.primary, Colors.primaryDark, Colors.success]}
       style={styles.container}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
@@ -260,7 +261,7 @@ export default function SignupScreen() {
                   style={styles.backButton}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="arrow-back" size={24} color="white" />
+                  <Ionicons name="arrow-back" size={24} color={Colors.white} />
                 </TouchableOpacity>
                 <View style={styles.headerSpacer} />
               </View>
@@ -304,19 +305,19 @@ export default function SignupScreen() {
               <View style={styles.featuresContainer}>
                 <View style={styles.featureItem}>
                   <View style={styles.featureIconContainer}>
-                    <Gift size={24} color="white" />
+                    <Gift size={24} color={Colors.white} />
                   </View>
                   <Text style={styles.featureText}>Daily prizes</Text>
                 </View>
                 <View style={styles.featureItem}>
                   <View style={styles.featureIconContainer}>
-                    <Trophy size={24} color="white" />
+                    <Trophy size={24} color={Colors.white} />
                   </View>
                   <Text style={styles.featureText}>Win rewards</Text>
                 </View>
                 <View style={styles.featureItem}>
                   <View style={styles.featureIconContainer}>
-                    <Heart size={24} color="white" />
+                    <Heart size={24} color={Colors.white} />
                   </View>
                   <Text style={styles.featureText}>Free to play</Text>
                 </View>
@@ -334,12 +335,12 @@ export default function SignupScreen() {
                       <Text style={styles.inputLabel}>First Name</Text>
                       <View style={styles.inputContainer}>
                         <View style={styles.inputIconContainer}>
-                          <User size={20} color="#14B8A6" />
+                          <User size={20} color={Colors.primary} />
                         </View>
                         <TextInput
                           style={styles.textInput}
                           placeholder="First name"
-                          placeholderTextColor="#9CA3AF"
+                          placeholderTextColor={Colors.gray400}
                           value={formData.firstName}
                           onChangeText={updateFirstName}
                           autoCapitalize="words"
@@ -353,12 +354,12 @@ export default function SignupScreen() {
                       <Text style={styles.inputLabel}>Last Name</Text>
                       <View style={styles.inputContainer}>
                         <View style={styles.inputIconContainer}>
-                          <User size={20} color="#14B8A6" />
+                          <User size={20} color={Colors.primary} />
                         </View>
                         <TextInput
                           style={styles.textInput}
                           placeholder="Last name"
-                          placeholderTextColor="#9CA3AF"
+                          placeholderTextColor={Colors.gray400}
                           value={formData.lastName}
                           onChangeText={updateLastName}
                           autoCapitalize="words"
@@ -373,12 +374,12 @@ export default function SignupScreen() {
                     <Text style={styles.inputLabel}>Email Address</Text>
                     <View style={styles.inputContainer}>
                       <View style={styles.inputIconContainer}>
-                        <Mail size={20} color="#14B8A6" />
+                        <Mail size={20} color={Colors.primary} />
                       </View>
                       <TextInput
                         style={styles.textInput}
                         placeholder="Enter your email"
-                        placeholderTextColor="#9CA3AF"
+                        placeholderTextColor={Colors.gray400}
                         value={formData.email}
                         onChangeText={updateEmail}
                         keyboardType="email-address"
@@ -395,12 +396,12 @@ export default function SignupScreen() {
                     <Text style={styles.inputLabel}>Password</Text>
                     <View style={styles.inputContainer}>
                       <View style={styles.inputIconContainer}>
-                        <Lock size={20} color="#14B8A6" />
+                        <Lock size={20} color={Colors.primary} />
                       </View>
                       <TextInput
                         style={styles.textInput}
                         placeholder="Create a password"
-                        placeholderTextColor="#9CA3AF"
+                        placeholderTextColor={Colors.gray400}
                         value={formData.password}
                         onChangeText={updatePassword}
                         secureTextEntry={!showPassword}
@@ -412,7 +413,7 @@ export default function SignupScreen() {
                         style={styles.eyeButton}
                         activeOpacity={0.7}
                       >
-                        {showPassword ? <EyeOff size={20} color="#64748B" /> : <Eye size={20} color="#64748B" />}
+                        {showPassword ? <EyeOff size={20} color={Colors.gray500} /> : <Eye size={20} color={Colors.gray500} />}
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -422,12 +423,12 @@ export default function SignupScreen() {
                     <Text style={styles.inputLabel}>Confirm Password</Text>
                     <View style={styles.inputContainer}>
                       <View style={styles.inputIconContainer}>
-                        <Lock size={20} color="#14B8A6" />
+                        <Lock size={20} color={Colors.primary} />
                       </View>
                       <TextInput
                         style={styles.textInput}
                         placeholder="Confirm your password"
-                        placeholderTextColor="#9CA3AF"
+                        placeholderTextColor={Colors.gray400}
                         value={formData.confirmPassword}
                         onChangeText={updateConfirmPassword}
                         secureTextEntry={!showConfirmPassword}
@@ -440,7 +441,7 @@ export default function SignupScreen() {
                         style={styles.eyeButton}
                         activeOpacity={0.7}
                       >
-                        {showConfirmPassword ? <EyeOff size={20} color="#64748B" /> : <Eye size={20} color="#64748B" />}
+                        {showConfirmPassword ? <EyeOff size={20} color={Colors.gray500} /> : <Eye size={20} color={Colors.gray500} />}
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -450,12 +451,12 @@ export default function SignupScreen() {
                     <Text style={styles.inputLabel}>Referral Code (Optional)</Text>
                     <View style={styles.inputContainer}>
                       <View style={styles.inputIconContainer}>
-                        <Gift size={20} color="#14B8A6" />
+                        <Gift size={20} color={Colors.primary} />
                       </View>
                       <TextInput
                         style={styles.textInput}
                         placeholder="Enter referral code if you have one"
-                        placeholderTextColor="#9CA3AF"
+                        placeholderTextColor={Colors.gray400}
                         value={formData.referralCode}
                         onChangeText={updateReferralCode}
                         autoCapitalize="characters"
@@ -489,7 +490,7 @@ export default function SignupScreen() {
                   <Text style={styles.createAccountButtonText}>
                     {loading ? 'Creating Account...' : 'Create Account'}
                   </Text>
-                  {!loading && <ArrowRight size={20} color="white" />}
+                  {!loading && <ArrowRight size={20} color={Colors.white} />}
                 </TouchableOpacity>
 
 
@@ -590,7 +591,7 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 60,
     overflow: 'hidden',
-    shadowColor: '#14B8A6',
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.7,
     shadowRadius: 30,
@@ -627,23 +628,23 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: 'white',
+    color: Colors.white,
     textAlign: 'center',
     marginBottom: 8,
   },
   titleAccent: {
-    color: 'white',
+    color: Colors.white,
   },
   titleUnderline: {
     width: 64,
     height: 4,
-    backgroundColor: '#FCD34D',
+    backgroundColor: Colors.warning,
     borderRadius: 2,
     marginBottom: 16,
   },
   subtitle: {
     fontSize: 18,
-    color: '#E0F2F1',
+    color: Colors.primaryLightest,
     textAlign: 'center',
     fontWeight: '500',
   },
@@ -666,7 +667,7 @@ const styles = StyleSheet.create({
   },
   featureText: {
     fontSize: 14,
-    color: '#E0F2F1',
+    color: Colors.primaryLightest,
     fontWeight: '500',
   },
   formContainer: {
@@ -674,7 +675,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   formCard: {
-    backgroundColor: 'white',
+    backgroundColor: Colors.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderBottomLeftRadius: 24,
@@ -683,7 +684,7 @@ const styles = StyleSheet.create({
     paddingTop: 32,
     paddingBottom: 48,
     flex: 1,
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: -8 },
     shadowOpacity: 0.1,
     shadowRadius: 32,
@@ -706,24 +707,24 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
+    color: Colors.gray700,
     marginBottom: 8,
   },
   helperText: {
     fontSize: 12,
-    color: '#6B7280',
+    color: Colors.gray500,
     marginTop: 6,
     lineHeight: 16,
   },
   inputContainer: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.gray50,
     borderWidth: 2,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.gray200,
     borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -738,7 +739,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 16,
     fontSize: 16,
-    color: '#1E293B',
+    color: Colors.gray900,
     fontWeight: '500',
   },
   eyeButton: {
@@ -750,16 +751,16 @@ const styles = StyleSheet.create({
   },
   termsText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: Colors.gray500,
     textAlign: 'center',
     lineHeight: 20,
   },
   termsLink: {
-    color: '#14B8A6',
+    color: Colors.primary,
     fontWeight: '600',
   },
   createAccountButton: {
-    backgroundColor: '#14B8A6',
+    backgroundColor: Colors.primary,
     paddingVertical: 16,
     paddingHorizontal: 32,
     borderRadius: 16,
@@ -768,7 +769,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 12,
     marginBottom: 32,
-    shadowColor: '#14B8A6',
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
@@ -777,7 +778,7 @@ const styles = StyleSheet.create({
   createAccountButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: 'white',
+    color: Colors.white,
   },
   signInLinkContainer: {
     flexDirection: 'row',
@@ -785,11 +786,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   signInLinkText: {
-    color: '#6B7280',
+    color: Colors.gray500,
     fontSize: 16,
   },
   signInLink: {
-    color: '#14B8A6',
+    color: Colors.primary,
     fontSize: 16,
     fontWeight: '600',
   },

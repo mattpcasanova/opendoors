@@ -13,6 +13,7 @@ import {
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Colors } from '../../constants';
 import { useAuthNavigation } from '../../hooks/useNavigation';
 import { useReferralLink } from '../../hooks/useReferralLink';
 
@@ -61,7 +62,7 @@ export default function WelcomeScreen() {
 
   return (
     <LinearGradient
-      colors={['#14B8A6', '#0D9488', '#059669']}
+      colors={[Colors.primary, Colors.primaryDark, Colors.success]}
       style={styles.container}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
@@ -77,9 +78,7 @@ export default function WelcomeScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Welcome to</Text>
-          <Text style={styles.brandTitle}>
-            Open <Text style={styles.brandAccent}>Doors</Text>
-          </Text>
+          <Text style={styles.brandTitle}>Open Doors</Text>
           <Text style={styles.headerSubtitle}>
             Discover amazing prizes in your neighborhood
           </Text>
@@ -117,19 +116,19 @@ export default function WelcomeScreen() {
           <View style={styles.featuresContainer}>
             <View style={styles.featureItem}>
               <View style={styles.featureIcon}>
-                <Gamepad2 size={24} color="white" />
+                <Gamepad2 size={24} color={Colors.white} />
               </View>
               <Text style={styles.featureText}>Play Games</Text>
             </View>
             <View style={styles.featureItem}>
               <View style={styles.featureIcon}>
-                <Trophy size={24} color="white" />
+                <Trophy size={24} color={Colors.white} />
               </View>
               <Text style={styles.featureText}>Win Prizes</Text>
             </View>
             <View style={styles.featureItem}>
               <View style={styles.featureIcon}>
-                <MapPin size={24} color="white" />
+                <MapPin size={24} color={Colors.white} />
               </View>
               <Text style={styles.featureText}>Local Deals</Text>
             </View>
@@ -146,7 +145,7 @@ export default function WelcomeScreen() {
               activeOpacity={0.9}
             >
               <Text style={styles.signInButtonText}>Sign In</Text>
-              <ArrowRight size={20} color="#0D9488" />
+              <ArrowRight size={20} color={Colors.primaryDark} />
             </TouchableOpacity>
 
             {/* Create Account Button */}
@@ -160,7 +159,7 @@ export default function WelcomeScreen() {
           </View>
           
           <Text style={styles.ctaSubtext}>
-            Join thousands of players already winning
+            Open the door to a better day
           </Text>
         </View>
       </SafeAreaView>
@@ -212,22 +211,22 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: 'white',
+    color: Colors.white,
     marginBottom: 8,
   },
   brandTitle: {
     fontSize: 40,
     fontWeight: '900',
-    color: 'white',
+    color: Colors.white,
     letterSpacing: -1,
     marginBottom: 16,
   },
   brandAccent: {
-    color: 'white',
+    color: Colors.white,
   },
   headerSubtitle: {
     fontSize: 18,
-    color: '#E0F2F1',
+    color: Colors.primaryLightest,
     fontWeight: '500',
     textAlign: 'center',
   },
@@ -249,7 +248,7 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 90,
     overflow: 'hidden',
-    shadowColor: '#14B8A6',
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.7,
     shadowRadius: 35,
@@ -298,7 +297,7 @@ const styles = StyleSheet.create({
   },
   featureText: {
     fontSize: 14,
-    color: '#E0F2F1',
+    color: Colors.primaryLightest,
     fontWeight: '500',
   },
   ctaSection: {
@@ -310,7 +309,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   signInButton: {
-    backgroundColor: 'white',
+    backgroundColor: Colors.white,
     paddingVertical: 16,
     paddingHorizontal: 32,
     borderRadius: 16,
@@ -318,7 +317,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
     shadowRadius: 16,
@@ -327,7 +326,7 @@ const styles = StyleSheet.create({
   signInButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#0D9488',
+    color: Colors.primaryDark,
   },
   createAccountButton: {
     backgroundColor: 'transparent',
@@ -335,17 +334,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: 'white',
+    borderColor: Colors.white,
     alignItems: 'center',
   },
   createAccountButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: 'white',
+    color: Colors.white,
   },
   ctaSubtext: {
     fontSize: 14,
-    color: '#E0F2F1',
+    color: Colors.primaryLightest,
     textAlign: 'center',
   },
 }); 

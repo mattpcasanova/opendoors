@@ -99,10 +99,10 @@ const DailyGameButton: React.FC<DailyGameButtonProps> = ({ hasPlayedToday, onPre
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, zIndex: 1 }}>
             <View style={{ width: 40, height: 40, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 20, alignItems: 'center', justifyContent: 'center' }}>
-              <Ionicons name="checkmark-circle" size={28} color="white" />
+              <Ionicons name="checkmark-circle" size={28} color={Colors.white} />
             </View>
             <View style={{ marginLeft: 8 }}>
-              <Text style={{ color: 'white', fontSize: 20, fontWeight: 'bold' }}>Played Today</Text>
+              <Text style={{ color: Colors.white, fontSize: 20, fontWeight: 'bold' }}>Played Today</Text>
               <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14 }}>Come back tomorrow for more!</Text>
             </View>
           </View>
@@ -121,7 +121,7 @@ const DailyGameButton: React.FC<DailyGameButtonProps> = ({ hasPlayedToday, onPre
         }}
       >
         <LinearGradient
-          colors={["#2dd4bf", "#14b8a6"]}
+          colors={[Colors.primary, Colors.primaryDark]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={{
@@ -132,7 +132,7 @@ const DailyGameButton: React.FC<DailyGameButtonProps> = ({ hasPlayedToday, onPre
             width: '100%',
             maxWidth: 480,
             alignSelf: 'center',
-            shadowColor: '#000',
+            shadowColor: Colors.black,
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.08,
             shadowRadius: 8,
@@ -143,10 +143,10 @@ const DailyGameButton: React.FC<DailyGameButtonProps> = ({ hasPlayedToday, onPre
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={{ width: 48, height: 48, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 24, alignItems: 'center', justifyContent: 'center' }}>
-                <Ionicons name="gift" size={28} color="white" style={{ opacity: 0.9 }} />
+                <Ionicons name="gift" size={28} color={Colors.white} style={{ opacity: 0.9 }} />
               </View>
               <View>
-                <Text style={{ color: 'white', fontSize: 20, fontWeight: 'bold' }}>Play Your Free Daily Game!</Text>
+                <Text style={{ color: Colors.white, fontSize: 20, fontWeight: 'bold' }}>Play Your Free Daily Game!</Text>
                 <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14 }}>Win amazing prizes every day</Text>
               </View>
             </View>
@@ -175,13 +175,13 @@ const EarnedRewardsSection: React.FC<EarnedRewardsSectionProps> = ({
   };
 
   return (
-    <TouchableOpacity 
-      style={{ 
+    <TouchableOpacity
+      style={{
         marginBottom: 24,
-        backgroundColor: 'white',
+        backgroundColor: Colors.white,
         borderRadius: 16,
         padding: 20,
-        shadowColor: '#000',
+        shadowColor: Colors.black,
         shadowOpacity: 0.05,
         shadowRadius: 8,
         shadowOffset: { width: 0, height: 2 },
@@ -190,34 +190,34 @@ const EarnedRewardsSection: React.FC<EarnedRewardsSectionProps> = ({
       onPress={handlePress}
       activeOpacity={0.7}
     >
-      <View style={{ 
-        flexDirection: 'row', 
-        alignItems: 'center', 
-        justifyContent: 'space-between' 
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between'
       }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ 
-            fontSize: 18, 
-            fontWeight: '600', 
-            color: '#1F2937',
-            marginBottom: 4 
+          <Text style={{
+            fontSize: 18,
+            fontWeight: '600',
+            color: Colors.gray900,
+            marginBottom: 4
           }}>
             Earned Rewards
           </Text>
-          <Text style={{ 
-            fontSize: 14, 
-            color: '#6B7280' 
+          <Text style={{
+            fontSize: 14,
+            color: Colors.gray600
           }}>
             Extra doors available
           </Text>
         </View>
-        
+
         <View style={{
           width: 40,
           height: 40,
           borderRadius: 20,
           borderWidth: 2,
-          borderColor: '#009688',
+          borderColor: Colors.primary,
           backgroundColor: 'transparent',
           alignItems: 'center',
           justifyContent: 'center',
@@ -225,7 +225,7 @@ const EarnedRewardsSection: React.FC<EarnedRewardsSectionProps> = ({
           <Text style={{
             fontSize: 16,
             fontWeight: '700',
-            color: '#009688',
+            color: Colors.primary,
           }}>
             {earnedDoors}
           </Text>
@@ -254,7 +254,7 @@ const ProgressSection: React.FC<ProgressSectionProps> = ({
     return (
       <View style={{ alignItems: 'center', marginBottom: 32 }}>
         <LinearGradient
-          colors={["#2dd4bf", "#14b8a6"]}
+          colors={[Colors.primary, Colors.primaryDark]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={{
@@ -265,7 +265,7 @@ const ProgressSection: React.FC<ProgressSectionProps> = ({
             width: '100%',
             maxWidth: 480,
             alignSelf: 'center',
-            shadowColor: '#000',
+            shadowColor: Colors.black,
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.08,
             shadowRadius: 8,
@@ -276,10 +276,10 @@ const ProgressSection: React.FC<ProgressSectionProps> = ({
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={{ width: 48, height: 48, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 24, alignItems: 'center', justifyContent: 'center' }}>
-                <Ionicons name="gift" size={28} color="white" style={{ opacity: 0.9 }} />
+                <Ionicons name="gift" size={28} color={Colors.white} style={{ opacity: 0.9 }} />
               </View>
               <View>
-                <Text style={{ color: 'white', fontSize: 20, fontWeight: 'bold' }}>Bonus Available!</Text>
+                <Text style={{ color: Colors.white, fontSize: 20, fontWeight: 'bold' }}>Bonus Available!</Text>
                 <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14 }}>Play any game for free</Text>
               </View>
             </View>
@@ -295,32 +295,32 @@ const ProgressSection: React.FC<ProgressSectionProps> = ({
 
   return (
     <View style={{ alignItems: 'center', marginBottom: 32 }}>
-      <View style={{ backgroundColor: 'white', borderRadius: 24, padding: 24, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, borderWidth: 1, borderColor: '#F3F4F6', width: '100%', maxWidth: 480, alignSelf: 'center' }}>
+      <View style={{ backgroundColor: Colors.white, borderRadius: 24, padding: 24, shadowColor: Colors.black, shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, borderWidth: 1, borderColor: Colors.gray200, width: '100%', maxWidth: 480, alignSelf: 'center' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <View>
-            <Text style={{ color: '#111827', fontSize: 18, fontWeight: '600' }}>Progress to Bonus</Text>
-            <Text style={{ color: '#6B7280', fontSize: 14 }}>
+            <Text style={{ color: Colors.gray900, fontSize: 18, fontWeight: '600' }}>Progress to Bonus</Text>
+            <Text style={{ color: Colors.gray600, fontSize: 14 }}>
               {gamesUntilBonus} more game{gamesUntilBonus !== 1 ? 's' : ''} to unlock
             </Text>
           </View>
-          <View style={{ 
-            width: 48, 
-            height: 48, 
-            borderRadius: 24, 
+          <View style={{
+            width: 48,
+            height: 48,
+            borderRadius: 24,
             borderWidth: 2,
-            borderColor: '#009688',
+            borderColor: Colors.primary,
             backgroundColor: 'transparent',
-            alignItems: 'center', 
-            justifyContent: 'center' 
+            alignItems: 'center',
+            justifyContent: 'center'
           }}>
-            <Gift size={28} color="#009688" />
+            <Gift size={28} color={Colors.primary} />
           </View>
         </View>
         {/* Progress Bar */}
         <View style={{ marginBottom: 12 }}>
-          <View style={{ height: 12, backgroundColor: '#E5E7EB', borderRadius: 6, overflow: 'hidden' }}>
+          <View style={{ height: 12, backgroundColor: Colors.gray200, borderRadius: 6, overflow: 'hidden' }}>
             <LinearGradient
-              colors={["#14B8A6", "#10B981"]}
+              colors={[Colors.primary, Colors.success]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={{ width: `${progressPercentage}%`, height: 12, borderRadius: 6, position: 'absolute', left: 0, top: 0 }}
@@ -340,24 +340,24 @@ const ProgressSection: React.FC<ProgressSectionProps> = ({
                 borderRadius: 6,
                 backgroundColor:
                   i < completedGames
-                    ? '#14B8A6'
+                    ? Colors.primary
                     : i === completedGames
-                    ? '#5EEAD4'
-                    : '#D1D5DB',
+                    ? Colors.primaryLight
+                    : Colors.gray300,
                 transform: [
                   { scale: i < completedGames ? 1.15 : 1 },
                 ],
                 borderWidth: i === completedGames ? 2 : 0,
-                borderColor: i === completedGames ? '#99F6E4' : 'transparent',
+                borderColor: i === completedGames ? Colors.primaryLightest : 'transparent',
               }}
             />
           ))}
         </View>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 }}>
-          <Text style={{ fontSize: 12, color: '#6B7280' }}>Start</Text>
+          <Text style={{ fontSize: 12, color: Colors.gray600 }}>Start</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-            <Zap size={14} color="#F59E42" />
-            <Text style={{ fontSize: 12, color: '#6B7280', marginLeft: 2 }}>Bonus</Text>
+            <Zap size={14} color={Colors.warning} />
+            <Text style={{ fontSize: 12, color: Colors.gray600, marginLeft: 2 }}>Bonus</Text>
           </View>
         </View>
       </View>

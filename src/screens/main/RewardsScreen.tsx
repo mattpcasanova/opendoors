@@ -87,7 +87,7 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
         {/* Status Badge */}
         <View style={{ alignItems: 'center', marginBottom: 24 }}>
           <View style={{
-            backgroundColor: reward.claimed ? '#DCFCE7' : '#DBEAFE',
+            backgroundColor: reward.claimed ? Colors.successLight : Colors.infoLight,
             paddingHorizontal: 16,
             paddingVertical: 8,
             borderRadius: 20,
@@ -95,7 +95,7 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
             <Text style={{
               fontSize: 14,
               fontWeight: '600',
-              color: reward.claimed ? '#166534' : '#1E40AF'
+              color: reward.claimed ? Colors.successDark : Colors.infoDark
             }}>
               {reward.claimed ? 'Already Claimed' : 'Ready to Claim'}
             </Text>
@@ -104,12 +104,12 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
 
         {/* QR Code and Reward Code */}
         <View style={{
-          backgroundColor: 'white',
+          backgroundColor: Colors.white,
           borderRadius: 16,
           padding: 24,
           alignItems: 'center',
           marginBottom: 24,
-          shadowColor: '#000',
+          shadowColor: Colors.black,
           shadowOffset: { width: 0, height: 1 },
           shadowOpacity: 0.08,
           shadowRadius: 8,
@@ -118,7 +118,7 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
           <View style={{
             width: 192,
             height: 192,
-            backgroundColor: '#F3F4F6',
+            backgroundColor: Colors.gray100,
             borderRadius: 12,
             alignItems: 'center',
             justifyContent: 'center',
@@ -128,17 +128,17 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
             {qrCodeUrl ? (
               <Image source={{ uri: qrCodeUrl }} style={{ width: 180, height: 180, resizeMode: 'contain' }} />
             ) : (
-              <Ionicons name="qr-code" size={128} color="#9CA3AF" />
+              <Ionicons name="qr-code" size={128} color={Colors.gray400} />
             )}
           </View>
-          <Text style={{ fontSize: 12, color: '#6B7280', marginBottom: 8 }}>
+          <Text style={{ fontSize: 12, color: Colors.gray600, marginBottom: 8 }}>
             Reward Code
           </Text>
           <Text style={{
             fontFamily: 'monospace',
             fontSize: 16,
             fontWeight: '600',
-            color: '#374151',
+            color: Colors.gray700,
             marginBottom: 8
           }}>
             {rewardCodeText || 'N/A'}
@@ -147,26 +147,26 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
 
         {/* Expiration Info */}
         <View style={{
-          backgroundColor: 'white',
+          backgroundColor: Colors.white,
           borderRadius: 12,
           padding: 16,
           flexDirection: 'row',
           alignItems: 'center',
           marginBottom: 24,
-          shadowColor: '#000',
+          shadowColor: Colors.black,
           shadowOffset: { width: 0, height: 1 },
           shadowOpacity: 0.05,
           shadowRadius: 4,
           elevation: 2,
         }}>
-          <Ionicons name="calendar" size={20} color="#EA580C" style={{ marginRight: 12 }} />
+          <Ionicons name="calendar" size={20} color={Colors.warning} style={{ marginRight: 12 }} />
           <View>
-            <Text style={{ fontSize: 16, fontWeight: '600', color: '#374151', marginBottom: 4 }}>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: Colors.gray700, marginBottom: 4 }}>
               Expiration
             </Text>
             <Text style={{
               fontSize: 14,
-              color: isExpiringSoon ? '#DC2626' : '#6B7280'
+              color: isExpiringSoon ? Colors.error : Colors.gray600
             }}>
               {formatExpirationText(reward.expirationDate)}
             </Text>
@@ -175,19 +175,19 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
 
         {/* Instructions */}
         <View style={{
-          backgroundColor: 'white',
+          backgroundColor: Colors.white,
           borderRadius: 12,
           padding: 16,
           marginBottom: 24,
-          shadowColor: '#000',
+          shadowColor: Colors.black,
           shadowOffset: { width: 0, height: 1 },
           shadowOpacity: 0.05,
           shadowRadius: 4,
           elevation: 2,
         }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-            <Ionicons name="location" size={20} color="#009688" style={{ marginRight: 8 }} />
-            <Text style={{ fontSize: 16, fontWeight: '600', color: '#374151' }}>
+            <Ionicons name="location" size={20} color={Colors.primary} style={{ marginRight: 8 }} />
+            <Text style={{ fontSize: 16, fontWeight: '600', color: Colors.gray700 }}>
               How to redeem
             </Text>
           </View>
@@ -196,18 +196,18 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
               <View style={{
                 width: 20,
                 height: 20,
-                backgroundColor: '#009688',
+                backgroundColor: Colors.primary,
                 borderRadius: 10,
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginRight: 12,
                 marginTop: 2,
               }}>
-                <Text style={{ color: 'white', fontSize: 12, fontWeight: '600' }}>
+                <Text style={{ color: Colors.white, fontSize: 12, fontWeight: '600' }}>
                   {index + 1}
                 </Text>
               </View>
-              <Text style={{ flex: 1, fontSize: 14, color: '#374151', lineHeight: 20 }}>
+              <Text style={{ flex: 1, fontSize: 14, color: Colors.gray700, lineHeight: 20 }}>
                 {instruction}
               </Text>
             </View>
@@ -216,11 +216,11 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
 
         {/* Action Button */}
         <View style={{
-          backgroundColor: 'white',
+          backgroundColor: Colors.white,
           borderRadius: 12,
           padding: 20,
           marginBottom: 100,
-          shadowColor: '#000',
+          shadowColor: Colors.black,
           shadowOffset: { width: 0, height: 1 },
           shadowOpacity: 0.05,
           shadowRadius: 4,

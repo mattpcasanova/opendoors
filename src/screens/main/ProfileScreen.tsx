@@ -754,12 +754,12 @@ export default function ProfileScreen() {
                   width: 48,
                   height: 48,
                   borderRadius: BorderRadius.full,
-                  backgroundColor: '#FEF3C7',
+                  backgroundColor: Colors.warningLight,
                   alignItems: 'center',
                   justifyContent: 'center',
                   marginBottom: Spacing.sm,
                 }}>
-                  <Ionicons name="trophy" size={24} color="#F59E0B" />
+                  <Ionicons name="trophy" size={24} color={Colors.warning} />
                 </View>
                 <Text style={{
                   fontSize: 24,
@@ -1097,7 +1097,7 @@ export default function ProfileScreen() {
               marginBottom: Spacing.lg,
               ...Shadows.sm,
               borderWidth: 1,
-              borderColor: '#FEE2E2',
+              borderColor: Colors.errorLight,
             }}
             onPress={handleSignOut}
             activeOpacity={0.7}
@@ -1110,13 +1110,13 @@ export default function ProfileScreen() {
               <Ionicons
                 name="log-out"
                 size={20}
-                color="#DC2626"
+                color={Colors.error}
                 style={{ marginRight: Spacing.sm }}
               />
               <Text style={{
                 fontSize: 16,
                 fontWeight: '600',
-                color: '#DC2626'
+                color: Colors.error
               }}>
                 Sign Out
               </Text>

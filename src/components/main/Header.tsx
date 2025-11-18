@@ -135,7 +135,7 @@ export default function Header({
       <View style={{ position: "relative", overflow: "hidden" }}>
         {/* Dynamic Background with Teal Gradients */}
         <LinearGradient
-          colors={[Colors.primary, Colors.info, Colors.primaryDark]}
+          colors={[Colors.primary, Colors.primaryDark, Colors.success]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={{
@@ -318,7 +318,7 @@ export default function Header({
   if (variant === "rewards") {
     return (
       <View style={{ backgroundColor: Colors.gray50 }}>
-        <LinearGradient colors={[Colors.primary, Colors.primaryDark]} style={{ paddingBottom: 24 }}>
+        <LinearGradient colors={[Colors.primary, Colors.primaryDark, Colors.success]} style={{ paddingBottom: 24 }}>
           <View style={{ paddingHorizontal: 20, paddingTop: 15 }}>
             <View
               style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}
@@ -427,7 +427,7 @@ export default function Header({
   if (variant === "history") {
     return (
       <View style={{ backgroundColor: Colors.gray50 }}>
-        <LinearGradient colors={[Colors.secondary, Colors.secondaryDark]} style={{ paddingBottom: 20 }}>
+        <LinearGradient colors={[Colors.primary, Colors.primaryDark, Colors.success]} style={{ paddingBottom: 20 }}>
           <View style={{ paddingHorizontal: 20, paddingTop: 15, paddingBottom: 20 }}>
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
               {showBackButton && onBackPress && (
@@ -463,7 +463,7 @@ export default function Header({
                   </View>
                   <View>
                     <Text style={{ color: Colors.white, fontSize: 28, fontWeight: "800" }}>History</Text>
-                    <Text style={{ color: Colors.secondaryLighter, fontSize: 14 }}>Your gaming journey</Text>
+                    <Text style={{ color: Colors.primaryLightest, fontSize: 14 }}>Your gaming journey</Text>
                   </View>
                 </View>
               </View>
@@ -494,7 +494,7 @@ export default function Header({
               elevation: 3,
             }}
           >
-            <Text style={{ fontSize: 32, fontWeight: "800", color: Colors.secondary, textAlign: "center" }}>
+            <Text style={{ fontSize: 32, fontWeight: "800", color: Colors.primary, textAlign: "center" }}>
               {stats?.gamesPlayed || 0}
             </Text>
             <Text style={{ fontSize: 14, color: Colors.gray600, textAlign: "center" }}>Games Played</Text>
@@ -507,7 +507,7 @@ export default function Header({
   // PROFILE HEADER - Personal/settings focused
   if (variant === "profile") {
     return (
-      <LinearGradient colors={[Colors.accent, Colors.accentDark]} style={{ paddingBottom: 20 }}>
+      <LinearGradient colors={[Colors.primary, Colors.primaryDark, Colors.success]} style={{ paddingBottom: 20 }}>
         <View style={{ paddingHorizontal: 20, paddingTop: 15, paddingBottom: 20 }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
             {showBackButton && onBackPress && (
@@ -543,7 +543,7 @@ export default function Header({
                 </View>
                 <View>
                   <Text style={{ color: Colors.white, fontSize: 28, fontWeight: "800" }}>Profile</Text>
-                  <Text style={{ color: Colors.accentLighter, fontSize: 14 }}>Manage your account and preferences</Text>
+                  <Text style={{ color: Colors.primaryLightest, fontSize: 14 }}>Manage your account and preferences</Text>
                 </View>
               </View>
             </View>
@@ -560,9 +560,9 @@ export default function Header({
     <View style={{ backgroundColor: Colors.gray50, paddingBottom: 12 }}>
       {/* Background Gradient */}
       <LinearGradient
-        colors={[Colors.primary, Colors.info]}
+        colors={[Colors.primary, Colors.primaryDark, Colors.success]}
         start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
+        end={{ x: 1, y: 1 }}
         style={{
           paddingHorizontal: 28,
           paddingTop: 24,
