@@ -192,7 +192,7 @@ export default function TutorialOverlay({ isVisible, onComplete, onSkip }: Tutor
                     style={styles.logoImage}
                   />
                 ) : (
-                  <Ionicons name={step.icon as any} size={60} color={Colors.white} />
+                  <Ionicons name={step.icon as any} size={60} color={Colors.primary} />
                 )}
               </BlurView>
             </View>
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     borderRadius: 60,
   },
   stepTitle: {
@@ -396,13 +396,13 @@ const styles = StyleSheet.create({
   nextButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     paddingVertical: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: 25,
     borderWidth: 2,
     borderColor: Colors.white,
-    gap: 8,
+    gap: 6,
     shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -416,7 +416,7 @@ const styles = StyleSheet.create({
   },
   nextText: {
     color: Colors.white,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
   },
   logoImage: {

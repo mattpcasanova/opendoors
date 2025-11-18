@@ -143,6 +143,8 @@ const styles = StyleSheet.create({
   playCounterContainer: {
     marginTop: 20,
     width: '100%',
+    height: 220,
+    justifyContent: 'center',
   },
   playCounterCard: {
     backgroundColor: Colors.white,
@@ -155,7 +157,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 4,
-    height: 220,
+    flex: 1,
   },
   playCounterIcon: {
     marginRight: 12,
@@ -192,6 +194,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     width: '100%',
     height: 220,
+    justifyContent: 'center',
   },
   gameCard: {
     backgroundColor: Colors.white,
@@ -266,17 +269,19 @@ const styles = StyleSheet.create({
   rewardsContainer: {
     marginTop: 20,
     width: '100%',
+    height: 220,
+    justifyContent: 'center',
   },
   rewardsCard: {
     backgroundColor: Colors.white,
     borderRadius: 16,
-    padding: 18,
+    padding: 14,
     shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 4,
-    height: 220,
+    flex: 1,
   },
   qrCodeContainer: {
     alignItems: 'center',
@@ -305,12 +310,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   rewardCodeLabel: {
-    fontSize: 12,
+    fontSize: 10,
     color: Colors.gray600,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   rewardCode: {
-    fontSize: 14,
+    fontSize: 10,
     fontWeight: 'bold',
     color: Colors.gray900,
   },
@@ -340,12 +345,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   rewardBusinessName: {
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: 'bold',
     color: Colors.gray900,
   },
   rewardDescription: {
-    fontSize: 14,
+    fontSize: 11,
     color: Colors.gray600,
   },
   expirationContainer: {
@@ -356,18 +361,20 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   expirationLabel: {
-    fontSize: 14,
+    fontSize: 11,
     color: Colors.gray700,
     fontWeight: '600',
   },
   expirationDate: {
-    fontSize: 14,
+    fontSize: 11,
     color: Colors.warning,
     fontWeight: 'bold',
   },
   morePlaysContainer: {
     marginTop: 20,
     width: '100%',
+    height: 220,
+    justifyContent: 'center',
   },
   morePlaysCard: {
     backgroundColor: Colors.white,
@@ -378,7 +385,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 4,
-    height: 220,
+    flex: 1,
   },
   morePlaysOption: {
     flexDirection: 'row',

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Colors } from '../constants';
 import Door from './Door';
 
 interface MiniGameProps {
@@ -89,6 +90,7 @@ export default function MiniGame({ onComplete }: MiniGameProps) {
 
   const handleSwitchDoorClick = (doorNumber: number) => {
     if (gameState === 'finalChoice' && !revealedDoors.includes(doorNumber)) {
+      setSelectedDoor(doorNumber); // Update glow to new door
       const won = doorNumber === prizeLocation;
       openDoor(doorNumber);
       
@@ -150,12 +152,14 @@ export default function MiniGame({ onComplete }: MiniGameProps) {
 
   const getDoorContent = (doorNumber: number) => {
     if (gameState === 'result') {
-      return doorNumber === prizeLocation ? '🏆' : '❌';
+      return doorNumber === prizeLocation
+        ? { type: 'icon' as const, name: 'gift', color: Colors.gold }
+        : { type: 'icon' as const, name: 'close-circle', color: Colors.error };
     }
     if (revealedDoors.includes(doorNumber)) {
-      return '❌'; // Show goat for revealed doors
+      return { type: 'icon' as const, name: 'close-circle', color: Colors.error };
     }
-    return '';
+    return null;
   };
 
   const isDoorOpen = (doorNumber: number) => {
@@ -232,7 +236,7 @@ const styles = StyleSheet.create({
   instruction: {
     fontSize: 16,
     fontWeight: '600',
-    color: 'white',
+    color: Colors.white,
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -254,20 +258,20 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 25,
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 4,
   },
   stayButton: {
-    backgroundColor: '#FF9800',
+    backgroundColor: Colors.warning,
   },
   switchButton: {
-    backgroundColor: '#3F51B5',
+    backgroundColor: Colors.accent,
   },
   buttonText: {
-    color: 'white',
+    color: Colors.white,
     fontSize: 14,
     fontWeight: 'bold',
     textAlign: 'center',
@@ -275,43 +279,43 @@ const styles = StyleSheet.create({
   door: {
     width: 60,
     height: 80,
-    backgroundColor: '#8D6E63',
+    backgroundColor: Colors.doorBrown,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: '#5D4037',
+    borderColor: Colors.doorBrownDark,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 4,
   },
   selectedDoor: {
-    borderColor: '#FFD700',
+    borderColor: Colors.gold,
     borderWidth: 3,
-    shadowColor: '#FFD700',
+    shadowColor: Colors.gold,
     shadowOpacity: 0.5,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 4,
   },
   revealedDoor: {
-    backgroundColor: '#666666',
-    borderColor: '#444444',
+    backgroundColor: Colors.gray600,
+    borderColor: Colors.gray700,
   },
   winningDoor: {
-    backgroundColor: '#4CAF50',
-    borderColor: '#2E7D32',
+    backgroundColor: Colors.success,
+    borderColor: Colors.successDark,
   },
   losingDoor: {
-    backgroundColor: '#F44336',
-    borderColor: '#C62828',
+    backgroundColor: Colors.error,
+    borderColor: Colors.errorDark,
   },
   doorNumber: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: 'white',
+    color: Colors.white,
     marginBottom: 4,
   },
   doorContent: {
@@ -320,7 +324,7 @@ const styles = StyleSheet.create({
   resultText: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: 'white',
+    color: Colors.white,
     textAlign: 'center',
   },
 });
