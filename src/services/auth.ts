@@ -7,6 +7,7 @@ export interface SignUpData {
   password: string;
   firstName: string;
   lastName: string;
+  birthDate?: string;
   phone?: string;
 }
 
@@ -17,12 +18,13 @@ export interface SignInData {
 
 class AuthService {
   // Sign up new user
-  async signUp({ email, password, firstName, lastName, phone }: SignUpData, referralCode?: string | null) {
+  async signUp({ email, password, firstName, lastName, birthDate, phone }: SignUpData, referralCode?: string | null) {
     try {
       const cleanEmail = String(email).trim().toLowerCase();
       const cleanPassword = String(password);
       const cleanFirstName = String(firstName).trim();
       const cleanLastName = String(lastName).trim();
+      const cleanBirthDate = birthDate ? String(birthDate).trim() : null;
       const cleanPhone = phone ? String(phone).trim() : null;
 
       console.log('🔍 Starting signup process for:', cleanEmail);
@@ -34,6 +36,7 @@ class AuthService {
           data: {
             first_name: cleanFirstName,
             last_name: cleanLastName,
+            birth_date: cleanBirthDate,
             phone: cleanPhone,
           },
           emailRedirectTo: 'opendoors://auth/callback',

@@ -3,7 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowRight, Eye, EyeOff, Gift, Heart, Lock, Mail, Trophy, User } from 'lucide-react-native';
+import { ArrowRight, Calendar, Eye, EyeOff, Gift, Heart, Lock, Mail, Trophy, User } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
     Alert,
@@ -36,6 +36,7 @@ export default function SignupScreen() {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
+    birthDate: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -44,6 +45,7 @@ export default function SignupScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [previousBirthDate, setPreviousBirthDate] = useState('');
 
   // Animation setup for logo lift
   const logoLiftAnim = useRef(new Animated.Value(0)).current;
@@ -88,25 +90,57 @@ export default function SignupScreen() {
     // Defensive extraction from form data
     const firstNameValue = formData?.firstName;
     const lastNameValue = formData?.lastName;
+    const birthDateValue = formData?.birthDate;
     const emailValue = formData?.email;
     const passwordValue = formData?.password;
     const confirmPasswordValue = formData?.confirmPassword;
-    
+
     if (firstNameValue === undefined || firstNameValue === null || firstNameValue === '') {
       Alert.alert('Error', 'Please enter your first name');
       return;
     }
-    
+
     if (lastNameValue === undefined || lastNameValue === null || lastNameValue === '') {
       Alert.alert('Error', 'Please enter your last name');
       return;
     }
-    
+
+    if (birthDateValue === undefined || birthDateValue === null || birthDateValue === '') {
+      Alert.alert('Error', 'Please enter your date of birth');
+      return;
+    }
+
+    // Validate and check age
+    const birthDate = String(birthDateValue).trim();
+    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(birthDate)) {
+      Alert.alert('Error', 'Please enter a valid date in MM/DD/YYYY format');
+      return;
+    }
+
+    // Parse and calculate age
+    const [month, day, year] = birthDate.split('/').map(Number);
+    const birthDateObj = new Date(year, month - 1, day);
+    const today = new Date();
+    let age = today.getFullYear() - birthDateObj.getFullYear();
+    const monthDiff = today.getMonth() - birthDateObj.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDateObj.getDate())) {
+      age--;
+    }
+
+    if (age < 13) {
+      Alert.alert(
+        'Age Requirement',
+        'You must be 13 years or older to use OpenDoors. This is required by law to protect children\'s privacy.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
     if (emailValue === undefined || emailValue === null || emailValue === '') {
       Alert.alert('Error', 'Please enter your email address');
       return;
     }
-    
+
     if (passwordValue === undefined || passwordValue === null || passwordValue === '') {
       Alert.alert('Error', 'Please enter your password');
       return;
@@ -163,6 +197,7 @@ export default function SignupScreen() {
       const result = await signUp({
         firstName,
         lastName,
+        birthDate,
         email,
         password,
       }, referralCode);
@@ -208,6 +243,23 @@ export default function SignupScreen() {
 
   const updateLastName = (text: string) => {
     setFormData(prev => ({ ...prev, lastName: text }));
+  };
+
+  const updateBirthDate = (text: string) => {
+    // Strip all non-digits to get just the numbers
+    const cleaned = text.replace(/\D/g, '');
+
+    // Build the formatted string with slashes
+    let formatted = '';
+    for (let i = 0; i < cleaned.length && i < 8; i++) {
+      if (i === 2 || i === 4) {
+        formatted += '/';
+      }
+      formatted += cleaned[i];
+    }
+
+    setPreviousBirthDate(formatted);
+    setFormData(prev => ({ ...prev, birthDate: formatted }));
   };
 
   const updateEmail = (text: string) => {
@@ -367,6 +419,29 @@ export default function SignupScreen() {
                         />
                       </View>
                     </View>
+                  </View>
+
+                  {/* Birth Date Field */}
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Date of Birth</Text>
+                    <View style={styles.inputContainer}>
+                      <View style={styles.inputIconContainer}>
+                        <Calendar size={20} color={Colors.primary} />
+                      </View>
+                      <TextInput
+                        style={styles.textInput}
+                        placeholder="MM/DD/YYYY"
+                        placeholderTextColor={Colors.gray400}
+                        value={formData.birthDate}
+                        onChangeText={updateBirthDate}
+                        keyboardType="number-pad"
+                        maxLength={10}
+                        returnKeyType="next"
+                      />
+                    </View>
+                    <Text style={styles.helperText}>
+                      You must be 13 or older to use OpenDoors
+                    </Text>
                   </View>
 
                   {/* Email Field */}

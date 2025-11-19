@@ -81,6 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password: String(data.password || ''),
         firstName: String(data.firstName || '').trim(),
         lastName: String(data.lastName || '').trim(),
+        birthDate: data.birthDate ? String(data.birthDate).trim() : undefined,
         phone: data.phone ? String(data.phone).trim() : undefined,
       };
 
