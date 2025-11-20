@@ -701,6 +701,10 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 2,
+    left: '50%',
+    top: '50%',
+    marginLeft: -5,  // Half of width to center
+    marginTop: -5,   // Half of height to center
   },
   completionHeader: {
     alignItems: 'center',

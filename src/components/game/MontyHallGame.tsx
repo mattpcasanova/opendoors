@@ -85,9 +85,9 @@ export default function MontyHallGame({ onGameComplete, numDoors = 3 }: Props) {
   return (
     <View style={styles.container}>
       <Text style={styles.message}>{getMessage()}</Text>
-      
-      <ScrollView 
-        horizontal 
+
+      <ScrollView
+        horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
@@ -109,8 +109,8 @@ export default function MontyHallGame({ onGameComplete, numDoors = 3 }: Props) {
       </ScrollView>
 
       {gameState === 'final' && (
-        <TouchableOpacity 
-          style={styles.resetButton} 
+        <TouchableOpacity
+          style={styles.resetButton}
           onPress={resetGame}
         >
           <Text style={styles.resetButtonText}>Play Again</Text>

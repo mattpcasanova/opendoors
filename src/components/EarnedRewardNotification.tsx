@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     Animated,
     Modal,
@@ -26,9 +26,19 @@ export default function EarnedRewardNotification({
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
+  // Confetti animation state
+  const [confettiParticles] = useState(() =>
+    Array.from({ length: 30 }, () => ({
+      x: new Animated.Value(0),
+      y: new Animated.Value(0),
+      opacity: new Animated.Value(1),
+      rotation: new Animated.Value(0),
+    }))
+  );
+
   useEffect(() => {
     if (isVisible) {
-      // Animate in
+      // Animate in modal
       Animated.parallel([
         Animated.spring(scaleAnim, {
           toValue: 1,
@@ -42,16 +52,55 @@ export default function EarnedRewardNotification({
           useNativeDriver: true,
         }),
       ]).start();
+
+      // Animate confetti
+      confettiParticles.forEach((particle, i) => {
+        const angle = (Math.PI * 2 * i) / confettiParticles.length;
+        const distance = 80 + Math.random() * 120;
+        const endX = Math.cos(angle) * distance;
+        const endY = Math.sin(angle) * distance - Math.random() * 80;
+
+        Animated.parallel([
+          Animated.timing(particle.x, {
+            toValue: endX,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(particle.y, {
+            toValue: endY,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(particle.opacity, {
+            toValue: 0,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(particle.rotation, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      });
     } else {
       // Reset animations
       scaleAnim.setValue(0.9);
       fadeAnim.setValue(0);
+      confettiParticles.forEach(particle => {
+        particle.x.setValue(0);
+        particle.y.setValue(0);
+        particle.opacity.setValue(1);
+        particle.rotation.setValue(0);
+      });
     }
   }, [isVisible]);
 
   if (!isVisible) {
     return null;
   }
+
+  const colors = ['#FFD700', '#FFA500', '#FF6B6B', '#4ECDC4', '#009688'];
 
   return (
     <Modal
@@ -86,6 +135,34 @@ export default function EarnedRewardNotification({
           elevation: 8,
           transform: [{ scale: scaleAnim }],
         }}>
+          {/* Confetti particles */}
+          {confettiParticles.map((particle, i) => (
+            <Animated.View
+              key={i}
+              style={{
+                position: 'absolute',
+                width: 10,
+                height: 10,
+                borderRadius: 2,
+                left: '50%',
+                top: '50%',
+                marginLeft: -5,
+                marginTop: -5,
+                backgroundColor: colors[i % colors.length],
+                transform: [
+                  { translateX: particle.x },
+                  { translateY: particle.y },
+                  {
+                    rotate: particle.rotation.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0deg', '720deg'],
+                    }),
+                  },
+                ],
+                opacity: particle.opacity,
+              }}
+            />
+          ))}
           {/* Header */}
           <View style={{ alignItems: 'center', marginBottom: 20 }}>
             <View style={{

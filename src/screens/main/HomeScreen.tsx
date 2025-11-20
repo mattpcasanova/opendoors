@@ -960,17 +960,26 @@ export default function HomeScreen() {
       let doorType = 'daily';
       let usedEarnedRewardId: string | null = null;
 
+      console.log('🚪 Door consumption logic - State:', {
+        hasPlayedAnyGameToday,
+        bonusPlaysAvailable,
+        earnedDoors
+      });
+
       // Priority 1: Daily Play (if available)
       if (!hasPlayedAnyGameToday) {
         doorType = 'daily';
+        console.log('🚪 Using DAILY door');
       }
       // Priority 2: Bonus Door (if daily not available but bonus is)
       else if (bonusPlaysAvailable > 0) {
         doorType = 'bonus';
+        console.log('🚪 Using BONUS door');
       }
       // Priority 3: Earned Door (if neither daily nor bonus available)
       else if (earnedDoors > 0) {
         doorType = 'earned';
+        console.log('🚪 Using EARNED door');
         // Get the next unclaimed reward
         const { data: nextReward, error: rewardError } = await earnedRewardsService.getNextUnclaimedReward(user.id);
         if (rewardError || !nextReward) {
@@ -1066,25 +1075,29 @@ export default function HomeScreen() {
       // Update user progress in database based on door type used
       if (user) {
         const usedBonus = doorType === 'bonus';
+        console.log('🚪 Door consumption - doorType:', doorType, 'usedBonus:', usedBonus);
+        console.log('🚪 Before update - bonusPlaysAvailable:', bonusPlaysAvailable);
+
         const { error: progressError } = await userProgressService.updateProgressAfterGame(user.id, won, usedBonus);
-        
+
         if (progressError) {
           console.error('❌ Error updating progress:', progressError);
         } else {
           // Reload progress from database to update UI
           const { data: updatedProgress } = await userProgressService.loadUserProgress(user.id);
           if (updatedProgress) {
+            console.log('🚪 After update - bonusPlaysAvailable:', updatedProgress.bonusPlaysAvailable);
             const hadBonusBefore = bonusPlaysAvailable > 0;
             setGamesUntilBonus(updatedProgress.gamesUntilBonus);
             setLastPlayDate(updatedProgress.lastPlayDate);
             setBonusPlaysAvailable(updatedProgress.bonusPlaysAvailable);
             setHasPlayedAnyGameToday(updatedProgress.hasPlayedToday);
-            
+
             // If bonus just became available, show popup and send notifications
             if (!hadBonusBefore && updatedProgress.bonusPlaysAvailable > 0) {
               // Show bonus popup immediately
               setShowBonusNotification(true);
-              
+
               // Send notifications (in-app and push)
               const { autoNotificationService } = await import('../../services/autoNotificationService');
               await autoNotificationService.checkBonusAvailableNotification(user.id);

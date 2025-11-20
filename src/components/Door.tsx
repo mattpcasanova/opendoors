@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Animated, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { soundService } from '../services/soundService';
@@ -26,6 +26,17 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
   const emptyShakeAnim = React.useRef(new Animated.Value(0)).current;
   const [isOpening, setIsOpening] = React.useState(false);
   const [hasPlayedResultSound, setHasPlayedResultSound] = React.useState(false);
+
+  // Confetti animation for winning doors
+  const [confettiParticles] = useState(() =>
+    Array.from({ length: 20 }, () => ({
+      x: new Animated.Value(0),
+      y: new Animated.Value(0),
+      opacity: new Animated.Value(1),
+      rotation: new Animated.Value(0),
+    }))
+  );
+  const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -107,6 +118,38 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
           console.log(`🎉 Door ${doorNumber} - Playing WIN sound and showing sparkles!`);
           soundService.playCelebration();
 
+          // Show and animate confetti
+          setShowConfetti(true);
+          confettiParticles.forEach((particle, i) => {
+            const angle = (Math.PI * 2 * i) / confettiParticles.length;
+            const distance = 60 + Math.random() * 80;
+            const endX = Math.cos(angle) * distance;
+            const endY = Math.sin(angle) * distance - Math.random() * 60;
+
+            Animated.parallel([
+              Animated.timing(particle.x, {
+                toValue: endX,
+                duration: 1000,
+                useNativeDriver: true,
+              }),
+              Animated.timing(particle.y, {
+                toValue: endY,
+                duration: 1000,
+                useNativeDriver: true,
+              }),
+              Animated.timing(particle.opacity, {
+                toValue: 0,
+                duration: 1000,
+                useNativeDriver: true,
+              }),
+              Animated.timing(particle.rotation, {
+                toValue: 1,
+                duration: 1000,
+                useNativeDriver: true,
+              }),
+            ]).start();
+          });
+
           // Start celebration border glow animation
           Animated.loop(
             Animated.sequence([
@@ -165,6 +208,14 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
     // Reset when door closes (new game)
     if (!isOpen && hasPlayedResultSound) {
       setHasPlayedResultSound(false);
+      setShowConfetti(false);
+      // Reset confetti particles
+      confettiParticles.forEach(particle => {
+        particle.x.setValue(0);
+        particle.y.setValue(0);
+        particle.opacity.setValue(1);
+        particle.rotation.setValue(0);
+      });
     }
   }, [isSelected, isOpen, isWinningDoor, hasPlayedResultSound, doorNumber]);
 
@@ -210,6 +261,7 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
 
   const isEmptyDoor = content?.name === 'close-circle';
   const backgroundColorValue = isWinningDoor ? Colors.doorBackground : (isEmptyDoor ? Colors.doorBackgroundEmpty : Colors.doorBackground);
+  const confettiColors = ['#FFD700', '#FFA500', '#FF6B6B', '#4ECDC4', '#009688'];
 
   return (
     <Animated.View style={{
@@ -219,6 +271,35 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
       transform: [{ scale: selectionBounceAnim }]
     }}>
       <View style={{ width: 100, height: 150, position: 'relative', overflow: 'visible', zIndex: 1 }}>
+        {/* Confetti particles */}
+        {showConfetti && confettiParticles.map((particle, i) => (
+          <Animated.View
+            key={i}
+            style={{
+              position: 'absolute',
+              width: 8,
+              height: 8,
+              borderRadius: 2,
+              left: '50%',
+              top: '50%',
+              marginLeft: -4,
+              marginTop: -4,
+              backgroundColor: confettiColors[i % confettiColors.length],
+              zIndex: 100,
+              transform: [
+                { translateX: particle.x },
+                { translateY: particle.y },
+                {
+                  rotate: particle.rotation.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['0deg', '720deg'],
+                  }),
+                },
+              ],
+              opacity: particle.opacity,
+            }}
+          />
+        ))}
         {/* Content behind the door */}
         <Animated.View style={{
           position: 'absolute',
