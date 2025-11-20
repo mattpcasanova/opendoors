@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import LottieView from 'lottie-react-native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -298,27 +297,106 @@ export default function RedemptionSurveyModal({
     }
   };
 
+  // Confetti animation state
+  const [confettiParticles] = useState(() =>
+    Array.from({ length: 30 }, () => ({
+      x: new Animated.Value(0),
+      y: new Animated.Value(0),
+      opacity: new Animated.Value(1),
+      rotation: new Animated.Value(0),
+    }))
+  );
+
+  // Animate confetti when completion shows
+  useEffect(() => {
+    if (showCompletion) {
+      confettiParticles.forEach((particle, i) => {
+        const angle = (Math.PI * 2 * i) / confettiParticles.length;
+        const distance = 80 + Math.random() * 120;
+        const endX = Math.cos(angle) * distance;
+        const endY = Math.sin(angle) * distance - Math.random() * 80;
+
+        Animated.parallel([
+          Animated.timing(particle.x, {
+            toValue: endX,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(particle.y, {
+            toValue: endY,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(particle.opacity, {
+            toValue: 0,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(particle.rotation, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      });
+    }
+  }, [showCompletion]);
+
   if (showCompletion) {
+    const colors = ['#FFD700', '#FFA500', '#FF6B6B', '#4ECDC4', '#009688'];
+
     return (
       <Modal visible={visible} animationType="fade" transparent>
         <View style={styles.completionOverlay}>
           <View style={styles.completionContainer}>
-            <LottieView
-              source={require('../../../assets/animations/confetti.json')}
-              autoPlay
-              loop={false}
-              style={styles.confetti}
-            />
-            <View style={styles.completionContent}>
-              <View style={styles.doorBadge}>
-                <Text style={styles.doorBadgeText}>+1</Text>
-                <Ionicons name="enter" size={40} color="#009688" />
+            {/* Confetti particles */}
+            {confettiParticles.map((particle, i) => (
+              <Animated.View
+                key={i}
+                style={[
+                  styles.confettiParticle,
+                  {
+                    backgroundColor: colors[i % colors.length],
+                    transform: [
+                      { translateX: particle.x },
+                      { translateY: particle.y },
+                      {
+                        rotate: particle.rotation.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ['0deg', '720deg'],
+                        }),
+                      },
+                    ],
+                    opacity: particle.opacity,
+                  },
+                ]}
+              />
+            ))}
+
+            {/* Header with icon */}
+            <View style={styles.completionHeader}>
+              <View style={styles.completionIconCircle}>
+                <Ionicons name="gift" size={30} color="#009688" />
               </View>
-              <Text style={styles.completionTitle}>Bonus Door Earned!</Text>
-              <Text style={styles.completionSubtitle}>
-                Thanks for sharing your feedback
+              <Text style={styles.completionTitle}>Door Earned! 🎉</Text>
+            </View>
+
+            {/* Content */}
+            <View style={styles.completionContent}>
+              <Text style={styles.doorsText}>+1 Door</Text>
+              <Text style={styles.completionFrom}>From: Completing Survey</Text>
+              <Text style={styles.completionMessage}>
+                You can now use this door to play any game!
               </Text>
             </View>
+
+            {/* Action Button */}
+            <TouchableOpacity
+              style={styles.completionButton}
+              onPress={onClose}
+            >
+              <Text style={styles.completionButtonText}>Got it!</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -370,32 +448,69 @@ export default function RedemptionSurveyModal({
             {renderQuestion()}
           </Animated.View>
 
-          {/* Next Button */}
-          <TouchableOpacity
-            style={[
-              styles.nextButton,
-              !canProceed() && styles.nextButtonDisabled,
-            ]}
-            onPress={handleNext}
-            disabled={!canProceed()}
-          >
-            <LinearGradient
-              colors={canProceed() ? ['#009688', '#00796B'] : ['#E5E7EB', '#D1D5DB']}
-              style={styles.nextButtonGradient}
+          {/* Navigation Buttons */}
+          <View style={styles.buttonContainer}>
+            {/* Back Button - only show if not on first question */}
+            {currentQuestion > 0 && (
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => {
+                  // Animate transition
+                  Animated.sequence([
+                    Animated.timing(fadeAnim, {
+                      toValue: 1,
+                      duration: 150,
+                      useNativeDriver: true,
+                    }),
+                    Animated.timing(fadeAnim, {
+                      toValue: 0,
+                      duration: 150,
+                      useNativeDriver: true,
+                    }),
+                  ]).start();
+
+                  // Go back to previous question
+                  if (currentQuestion === 2) {
+                    // If on Q3 and user made purchase, go to Q2, else Q1
+                    setCurrentQuestion(madePurchase ? 1 : 0);
+                  } else {
+                    setCurrentQuestion(currentQuestion - 1);
+                  }
+                }}
+              >
+                <Ionicons name="arrow-back" size={20} color="#6B7280" />
+                <Text style={styles.backButtonText}>Back</Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Next Button */}
+            <TouchableOpacity
+              style={[
+                styles.nextButton,
+                !canProceed() && styles.nextButtonDisabled,
+                currentQuestion > 0 && styles.nextButtonWithBack,
+              ]}
+              onPress={handleNext}
+              disabled={!canProceed()}
             >
-              <Text style={[
-                styles.nextButtonText,
-                !canProceed() && styles.nextButtonTextDisabled,
-              ]}>
-                {currentQuestion === 3 ? 'Complete' : 'Next'}
-              </Text>
-              <Ionicons
-                name="arrow-forward"
-                size={20}
-                color={canProceed() ? 'white' : '#9CA3AF'}
-              />
-            </LinearGradient>
-          </TouchableOpacity>
+              <LinearGradient
+                colors={canProceed() ? ['#009688', '#00796B'] : ['#E5E7EB', '#D1D5DB']}
+                style={styles.nextButtonGradient}
+              >
+                <Text style={[
+                  styles.nextButtonText,
+                  !canProceed() && styles.nextButtonTextDisabled,
+                ]}>
+                  {currentQuestion === 3 ? 'Complete' : 'Next'}
+                </Text>
+                <Ionicons
+                  name="arrow-forward"
+                  size={20}
+                  color={canProceed() ? 'white' : '#9CA3AF'}
+                />
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
         </View>
       </SafeAreaView>
     </Modal>
@@ -516,10 +631,33 @@ const styles = StyleSheet.create({
   optionTextSelected: {
     color: '#009688',
   },
-  nextButton: {
+  buttonContainer: {
+    flexDirection: 'row',
+    gap: 12,
     marginTop: 24,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+    gap: 8,
+  },
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  nextButton: {
+    flex: 1,
     borderRadius: 12,
     overflow: 'hidden',
+  },
+  nextButtonWithBack: {
+    flex: 2,
   },
   nextButtonDisabled: {
     opacity: 0.5,
@@ -541,50 +679,79 @@ const styles = StyleSheet.create({
   },
   completionOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 20,
   },
   completionContainer: {
-    width: width - 80,
+    width: '100%',
+    maxWidth: 400,
     backgroundColor: 'white',
-    borderRadius: 24,
-    padding: 32,
-    alignItems: 'center',
+    borderRadius: 20,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  confetti: {
+  confettiParticle: {
     position: 'absolute',
-    width: width,
-    height: height,
-    top: -height / 2,
+    width: 10,
+    height: 10,
+    borderRadius: 2,
   },
-  completionContent: {
+  completionHeader: {
     alignItems: 'center',
+    marginBottom: 20,
   },
-  doorBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  completionIconCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: '#E0F2F1',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderRadius: 50,
-    marginBottom: 24,
-  },
-  doorBadgeText: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#009688',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
   completionTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#1F2937',
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#111827',
+    textAlign: 'center',
+  },
+  completionContent: {
+    marginBottom: 24,
+    alignItems: 'center',
+  },
+  doorsText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+    textAlign: 'center',
     marginBottom: 8,
   },
-  completionSubtitle: {
-    fontSize: 15,
+  completionFrom: {
+    fontSize: 16,
     color: '#6B7280',
     textAlign: 'center',
+    marginBottom: 12,
+  },
+  completionMessage: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    textAlign: 'center',
+  },
+  completionButton: {
+    backgroundColor: '#009688',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  completionButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

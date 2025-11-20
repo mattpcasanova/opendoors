@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { SurveyResponses } from '../components/modals/RedemptionSurveyModal';
+import { earnedRewardsService } from './earnedRewardsService';
 
 interface SubmitSurveyParams {
   userId: string;
@@ -26,62 +27,38 @@ class SurveyService {
     try {
       console.log('📝 Submitting survey response...', { userId, rewardId, prizeId });
 
-      // 1. Insert survey response
-      const { data: surveyData, error: surveyError } = await supabase
-        .from('redemption_surveys')
-        .insert({
-          user_id: userId,
-          reward_id: rewardId,
-          prize_id: prizeId,
-          made_purchase: responses.made_purchase,
-          spend_amount: responses.spend_amount || null,
-          will_return: responses.will_return,
-          discovery_source: responses.discovery_source || null,
-          bonus_door_granted: true,
-        })
-        .select('id')
-        .single();
+      // Use RPC function to submit survey and grant bonus door (bypasses RLS)
+      const { data: surveyId, error: surveyError } = await supabase
+        .rpc('submit_redemption_survey', {
+          p_user_id: userId,
+          p_reward_id: rewardId,
+          p_prize_id: prizeId,
+          p_made_purchase: responses.made_purchase,
+          p_spend_amount: responses.spend_amount || null,
+          p_will_return: responses.will_return,
+          p_discovery_source: responses.discovery_source || null,
+        });
 
       if (surveyError) {
-        console.error('❌ Error inserting survey:', surveyError);
+        console.error('❌ Error submitting survey:', surveyError);
         return { data: null, error: surveyError };
       }
 
-      console.log('✅ Survey response saved:', surveyData.id);
+      console.log('✅ Survey response saved and bonus door granted! Survey ID:', surveyId);
 
-      // 2. Grant +1 bonus door to user
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('available_doors')
-        .eq('id', userId)
-        .single();
-
-      if (profileError) {
-        console.error('❌ Error fetching user profile:', profileError);
-        return { data: null, error: profileError };
+      // Add to earned rewards history
+      const { error: earnedRewardError } = await earnedRewardsService.addSurveyReward(userId);
+      if (earnedRewardError) {
+        console.error('❌ Error adding survey to earned rewards:', earnedRewardError);
+        // Don't fail the whole operation if earned rewards fails
       }
 
-      const currentDoors = profileData.available_doors || 0;
-      const newDoors = currentDoors + 1;
-
-      const { error: updateError } = await supabase
-        .from('user_profiles')
-        .update({ available_doors: newDoors })
-        .eq('id', userId);
-
-      if (updateError) {
-        console.error('❌ Error granting bonus door:', updateError);
-        return { data: null, error: updateError };
-      }
-
-      console.log('✅ Bonus door granted! New total:', newDoors);
-
-      // 3. Track analytics event
+      // Track analytics event
       await supabase.from('analytics_events').insert({
         user_id: userId,
         event_type: 'survey_completed',
         event_data: {
-          survey_id: surveyData.id,
+          survey_id: surveyId,
           reward_id: rewardId,
           prize_id: prizeId,
           made_purchase: responses.made_purchase,
@@ -91,7 +68,7 @@ class SurveyService {
 
       return {
         data: {
-          surveyId: surveyData.id,
+          surveyId: surveyId,
           doorsGranted: 1,
         },
         error: null,

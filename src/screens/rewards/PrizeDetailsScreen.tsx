@@ -2,12 +2,16 @@ import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Calendar, ChevronLeft } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { Alert, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, DeviceEventEmitter, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { rewardsService } from '../../services/rewardsService';
+import { surveyService } from '../../services/surveyService';
 import { useToast } from '../../contexts/ToastContext';
+import { useAuth } from '../../hooks/useAuth';
+import RedemptionSurveyModal, { SurveyResponses } from '../../components/modals/RedemptionSurveyModal';
+import type { Reward } from '../../components/main/RewardCard';
 import type { RootNavigationProp, RootStackParamList } from '../../types/navigation';
 
 export default function PrizeDetailsScreen() {
@@ -15,8 +19,11 @@ export default function PrizeDetailsScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'PrizeDetails'>>();
   const reward = route.params.reward;
   const { showToast } = useToast();
+  const { user } = useAuth();
   const [isClaimed, setIsClaimed] = useState(reward.claimed === true);
   const [isClaiming, setIsClaiming] = useState(false);
+  const [showSurveyModal, setShowSurveyModal] = useState(false);
+  const [surveyReward, setSurveyReward] = useState<Reward | null>(null);
 
   const handleMarkClaimed = async () => {
     if (!reward.id) return;
@@ -39,6 +46,16 @@ export default function PrizeDetailsScreen() {
               if (success) {
                 setIsClaimed(true);
                 showToast('Reward claimed successfully!', 'success');
+                
+                // Show survey modal to earn bonus door
+                if (user && reward.id) {
+                  // Check if user has already completed survey for this reward
+                  const { data: hasCompletedSurvey } = await surveyService.hasSurveyForReward(user.id, reward.id);
+                  if (!hasCompletedSurvey) {
+                    setSurveyReward(reward as Reward);
+                    setShowSurveyModal(true);
+                  }
+                }
               } else {
                 showToast(error || 'Failed to claim reward', 'error');
               }
@@ -51,6 +68,48 @@ export default function PrizeDetailsScreen() {
         }
       ]
     );
+  };
+
+  const handleSurveyComplete = async (responses: SurveyResponses) => {
+    if (!user || !surveyReward) return;
+
+    try {
+      // Extract prize_id from reward object (check both snake_case and camelCase)
+      const prizeId = surveyReward.prize_id || (surveyReward as any).prizeId || surveyReward.id;
+      console.log('📋 Survey submission - Prize ID:', prizeId, 'Reward object:', {
+        id: surveyReward.id,
+        prize_id: surveyReward.prize_id,
+        prizeId: (surveyReward as any).prizeId
+      });
+
+      const { data, error } = await surveyService.submitSurvey({
+        userId: user.id,
+        rewardId: surveyReward.id,
+        prizeId: prizeId,
+        responses,
+      });
+
+      if (error) {
+        console.error('Failed to submit survey:', error);
+        showToast('Survey submitted, but failed to grant bonus door', 'error');
+      } else {
+        console.log('✅ Survey completed! Bonus door granted:', data);
+        showToast('Survey completed! Bonus door granted!', 'success');
+        // Emit event to refresh user profile/doors count
+        DeviceEventEmitter.emit('REFRESH_PROFILE');
+      }
+    } catch (error) {
+      console.error('Error submitting survey:', error);
+      showToast('Error submitting survey. Please try again.', 'error');
+    } finally {
+      setShowSurveyModal(false);
+      setSurveyReward(null);
+    }
+  };
+
+  const handleSurveySkip = () => {
+    setShowSurveyModal(false);
+    setSurveyReward(null);
   };
 
   if (!reward) {
@@ -297,6 +356,18 @@ export default function PrizeDetailsScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* Survey Modal */}
+      {surveyReward && (
+        <RedemptionSurveyModal
+          visible={showSurveyModal}
+          onClose={handleSurveySkip}
+          onComplete={handleSurveyComplete}
+          businessName={surveyReward.company}
+          rewardId={surveyReward.id}
+          prizeId={surveyReward.prize_id || surveyReward.id}
+        />
+      )}
     </SafeAreaView>
   );
 }

@@ -19,6 +19,8 @@ export interface Reward {
   instructions: string[];
   logo_url?: string;
   created_at?: string;
+  prizeId?: string; // Database prize_id field
+  prize_id?: string; // Alternative naming from API
 }
 
 interface Props {
@@ -120,12 +122,13 @@ export default function RewardCard({ reward, onPress }: Props) {
   });
 
   // Get gradient colors based on state
+  // Prioritize claimed status over expired
   const getGradientColors = (): string[] => {
-    if (isExpired) {
-      return [Colors.gray100, Colors.gray50]; // Grayed out
-    }
     if (isClaimed) {
       return [Colors.successLight, Colors.success]; // Green gradient
+    }
+    if (isExpired) {
+      return [Colors.gray100, Colors.gray50]; // Grayed out
     }
     if (isExpiringSoon) {
       return [Colors.warningLight, Colors.warning]; // Orange gradient
@@ -134,11 +137,12 @@ export default function RewardCard({ reward, onPress }: Props) {
   };
 
   const getStatusIcon = () => {
-    if (isExpired) {
-      return <XCircle size={20} color={Colors.error} strokeWidth={2.5} />;
-    }
+    // Prioritize claimed status over expired
     if (isClaimed) {
       return <CheckCircle size={20} color={Colors.success} strokeWidth={2.5} />;
+    }
+    if (isExpired) {
+      return <XCircle size={20} color={Colors.error} strokeWidth={2.5} />;
     }
     if (isExpiringSoon) {
       return <Clock size={20} color={Colors.warning} strokeWidth={2.5} />;
@@ -147,22 +151,7 @@ export default function RewardCard({ reward, onPress }: Props) {
   };
 
   const getStatusBadge = () => {
-    if (isExpired) {
-      return (
-        <View style={{
-          backgroundColor: Colors.error,
-          paddingHorizontal: Spacing.sm,
-          paddingVertical: 4,
-          borderRadius: BorderRadius.sm,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 4,
-        }}>
-          <XCircle size={14} color={Colors.white} strokeWidth={2.5} />
-          <Text style={{ color: Colors.white, fontSize: 11, fontWeight: '700' }}>EXPIRED</Text>
-        </View>
-      );
-    }
+    // Prioritize claimed status over expired status
     if (isClaimed) {
       return (
         <View style={{
@@ -176,6 +165,22 @@ export default function RewardCard({ reward, onPress }: Props) {
         }}>
           <CheckCircle size={14} color={Colors.white} strokeWidth={2.5} />
           <Text style={{ color: Colors.white, fontSize: 11, fontWeight: '700' }}>CLAIMED</Text>
+        </View>
+      );
+    }
+    if (isExpired) {
+      return (
+        <View style={{
+          backgroundColor: Colors.error,
+          paddingHorizontal: Spacing.sm,
+          paddingVertical: 4,
+          borderRadius: BorderRadius.sm,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 4,
+        }}>
+          <XCircle size={14} color={Colors.white} strokeWidth={2.5} />
+          <Text style={{ color: Colors.white, fontSize: 11, fontWeight: '700' }}>EXPIRED</Text>
         </View>
       );
     }
@@ -205,7 +210,7 @@ export default function RewardCard({ reward, onPress }: Props) {
     <TouchableScale
       onPress={() => onPress(reward)}
       scaleValue={0.97}
-      hapticFeedback={!isExpired}
+      hapticFeedback={!isExpired || isClaimed}
       style={{
         marginBottom: Spacing.md,
         overflow: 'hidden',
@@ -217,7 +222,7 @@ export default function RewardCard({ reward, onPress }: Props) {
         borderRadius: BorderRadius.lg,
         overflow: 'hidden',
         ...Shadows.md,
-        opacity: isExpired ? 0.6 : 1,
+        opacity: isClaimed ? 1 : (isExpired ? 0.6 : 1),
         borderWidth: 1,
         borderColor: Colors.gray200,
       }}>
@@ -323,7 +328,7 @@ export default function RewardCard({ reward, onPress }: Props) {
               {getStatusIcon()}
               <Text style={{
                 fontSize: 13,
-                color: isExpired ? Colors.error : (isClaimed ? Colors.success : (isExpiringSoon ? Colors.warningDark : Colors.black)),
+                color: isClaimed ? Colors.success : (isExpired ? Colors.error : (isExpiringSoon ? Colors.warningDark : Colors.black)),
                 fontWeight: '600',
               }}>
                 {isClaimed ? 'Claimed' : formatExpirationText(reward.expirationDate)}
@@ -334,7 +339,7 @@ export default function RewardCard({ reward, onPress }: Props) {
           {/* Chevron */}
           <ChevronRight
             size={22}
-            color={isExpired ? Colors.gray400 : Colors.gray500}
+            color={isClaimed ? Colors.gray500 : (isExpired ? Colors.gray400 : Colors.gray500)}
             style={{ marginLeft: Spacing.sm }}
           />
         </View>

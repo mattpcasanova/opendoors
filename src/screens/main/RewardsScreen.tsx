@@ -420,10 +420,18 @@ export default function RewardsScreen() {
     if (!user || !surveyReward) return;
 
     try {
+      // Extract prize_id from reward object (check both snake_case and camelCase)
+      const prizeId = surveyReward.prize_id || (surveyReward as any).prizeId || surveyReward.id;
+      console.log('📋 Survey submission - Prize ID:', prizeId, 'Reward object:', {
+        id: surveyReward.id,
+        prize_id: surveyReward.prize_id,
+        prizeId: (surveyReward as any).prizeId
+      });
+
       const { data, error } = await surveyService.submitSurvey({
         userId: user.id,
         rewardId: surveyReward.id,
-        prizeId: surveyReward.prizeId || surveyReward.id, // Fallback if prizeId not available
+        prizeId: prizeId,
         responses,
       });
 
@@ -687,38 +695,47 @@ export default function RewardsScreen() {
                 return matchesSearch; // 'all' filter
               })
               .sort((a, b) => {
-                // Priority-based sorting: expiring soon > active > claimed > expired
+                // Priority-based sorting: expiring soon > active > (claimed/expired mixed by recency)
                 const daysA = getDaysUntilExpiration(a.expirationDate);
                 const daysB = getDaysUntilExpiration(b.expirationDate);
 
-                const isExpiredA = daysA < 0;
-                const isExpiredB = daysB < 0;
+                const isExpiredA = daysA < 0 && !a.claimed; // Only unclaimed expired items
+                const isExpiredB = daysB < 0 && !b.claimed; // Only unclaimed expired items
                 const isExpiringSoonA = daysA <= 3 && daysA >= 0 && !a.claimed;
                 const isExpiringSoonB = daysB <= 3 && daysB >= 0 && !b.claimed;
                 const isClaimedA = a.claimed;
                 const isClaimedB = b.claimed;
 
-                // 1. Expired items go to bottom
-                if (isExpiredA && !isExpiredB) return 1;
-                if (!isExpiredA && isExpiredB) return -1;
-
-                // 2. Expiring soon goes to top (among non-expired)
+                // 1. Expiring soon goes to top (among non-expired, unclaimed)
                 if (isExpiringSoonA && !isExpiringSoonB) return -1;
                 if (!isExpiringSoonA && isExpiringSoonB) return 1;
 
-                // 3. Claimed goes after active
-                if (isClaimedA && !isClaimedB && !isExpiredB) return 1;
-                if (!isClaimedA && isClaimedB && !isExpiredA) return -1;
+                // 2. Active (unclaimed, not expired, not expiring soon) goes after expiring soon
+                const isActiveA = !isClaimedA && !isExpiredA && !isExpiringSoonA;
+                const isActiveB = !isClaimedB && !isExpiredB && !isExpiringSoonB;
+                if (isActiveA && !isActiveB && !isExpiringSoonB) return -1;
+                if (!isActiveA && isActiveB && !isExpiringSoonA) return 1;
 
-                // 4. Within same priority, sort by expiration date (soonest first)
-                if (!isExpiredA && !isExpiredB) {
+                // 3. Claimed and expired (unclaimed) items mixed together by recency
+                // Sort by created_at (most recent first), mixing claimed and expired together
+                const isClaimedOrExpiredA = isClaimedA || isExpiredA;
+                const isClaimedOrExpiredB = isClaimedB || isExpiredB;
+                
+                if (isClaimedOrExpiredA && isClaimedOrExpiredB) {
+                  // Both are claimed or expired - sort by created_at (most recent first)
+                  const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+                  const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+                  return dateB - dateA; // Most recent first
+                }
+
+                // 4. Active items sort by expiration date (soonest first)
+                if (isActiveA && isActiveB) {
                   return daysA - daysB;
                 }
 
-                // 5. For expired items, sort by expiration date (most recently expired first)
-                const dateA = new Date(a.expirationDate);
-                const dateB = new Date(b.expirationDate);
-                return dateB.getTime() - dateA.getTime();
+                // 5. Claimed/expired items go after active items
+                if (isClaimedOrExpiredA && !isClaimedOrExpiredB && !isActiveB && !isExpiringSoonB) return 1;
+                if (!isClaimedOrExpiredA && isClaimedOrExpiredB && !isActiveA && !isExpiringSoonA) return -1;
               })
               .map(reward => (
                 <RewardCard
@@ -741,7 +758,7 @@ export default function RewardsScreen() {
           onComplete={handleSurveyComplete}
           businessName={surveyReward.company}
           rewardId={surveyReward.id}
-          prizeId={surveyReward.prizeId || surveyReward.id}
+          prizeId={surveyReward.prize_id || surveyReward.id}
         />
       )}
     </SafeAreaView>

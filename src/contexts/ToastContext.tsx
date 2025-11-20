@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { Toast, ToastType } from '../components/ui/Toast';
 
 interface ToastContextType {
@@ -12,28 +12,51 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [message, setMessage] = useState('');
   const [type, setType] = useState<ToastType>('info');
   const [duration, setDuration] = useState(3000);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isVisibleRef = useRef(false);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Sync ref with state
+  useEffect(() => {
+    isVisibleRef.current = visible;
+  }, [visible]);
 
   const showToast = useCallback((
     msg: string,
     toastType: ToastType = 'info',
     toastDuration: number = 3000
   ) => {
-    // If a toast is already visible, hide it first
-    if (visible) {
+    // Clear any pending timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
+    // If a toast is already visible, hide it first, then show new one
+    if (isVisibleRef.current) {
       setVisible(false);
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         setMessage(msg);
         setType(toastType);
         setDuration(toastDuration);
         setVisible(true);
-      }, 300);
+        timeoutRef.current = null;
+      }, 350);
     } else {
       setMessage(msg);
       setType(toastType);
       setDuration(toastDuration);
       setVisible(true);
     }
-  }, [visible]);
+  }, []);
 
   const handleDismiss = useCallback(() => {
     setVisible(false);

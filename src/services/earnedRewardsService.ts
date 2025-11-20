@@ -4,7 +4,7 @@ export interface EarnedReward {
   id: string;
   user_id: string;
   doors_earned: number;
-  source_type: 'ad_watch' | 'referral' | 'distributor' | 'achievement' | 'lesson';
+  source_type: 'ad_watch' | 'referral' | 'distributor' | 'achievement' | 'lesson' | 'survey';
   source_name: string;
   description: string;
   claimed: boolean;
@@ -145,8 +145,8 @@ class EarnedRewardsService {
 
   // Add distributor reward
   async addDistributorReward(
-    userId: string, 
-    distributorName: string, 
+    userId: string,
+    distributorName: string,
     description: string,
     doorsEarned: number = 1
   ): Promise<{ data: EarnedReward | null; error: string | null }> {
@@ -155,6 +155,15 @@ class EarnedRewardsService {
       source_type: 'distributor',
       source_name: distributorName,
       description: description,
+    });
+  }
+
+  // Add survey completion reward
+  async addSurveyReward(userId: string): Promise<{ data: EarnedReward | null; error: string | null }> {
+    return this.addEarnedReward(userId, {
+      source_type: 'survey',
+      source_name: 'Completing Survey',
+      description: 'Completed post-redemption survey',
     });
   }
 }
