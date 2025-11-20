@@ -291,7 +291,7 @@ class OrganizationService {
    */
   async getDistributorHistory(distributorId: string) {
     try {
-      // Use SECURITY DEFINER RPC to avoid RLS visibility edge cases
+      // Use SECURITY DEFINER RPC that now includes recipient names
       const { data, error } = await supabase
         .rpc('get_distributor_history', { p_distributor_id: distributorId });
 
@@ -300,8 +300,10 @@ class OrganizationService {
         return { data: null, error: error.message };
       }
 
-      // Fetch recipient profiles separately
-      if (data && data.length > 0) {
+      // The RPC function now returns recipient_name and recipient_email
+      // If the function hasn't been updated yet, fallback to old behavior
+      if (data && data.length > 0 && !data[0].recipient_name) {
+        // Old function format - fetch profiles separately (may fail due to RLS)
         const recipientIds = data.map((dist: any) => dist.recipient_id);
         const { data: profiles } = await supabase
           .from('user_profiles')
@@ -310,14 +312,14 @@ class OrganizationService {
 
         const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
 
-        // Format the data
         const formattedData = data.map((dist: any) => {
           const recipient = profileMap.get(dist.recipient_id);
+          const fullName = recipient
+            ? `${recipient.first_name || ''} ${recipient.last_name || ''}`.trim()
+            : '';
           return {
             ...dist,
-            recipient_name: recipient 
-              ? `${recipient.first_name || ''} ${recipient.last_name || ''}`.trim() || recipient.email
-              : 'Unknown',
+            recipient_name: fullName || recipient?.email || 'Unknown',
             recipient_email: recipient?.email || ''
           };
         }) as DoorDistribution[];
@@ -325,7 +327,8 @@ class OrganizationService {
         return { data: formattedData, error: null };
       }
 
-      return { data: [], error: null };
+      // New function format - already includes recipient names
+      return { data: data as DoorDistribution[], error: null };
     } catch (error: any) {
       console.error('Error fetching distributor history:', error);
       return { data: null, error: error.message };

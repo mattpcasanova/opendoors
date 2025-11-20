@@ -16,11 +16,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import BottomNavBar from '../../components/main/BottomNavBar';
 import Header from '../../components/main/Header';
 import RewardCard, { Reward } from '../../components/main/RewardCard';
+import RedemptionSurveyModal, { SurveyResponses } from '../../components/modals/RedemptionSurveyModal';
 import { LoadingSpinner, TouchableScale, EmptyState } from '../../components/ui';
 import { Colors, Spacing, BorderRadius, Shadows } from '../../constants';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../contexts/ToastContext';
 import { rewardsService } from '../../services/rewardsService';
+import { surveyService } from '../../services/surveyService';
 import type { RootNavigationProp } from '../../types/navigation';
 
 // Helper functions
@@ -55,6 +57,18 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
   // Map backend fields to frontend camelCase
   const qrCodeUrl = reward.qrCode || (reward as any).qr_code;
   const rewardCodeText = reward.rewardCode || (reward as any).reward_code;
+  
+  // Ensure claimed is a boolean - handle undefined/null cases
+  const isClaimed = reward.claimed === true;
+  
+  // Debug logging
+  console.log('🎁 RewardDetailScreen - reward object:', {
+    id: reward.id,
+    claimed: reward.claimed,
+    isClaimed,
+    claimedType: typeof reward.claimed,
+    rewardKeys: Object.keys(reward)
+  });
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50 }}>
@@ -82,12 +96,13 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
 
       <ScrollView
         style={{ flex: 1, padding: Spacing.lg }}
-        contentContainerStyle={{ paddingBottom: Spacing.lg }}
+        contentContainerStyle={{ paddingBottom: Spacing.xl }}
+        showsVerticalScrollIndicator={true}
       >
         {/* Status Badge */}
         <View style={{ alignItems: 'center', marginBottom: 24 }}>
           <View style={{
-            backgroundColor: reward.claimed ? Colors.successLight : Colors.infoLight,
+            backgroundColor: isClaimed ? Colors.successLight : Colors.infoLight,
             paddingHorizontal: 16,
             paddingVertical: 8,
             borderRadius: 20,
@@ -95,9 +110,9 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
             <Text style={{
               fontSize: 14,
               fontWeight: '600',
-              color: reward.claimed ? Colors.successDark : Colors.infoDark
+              color: isClaimed ? Colors.successDark : Colors.infoDark
             }}>
-              {reward.claimed ? 'Already Claimed' : 'Ready to Claim'}
+              {isClaimed ? 'Already Claimed' : 'Ready to Claim'}
             </Text>
           </View>
         </View>
@@ -226,21 +241,48 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
           shadowRadius: 4,
           elevation: 2,
         }}>
-          {!reward.claimed ? (
-            <TouchableOpacity
-              style={{
-                backgroundColor: Colors.primary,
-                paddingVertical: Spacing.md,
-                borderRadius: BorderRadius.md,
-                alignItems: 'center',
-              }}
-              onPress={() => onMarkClaimed(reward.id)}
-              activeOpacity={0.8}
-            >
-              <Text style={{ color: Colors.white, fontSize: 16, fontWeight: '600' }}>
-                Mark as Claimed
+          {!isClaimed ? (
+            <>
+              <Text style={{
+                fontSize: 13,
+                color: Colors.gray600,
+                textAlign: 'center',
+                marginBottom: 12,
+                lineHeight: 18
+              }}>
+                Can't scan the QR code? Manually mark this reward as claimed below.
               </Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: Colors.primary,
+                  paddingVertical: Spacing.md,
+                  borderRadius: BorderRadius.md,
+                  alignItems: 'center',
+                }}
+                onPress={() => {
+                  Alert.alert(
+                    'Confirm Redemption',
+                    'Have you shown this reward to the business and received your item?',
+                    [
+                      {
+                        text: 'Cancel',
+                        style: 'cancel'
+                      },
+                      {
+                        text: 'Yes, Mark as Claimed',
+                        style: 'default',
+                        onPress: () => onMarkClaimed(reward.id)
+                      }
+                    ]
+                  );
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={{ color: Colors.white, fontSize: 16, fontWeight: '600' }}>
+                  Mark as Claimed
+                </Text>
+              </TouchableOpacity>
+            </>
           ) : (
             <View style={{
               flexDirection: 'row',
@@ -274,6 +316,10 @@ export default function RewardsScreen() {
   const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'claimed' | 'expiring'>('all');
+
+  // Survey modal state
+  const [showSurveyModal, setShowSurveyModal] = useState(false);
+  const [surveyReward, setSurveyReward] = useState<Reward | null>(null);
 
   // Initial load
   useEffect(() => {
@@ -342,6 +388,8 @@ export default function RewardsScreen() {
     try {
       const { success, error } = await rewardsService.claimRewardById(rewardId);
       if (success) {
+        // Update rewards list and selected reward
+        const claimedReward = rewards.find(r => r.id === rewardId);
         setRewards((prev: Reward[]) => prev.map(r =>
           r.id === rewardId ? { ...r, claimed: true } : r
         ));
@@ -349,13 +397,55 @@ export default function RewardsScreen() {
           prev?.id === rewardId ? { ...prev, claimed: true } : prev
         );
         showToast('Reward claimed successfully!', 'success');
-        setSelectedReward(null); // Close the modal
+        setSelectedReward(null); // Close the detail modal
+
+        // Show survey modal to earn bonus door
+        if (claimedReward && user) {
+          // Check if user has already completed survey for this reward
+          const { data: hasCompletedSurvey } = await surveyService.hasSurveyForReward(user.id, rewardId);
+          if (!hasCompletedSurvey) {
+            setSurveyReward(claimedReward);
+            setShowSurveyModal(true);
+          }
+        }
       } else {
         showToast(error || 'Failed to claim reward', 'error');
       }
     } catch (error) {
       showToast('Failed to claim reward. Please try again.', 'error');
     }
+  };
+
+  const handleSurveyComplete = async (responses: SurveyResponses) => {
+    if (!user || !surveyReward) return;
+
+    try {
+      const { data, error } = await surveyService.submitSurvey({
+        userId: user.id,
+        rewardId: surveyReward.id,
+        prizeId: surveyReward.prizeId || surveyReward.id, // Fallback if prizeId not available
+        responses,
+      });
+
+      if (error) {
+        console.error('Failed to submit survey:', error);
+        showToast('Survey submitted, but failed to grant bonus door', 'error');
+      } else {
+        console.log('✅ Survey completed! Bonus door granted:', data);
+        // Emit event to refresh user profile/doors count
+        DeviceEventEmitter.emit('REFRESH_PROFILE');
+      }
+    } catch (error) {
+      console.error('Error submitting survey:', error);
+    } finally {
+      setShowSurveyModal(false);
+      setSurveyReward(null);
+    }
+  };
+
+  const handleSurveySkip = () => {
+    setShowSurveyModal(false);
+    setSurveyReward(null);
   };
 
   const handleBackFromDetail = () => {
@@ -642,6 +732,18 @@ export default function RewardsScreen() {
       </ScrollView>
 
       <BottomNavBar />
+
+      {/* Survey Modal */}
+      {surveyReward && (
+        <RedemptionSurveyModal
+          visible={showSurveyModal}
+          onClose={handleSurveySkip}
+          onComplete={handleSurveyComplete}
+          businessName={surveyReward.company}
+          rewardId={surveyReward.id}
+          prizeId={surveyReward.prizeId || surveyReward.id}
+        />
+      )}
     </SafeAreaView>
   );
 }

@@ -1,16 +1,57 @@
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Calendar, ChevronLeft } from 'lucide-react-native';
-import React from 'react';
-import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { Alert, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { rewardsService } from '../../services/rewardsService';
+import { useToast } from '../../contexts/ToastContext';
 import type { RootNavigationProp, RootStackParamList } from '../../types/navigation';
 
 export default function PrizeDetailsScreen() {
   const navigation = useNavigation<RootNavigationProp>();
   const route = useRoute<RouteProp<RootStackParamList, 'PrizeDetails'>>();
   const reward = route.params.reward;
+  const { showToast } = useToast();
+  const [isClaimed, setIsClaimed] = useState(reward.claimed === true);
+  const [isClaiming, setIsClaiming] = useState(false);
+
+  const handleMarkClaimed = async () => {
+    if (!reward.id) return;
+    
+    Alert.alert(
+      'Confirm Redemption',
+      'Have you shown this reward to the business and received your item?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'Yes, Mark as Claimed',
+          style: 'default',
+          onPress: async () => {
+            setIsClaiming(true);
+            try {
+              const { success, error } = await rewardsService.claimRewardById(reward.id);
+              if (success) {
+                setIsClaimed(true);
+                showToast('Reward claimed successfully!', 'success');
+              } else {
+                showToast(error || 'Failed to claim reward', 'error');
+              }
+            } catch (error) {
+              showToast('Failed to claim reward. Please try again.', 'error');
+            } finally {
+              setIsClaiming(false);
+            }
+          }
+        }
+      ]
+    );
+  };
 
   if (!reward) {
     return (
@@ -200,6 +241,61 @@ export default function PrizeDetailsScreen() {
             ))}
           </View>
         )}
+
+        {/* Mark as Claimed Button */}
+        <View style={{
+          backgroundColor: 'white',
+          borderRadius: 16,
+          padding: 20,
+          marginBottom: 24,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.05,
+          shadowRadius: 4,
+          elevation: 2,
+        }}>
+          {!isClaimed ? (
+            <>
+              <Text style={{
+                fontSize: 13,
+                color: '#6B7280',
+                textAlign: 'center',
+                marginBottom: 12,
+                lineHeight: 18
+              }}>
+                Can't scan the QR code? Manually mark this reward as claimed below.
+              </Text>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#009688',
+                  paddingVertical: 14,
+                  borderRadius: 12,
+                  alignItems: 'center',
+                  opacity: isClaiming ? 0.6 : 1,
+                }}
+                onPress={handleMarkClaimed}
+                disabled={isClaiming}
+                activeOpacity={0.8}
+              >
+                <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
+                  {isClaiming ? 'Claiming...' : 'Mark as Claimed'}
+                </Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingVertical: 14,
+            }}>
+              <Ionicons name="checkmark-circle" size={24} color="#10B981" style={{ marginRight: 8 }} />
+              <Text style={{ color: '#10B981', fontSize: 16, fontWeight: '600' }}>
+                Already claimed
+              </Text>
+            </View>
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

@@ -31,6 +31,11 @@ Individual prize logo updates (consolidated into bulk updates later):
 - `20240713000005_update_specific_prize_logo.sql`
 - `20240713000006_update_mcdonalds_prize_logo.sql`
 
+### 2025-01-19 Schema Cleanup
+Migrations archived during schema cleanup and RLS policy consolidation:
+- `20250119000002_add_rls_policies.sql` - Duplicate of 000003 (superseded by reset_and_add_rls_policies)
+- `20250119000004_drop_game_plays_table.sql` - Mistaken drop (game_plays was needed, restored in 000006)
+
 ## Note
 These files are kept for reference but should NOT be applied to new databases.
 The current schema includes all necessary changes from the active migrations.
