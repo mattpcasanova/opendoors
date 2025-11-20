@@ -54,9 +54,9 @@ class HistoryService {
   async getUserGameHistory(userId: string) {
     try {
       console.log('📜 Fetching game history for user:', userId);
-      
+
       const { data, error } = await supabase
-        .from('games')
+        .from('game_plays')
         .select(`
           *,
           prize:prize_id (

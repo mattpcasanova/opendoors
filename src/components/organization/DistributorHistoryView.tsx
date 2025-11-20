@@ -185,31 +185,59 @@ export default function DistributorHistoryView({
         
         {/* Search Bar */}
         <View style={{
+          backgroundColor: 'white',
+          borderRadius: 24,
+          paddingHorizontal: 16,
+          paddingVertical: 14,
           flexDirection: 'row',
           alignItems: 'center',
-          backgroundColor: '#F9FAFB',
-          borderRadius: 12,
-          paddingHorizontal: 16,
-          paddingVertical: 12,
+          borderWidth: 2,
+          borderColor: searchQuery.length > 0 ? '#009688' : '#E5E7EB',
           marginBottom: 16,
-          borderWidth: 1,
-          borderColor: '#E5E7EB'
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.05,
+          shadowRadius: 4,
+          elevation: 2,
         }}>
-          <Ionicons name="search" size={20} color="#6B7280" style={{ marginRight: 12 }} />
+          <View style={{
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            backgroundColor: searchQuery.length > 0 ? '#009688' : '#F3F4F6',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginRight: 12,
+          }}>
+            <Ionicons name="search" size={20} color={searchQuery.length > 0 ? 'white' : '#6B7280'} />
+          </View>
           <TextInput
             style={{
               flex: 1,
               fontSize: 16,
-              color: '#111827'
+              color: '#111827',
+              fontWeight: '500',
             }}
             placeholder="Search by name or email..."
+            placeholderTextColor="#9CA3AF"
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholderTextColor="#9CA3AF"
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={20} color="#6B7280" />
+            <TouchableOpacity
+              onPress={() => setSearchQuery('')}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                backgroundColor: '#F3F4F6',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginLeft: 12,
+              }}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="close" size={18} color="#6B7280" />
             </TouchableOpacity>
           )}
         </View>

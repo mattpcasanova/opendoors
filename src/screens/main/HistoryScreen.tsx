@@ -54,18 +54,21 @@ export default function HistoryScreen() {
   // Refresh when screen comes into focus (but only if data is stale)
   useFocusEffect(
     useCallback(() => {
-      if (user && gamePlays.length > 0) {
-        const now = Date.now();
-        const timeSinceLastFetch = now - lastFetchTime;
-        // Only refetch if more than 5 seconds have passed
-        if (timeSinceLastFetch > 5000) {
-          fetchHistory(true); // Background refresh
-        }
-      } else if (user && gamePlays.length === 0) {
-        // If no data, fetch immediately
+      if (!user) return;
+
+      const now = Date.now();
+      const timeSinceLastFetch = now - lastFetchTime;
+
+      // Only refetch if:
+      // 1. We have data and it's been more than 30 seconds
+      // 2. We've never fetched before (lastFetchTime === 0) and not currently loading
+      if (gamePlays.length > 0 && timeSinceLastFetch > 30000) {
+        fetchHistory(true); // Background refresh
+      } else if (lastFetchTime === 0 && !loading) {
+        // Initial load only
         fetchHistory();
       }
-    }, [user, lastFetchTime, gamePlays.length])
+    }, [user, lastFetchTime, gamePlays.length, loading])
   );
 
   const fetchHistory = async (backgroundRefresh: boolean = false) => {

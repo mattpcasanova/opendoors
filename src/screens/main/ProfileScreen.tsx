@@ -92,6 +92,13 @@ export default function ProfileScreen() {
   // Add state for user stats
   const [userStats, setUserStats] = useState<{ gamesPlayed: number; rewardsEarned: number } | null>(null);
 
+  const fetchUserStats = async () => {
+    if (!user) return;
+    const { historyService } = await import('../../services/historyService');
+    const { data } = await historyService.getUserStats(user.id);
+    if (data) setUserStats({ gamesPlayed: data.gamesPlayed, rewardsEarned: data.rewardsEarned });
+  };
+
   useEffect(() => {
     if (!user) return;
     setLoading(true);
@@ -145,11 +152,19 @@ export default function ProfileScreen() {
         }
       });
     // Fetch user stats for games played and rewards earned
-    import('../../services/historyService').then(({ historyService }) => {
-      historyService.getUserStats(user.id).then(({ data }) => {
-        if (data) setUserStats({ gamesPlayed: data.gamesPlayed, rewardsEarned: data.rewardsEarned });
-      });
+    fetchUserStats();
+  }, [user]);
+
+  // Listen for game completion events to auto-refresh stats
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener('REFRESH_HISTORY', () => {
+      console.log('🔄 Refreshing profile stats after game completion');
+      fetchUserStats();
     });
+
+    return () => {
+      subscription.remove();
+    };
   }, [user]);
 
   const handleToggle = (key: keyof typeof preferences) => {
