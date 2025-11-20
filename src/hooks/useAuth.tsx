@@ -1,5 +1,6 @@
 import { Session, User } from '@supabase/supabase-js';
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { analyticsService } from '../services/analyticsService';
 import { authService, SignUpData } from '../services/auth';
 import { supabase } from '../services/supabase/client';
 
@@ -86,12 +87,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
 
       const result = await authService.signUp(cleanData, referralCode);
-      
+
       if (result.error) {
         setLoading(false);
         return { error: result.error };
       }
-      
+
+      // Track signup analytics
+      if (result.data?.user?.id) {
+        analyticsService.trackSignup(result.data.user.id, {
+          hasReferralCode: !!referralCode,
+          signupMethod: 'email',
+        }).catch(err => console.error('Analytics error:', err));
+      }
+
       setLoading(false);
       return { error: null, user: result.data?.user || undefined };
     } catch (error) {

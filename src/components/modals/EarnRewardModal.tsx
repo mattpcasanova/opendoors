@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import Constants from 'expo-constants';
 import { useAuth } from '../../hooks/useAuth';
+import { analyticsService } from '../../services/analyticsService';
 import { earnedRewardsService } from '../../services/earnedRewardsService';
 import { referralService } from '../../services/referralService';
 import { useState, useEffect, useRef } from 'react';
@@ -101,6 +102,13 @@ const EarnRewardModal: React.FC<EarnRewardModalProps> = ({
       });
 
       if (result.action === Share.sharedAction) {
+        // Track referral shared
+        if (user?.id) {
+          analyticsService.trackReferralShared(user.id, {
+            shareMethod: 'share',
+          }).catch(err => console.error('Analytics error:', err));
+        }
+
         // User shared successfully - reward is granted when friend plays first game
         onReferFriend();
       }

@@ -28,6 +28,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useLocation } from '../../hooks/useLocation';
 import { Colors, Spacing, BorderRadius, Shadows } from '../../constants';
 import { adsService } from '../../services/adsService';
+import { analyticsService } from '../../services/analyticsService';
 import { EarnedReward, earnedRewardsService } from '../../services/earnedRewardsService';
 import { gamesService, Prize } from '../../services/gameLogic/games';
 import { notificationService } from '../../services/notificationService';
@@ -999,6 +1000,37 @@ export default function HomeScreen() {
         console.error('❌ Error recording game:', gameError);
         Alert.alert('Error', 'Failed to save game result. Please try again.');
         return;
+      }
+
+      // Track analytics for game played
+      analyticsService.trackGamePlayed(user.id, {
+        prizeName: currentGame.name,
+        prizeCategory: currentGame.category,
+        won,
+      }).catch(err => console.error('Analytics error:', err));
+
+      // Check if this is first game or first win for analytics
+      const { data: gameHistory } = await supabase
+        .from('game_history')
+        .select('id, won')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+
+      const isFirstGame = gameHistory && gameHistory.length === 1;
+      const isFirstWin = won && gameHistory && gameHistory.filter(g => g.won).length === 1;
+
+      if (isFirstGame) {
+        analyticsService.trackFirstGame(user.id, {
+          prizeName: currentGame.name,
+          prizeCategory: currentGame.category,
+        }).catch(err => console.error('Analytics error:', err));
+      }
+
+      if (isFirstWin) {
+        analyticsService.trackFirstWin(user.id, {
+          prizeName: currentGame.name,
+          prizeValue: currentGame.description || 'Prize',
+        }).catch(err => console.error('Analytics error:', err));
       }
 
       // Check and grant referral rewards if this is first game

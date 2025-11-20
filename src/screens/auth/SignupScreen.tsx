@@ -522,7 +522,7 @@ export default function SignupScreen() {
                   </View>
 
                   {/* Referral Code (Optional) */}
-                  <View style={styles.inputField}>
+                  <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>Referral Code (Optional)</Text>
                     <View style={styles.inputContainer}>
                       <View style={styles.inputIconContainer}>
