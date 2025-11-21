@@ -1082,6 +1082,11 @@ export default function HomeScreen() {
 
         if (progressError) {
           console.error('❌ Error updating progress:', progressError);
+          Alert.alert(
+            'Connection Error',
+            'Unable to save your game progress. Please check your internet connection and try again.',
+            [{ text: 'OK' }]
+          );
         } else {
           // Reload progress from database to update UI
           const { data: updatedProgress } = await userProgressService.loadUserProgress(user.id);

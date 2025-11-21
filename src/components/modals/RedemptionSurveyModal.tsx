@@ -47,6 +47,7 @@ export default function RedemptionSurveyModal({
   const [spendAmount, setSpendAmount] = useState<'under_5' | '5_10' | '10_20' | 'over_20' | null>(null);
   const [willReturn, setWillReturn] = useState<'yes' | 'maybe' | 'no' | null>(null);
   const [discoverySource, setDiscoverySource] = useState<'existing' | 'opendoors' | 'referral' | 'other' | null>(null);
+  const [completedResponses, setCompletedResponses] = useState<SurveyResponses | null>(null);
 
   const totalQuestions = madePurchase ? 4 : 3; // Skip Q2 if no purchase
 
@@ -95,13 +96,16 @@ export default function RedemptionSurveyModal({
       discovery_source: discoverySource || undefined,
     };
 
+    setCompletedResponses(responses);
     setShowCompletion(true);
+    // Don't auto-close - wait for user to tap "Got it!"
+  };
 
-    // Show completion animation for 2 seconds, then call onComplete
-    setTimeout(() => {
-      onComplete(responses);
+  const handleGotIt = () => {
+    if (completedResponses) {
+      onComplete(completedResponses);
       resetSurvey();
-    }, 2500);
+    }
   };
 
   const resetSurvey = () => {
@@ -110,6 +114,7 @@ export default function RedemptionSurveyModal({
     setSpendAmount(null);
     setWillReturn(null);
     setDiscoverySource(null);
+    setCompletedResponses(null);
     setShowCompletion(false);
   };
 
@@ -398,7 +403,7 @@ export default function RedemptionSurveyModal({
             {/* Action Button */}
             <TouchableOpacity
               style={styles.completionButton}
-              onPress={onClose}
+              onPress={handleGotIt}
             >
               <Text style={styles.completionButtonText}>Got it!</Text>
             </TouchableOpacity>

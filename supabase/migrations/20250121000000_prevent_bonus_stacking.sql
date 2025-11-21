@@ -1,38 +1,6 @@
--- Fix RLS policies for redemption_surveys table
--- Create RPC function with SECURITY DEFINER to handle survey submission
+-- Prevent bonus door stacking - only allow max 1 bonus door at a time
+-- Update the survey submission function to not stack bonuses
 
--- Drop existing policies if they exist
-DROP POLICY IF EXISTS "Users can read their own surveys" ON public.redemption_surveys;
-DROP POLICY IF EXISTS "Users can insert their own surveys" ON public.redemption_surveys;
-DROP POLICY IF EXISTS "Users can update their own surveys" ON public.redemption_surveys;
-
--- Ensure RLS is enabled
-ALTER TABLE public.redemption_surveys ENABLE ROW LEVEL SECURITY;
-
--- Make reward_id nullable in the table (it's not strictly required for the survey)
--- This allows surveys to be submitted even if the reward_id doesn't exist or is invalid
-DO $$
-BEGIN
-  -- Check if column is NOT NULL before altering
-  IF EXISTS (
-    SELECT 1 FROM information_schema.columns 
-    WHERE table_schema = 'public' 
-    AND table_name = 'redemption_surveys' 
-    AND column_name = 'reward_id' 
-    AND is_nullable = 'NO'
-  ) THEN
-    ALTER TABLE public.redemption_surveys 
-      ALTER COLUMN reward_id DROP NOT NULL;
-  END IF;
-END $$;
-
--- Users can read their own surveys
-CREATE POLICY "Users can read their own surveys"
-  ON public.redemption_surveys FOR SELECT
-  TO authenticated
-  USING (auth.uid() = user_id);
-
--- Create RPC function to submit survey (SECURITY DEFINER to bypass RLS)
 CREATE OR REPLACE FUNCTION public.submit_redemption_survey(
   p_user_id UUID,
   p_reward_id UUID,
@@ -61,11 +29,11 @@ BEGIN
   IF p_reward_id IS NOT NULL THEN
     BEGIN
       SELECT EXISTS(
-        SELECT 1 FROM public.user_rewards 
-        WHERE id = p_reward_id 
+        SELECT 1 FROM public.user_rewards
+        WHERE id = p_reward_id
         AND user_id = p_user_id
       ) INTO v_reward_exists;
-      
+
       IF NOT v_reward_exists THEN
         -- If reward doesn't exist, set to NULL (survey can still be submitted)
         p_reward_id := NULL;
@@ -111,7 +79,7 @@ BEGIN
       RAISE EXCEPTION 'Error inserting survey: %', SQLERRM;
   END;
 
-  -- Grant +1 bonus door (only if user doesn't already have one)
+  -- Grant +1 bonus door (only if user doesn't already have one - prevent stacking)
   UPDATE public.user_profiles
   SET bonus_plays_available = CASE
     WHEN COALESCE(bonus_plays_available, 0) = 0 THEN 1
@@ -132,8 +100,4 @@ $$;
 REVOKE ALL ON FUNCTION public.submit_redemption_survey(UUID, UUID, UUID, BOOLEAN, TEXT, TEXT, TEXT) FROM public;
 GRANT EXECUTE ON FUNCTION public.submit_redemption_survey(UUID, UUID, UUID, BOOLEAN, TEXT, TEXT, TEXT) TO authenticated;
 
-COMMENT ON FUNCTION public.submit_redemption_survey(UUID, UUID, UUID, BOOLEAN, TEXT, TEXT, TEXT) IS 'Submit redemption survey and grant +1 bonus door (SECURITY DEFINER)';
-
--- Grant permissions on table
-GRANT SELECT, INSERT ON public.redemption_surveys TO authenticated;
-
+COMMENT ON FUNCTION public.submit_redemption_survey(UUID, UUID, UUID, BOOLEAN, TEXT, TEXT, TEXT) IS 'Submit redemption survey and grant +1 bonus door only if user has none (prevents stacking) - SECURITY DEFINER';
