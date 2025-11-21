@@ -100,6 +100,7 @@ export default function GameScreen({
   // Add new state for picking switch door
   const [switchPickMode, setSwitchPickMode] = useState(false);
   const [availableSwitchDoors, setAvailableSwitchDoors] = useState<number[]>([]);
+  const [choiceLocked, setChoiceLocked] = useState(false);
 
 
   const getInstructions = (): string => {
@@ -126,26 +127,46 @@ export default function GameScreen({
       setSelectedDoor(doorNumber);
       // reset start time when user starts the game interaction
       gameStartRef.current = Date.now();
-      
+
       // Always reveal just 1 door to make the game more challenging
       const doorsToReveal = 1;
-      
+
       const availableToReveal = Array.from({ length: doorCount }, (_, i) => i + 1)
         .filter(num => num !== doorNumber && num !== prizeLocation);
-      
+
       const doorsToRevealList = availableToReveal
         .sort(() => Math.random() - 0.5)
         .slice(0, doorsToReveal);
-      
+
       setRevealedDoors(doorsToRevealList);
-      
+
       // Animate the doors opening
       setTimeout(() => {
         doorsToRevealList.forEach(door => openDoor(door));
         setGameStage('montyReveal');
       }, 1000);
-    } else if (gameStage === 'finalChoice' && doorNumber === selectedDoor) {
-      // Final reveal
+    } else if (gameStage === 'finalChoice') {
+      // Prevent clicks if choice is locked or door is already revealed
+      if (choiceLocked || revealedDoors.includes(doorNumber)) {
+        return;
+      }
+
+      // If user chose to stay, only allow clicking the selected door
+      if (!switchedChoice && doorNumber !== selectedDoor) {
+        return;
+      }
+
+      // Lock the choice immediately to prevent multiple clicks
+      setChoiceLocked(true);
+
+      // Allow clicking any unopened door at finalChoice stage
+      // If clicking a different door than selected, update to that door
+      if (doorNumber !== selectedDoor) {
+        setSelectedDoor(doorNumber);
+        setSwitchedChoice(true);
+      }
+
+      // Final reveal - open the clicked door
       const won = doorNumber === prizeLocation;
       openDoor(doorNumber);
       
@@ -200,6 +221,7 @@ export default function GameScreen({
 
   const finalChoice = (shouldSwitch: boolean) => {
     setSwitchedChoice(shouldSwitch);
+    setChoiceLocked(false); // Reset lock when making initial choice
 
     if (shouldSwitch) {
       if (doorCount > 3) {

@@ -433,7 +433,6 @@ export default function HomeScreen() {
           
           if (prefCategories.length > 0) {
             setUserPreferenceCategories(prefCategories); // Store for emphasis (used for visual emphasis only)
-            console.log('✅ Loaded user preference categories for emphasis:', prefCategories);
           } else {
             setUserPreferenceCategories([]); // Clear if no preferences
           }
@@ -457,17 +456,10 @@ export default function HomeScreen() {
           if (settingsData.excluded_categories && Array.isArray(settingsData.excluded_categories)) {
             setExcludedCategories(settingsData.excluded_categories);
           }
-          
-          console.log('✅ Loaded filter preferences:', {
-            distance: settingsData.distance_filter || 'Any',
-            sortBy: settingsData.sort_by || 'Closest',
-            excludedCategories: settingsData.excluded_categories || []
-          });
         } else {
           // No saved preferences - use defaults
           setDistance('Any');
           setSortBy('Closest');
-          console.log('✅ Using default filter preferences');
         }
       } catch (error) {
         console.error('Error loading user preferences:', error);
@@ -555,7 +547,6 @@ export default function HomeScreen() {
             if (prefData.shopping) prefCategories.push('Retail');
             
             setUserPreferenceCategories(prefCategories.length > 0 ? prefCategories : []);
-            console.log('✅ Refreshed user preference categories:', prefCategories);
           }
         } catch (error) {
           console.error('Error refreshing user preferences:', error);
@@ -606,10 +597,6 @@ export default function HomeScreen() {
     }
   };
 
-  // Debug log filter/sort state
-  useEffect(() => {
-    // Filter state logging removed for cleaner console
-  }, [excludedCategories, distance, sortBy, showOnlyFavorites]);
 
   // Load earned rewards when user changes
   useEffect(() => {
@@ -654,7 +641,6 @@ export default function HomeScreen() {
           setError('Failed to load games. Please try again.');
         } else {
           const games = regularResult.data || [];
-          console.log('✅ Loaded regular games:', games.length);
           setRegularGames(games);
         }
 
@@ -774,21 +760,14 @@ export default function HomeScreen() {
         const locationMatch = (game.location_name || '').toLowerCase().includes(searchLower);
         return nameMatch || descriptionMatch || locationMatch;
       });
-      console.log(`🔍 After search filter: ${filtered.length} games`);
     }
-    
+
     // Filter by favorites if enabled (showOnlyFavorites defaults to true)
     if (showOnlyFavorites && favoritePrizeIds.length > 0) {
       // Only show favorites
       filtered = filtered.filter(game => favoritePrizeIds.includes(game.id));
-      console.log(`⭐ After favorites filter (ON): ${filtered.length} games`);
-    } else if (showOnlyFavorites && favoritePrizeIds.length === 0) {
-      // Favorites ON but no favorites - show all games (fallback)
-      console.log(`⭐ Favorites filter ON but no favorites - showing all games`);
-    } else {
-      console.log(`⭐ Favorites filter OFF: showing all games`);
     }
-    
+
     // Filter by excluded categories (hide games in these categories)
     if (excludedCategories.length > 0) {
       const dbExcludedCategories = excludedCategories.map(mapCategoryToDBFormat);
@@ -796,11 +775,8 @@ export default function HomeScreen() {
         if (!game.category) return true; // Show games without categories
         return !dbExcludedCategories.includes(game.category); // Hide if in excluded list
       });
-      console.log(`🏷️ After excluding categories (${excludedCategories.join(', ')}): ${filtered.length} games`);
-      console.log('🏷️ Available game categories:', [...new Set(regularGames.map(g => g.category))]);
     }
-    
-    console.log(`📊 Total games: ${initialCount}, Filtered to: ${filtered.length}`);
+
     setFilteredGames(filtered);
   }, [searchText, regularGames, showOnlyFavorites, excludedCategories, favoritePrizeIds]);
 
@@ -821,7 +797,6 @@ export default function HomeScreen() {
             sort_by: sortBy,
             excluded_categories: excludedCategories,
           }, { onConflict: 'user_id' });
-        console.log('💾 Saved filter preferences:', { distance, sortBy, excludedCategories });
       } catch (error) {
         console.error('Error saving filter preferences:', error);
       }
@@ -936,11 +911,6 @@ export default function HomeScreen() {
       return;
     }
 
-    console.log('🎮 Playing featured game:', {
-      name: featuredGame.name,
-      isSpecial: featuredGame.is_special
-    });
-
     setCurrentGame(featuredGame);
     setShowGameScreen(true);
   };
@@ -960,26 +930,17 @@ export default function HomeScreen() {
       let doorType = 'daily';
       let usedEarnedRewardId: string | null = null;
 
-      console.log('🚪 Door consumption logic - State:', {
-        hasPlayedAnyGameToday,
-        bonusPlaysAvailable,
-        earnedDoors
-      });
-
       // Priority 1: Daily Play (if available)
       if (!hasPlayedAnyGameToday) {
         doorType = 'daily';
-        console.log('🚪 Using DAILY door');
       }
       // Priority 2: Bonus Door (if daily not available but bonus is)
       else if (bonusPlaysAvailable > 0) {
         doorType = 'bonus';
-        console.log('🚪 Using BONUS door');
       }
       // Priority 3: Earned Door (if neither daily nor bonus available)
       else if (earnedDoors > 0) {
         doorType = 'earned';
-        console.log('🚪 Using EARNED door');
         // Get the next unclaimed reward
         const { data: nextReward, error: rewardError } = await earnedRewardsService.getNextUnclaimedReward(user.id);
         if (rewardError || !nextReward) {
@@ -1045,7 +1006,6 @@ export default function HomeScreen() {
       // Check and grant referral rewards if this is first game
       const { granted: referralGranted } = await referralService.checkAndGrantReferralRewards(user.id);
       if (referralGranted) {
-        console.log('✅ Referral rewards granted for first game');
         // Refresh earned rewards to show new door
         await loadEarnedRewards();
         // Show referral notification popup immediately (no delay)
@@ -1075,9 +1035,6 @@ export default function HomeScreen() {
       // Update user progress in database based on door type used
       if (user) {
         const usedBonus = doorType === 'bonus';
-        console.log('🚪 Door consumption - doorType:', doorType, 'usedBonus:', usedBonus);
-        console.log('🚪 Before update - bonusPlaysAvailable:', bonusPlaysAvailable);
-
         const { error: progressError } = await userProgressService.updateProgressAfterGame(user.id, won, usedBonus);
 
         if (progressError) {
@@ -1091,7 +1048,6 @@ export default function HomeScreen() {
           // Reload progress from database to update UI
           const { data: updatedProgress } = await userProgressService.loadUserProgress(user.id);
           if (updatedProgress) {
-            console.log('🚪 After update - bonusPlaysAvailable:', updatedProgress.bonusPlaysAvailable);
             const hadBonusBefore = bonusPlaysAvailable > 0;
             setGamesUntilBonus(updatedProgress.gamesUntilBonus);
             setLastPlayDate(updatedProgress.lastPlayDate);
@@ -1178,13 +1134,6 @@ export default function HomeScreen() {
 
   // If showing game screen, render that instead
   if (showGameScreen && currentGame) {
-    console.log('🎮 Starting game with:', {
-      name: currentGame.name,
-      description: currentGame.description,
-      locationName: currentGame.location_name,
-      doorCount: typeof currentGame.doors === 'number' ? currentGame.doors : 3,
-      currentGame: JSON.stringify(currentGame, null, 2)
-    });
     return (
       <GameScreen
         prizeName={currentGame.name}

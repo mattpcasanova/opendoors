@@ -110,12 +110,9 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
     // The game is complete when a door is both selected AND open
     // This only happens at the very end of the game
     if (isSelected && isOpen && !hasPlayedResultSound) {
-      console.log(`🎯 Door ${doorNumber} FINAL RESULT DETECTED! isWinningDoor: ${isWinningDoor}, isSelected: ${isSelected}, isOpen: ${isOpen}`);
-
       // Wait 1 second for door opening animation, then play result sound
       setTimeout(() => {
         if (isWinningDoor) {
-          console.log(`🎉 Door ${doorNumber} - Playing WIN sound and showing sparkles!`);
           soundService.playCelebration();
 
           // Show and animate confetti
@@ -184,7 +181,6 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
             { iterations: 4 }
           ).start();
         } else {
-          console.log(`😔 Door ${doorNumber} - Playing LOSS sound`);
           soundService.playLoss();
 
           // Subtle shake for empty door

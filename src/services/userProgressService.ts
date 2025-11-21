@@ -76,8 +76,6 @@ class UserProgressService {
         updated_at: new Date().toISOString()
       };
 
-      console.log('💾 Attempting to save to database:', updateData);
-
       const { error } = await supabase
         .from('user_profiles')
         .update(updateData)
@@ -88,7 +86,6 @@ class UserProgressService {
         return { error: error.message };
       }
 
-      console.log('✅ Database update successful!');
       return { error: null };
     } catch (error: any) {
       console.error('❌ Error saving user progress:', error);
@@ -99,21 +96,12 @@ class UserProgressService {
   // Update progress after a game is played
   async updateProgressAfterGame(userId: string, won: boolean, usedBonus: boolean = false): Promise<{ error: string | null }> {
     try {
-      console.log('🔄 updateProgressAfterGame START - usedBonus:', usedBonus);
-
       // Get current progress first
       const { data: currentProgress, error: loadError } = await this.loadUserProgress(userId);
       if (loadError || !currentProgress) {
         console.error('❌ Failed to load current progress:', loadError);
         return { error: loadError || 'Failed to load current progress' };
       }
-
-      console.log('📊 Current progress BEFORE update:', {
-        bonusPlaysAvailable: currentProgress.bonusPlaysAvailable,
-        gamesUntilBonus: currentProgress.gamesUntilBonus,
-        hasPlayedToday: currentProgress.hasPlayedToday,
-        lastPlayDate: currentProgress.lastPlayDate
-      });
 
       // Set last play date in EST as YYYY-MM-DD format
       const todayEST = this.getTodayEST();
@@ -125,11 +113,9 @@ class UserProgressService {
       };
 
       if (usedBonus) {
-        console.log('🎁 CONSUMING BONUS DOOR - Before:', currentProgress.bonusPlaysAvailable);
         // Consume bonus play and reset progress
         newProgress.bonusPlaysAvailable = Math.max(0, currentProgress.bonusPlaysAvailable - 1);
         newProgress.gamesUntilBonus = 5; // Reset progress bar
-        console.log('🎁 CONSUMING BONUS DOOR - After:', newProgress.bonusPlaysAvailable);
       } else {
         // Normal game progression
         const newGamesUntilBonus = Math.max(0, currentProgress.gamesUntilBonus - 1);
@@ -140,29 +126,18 @@ class UserProgressService {
           // Only give bonus if user doesn't already have one
           if (currentProgress.bonusPlaysAvailable === 0) {
             newProgress.bonusPlaysAvailable = 1;
-            console.log('🎁 BONUS EARNED! Setting bonusPlaysAvailable to 1');
           } else {
-            console.log('⚠️ User already has a bonus door, not adding another. Progress bar resets to 5.');
             newProgress.bonusPlaysAvailable = currentProgress.bonusPlaysAvailable; // Keep existing bonus
             newProgress.gamesUntilBonus = 5; // Reset progress bar anyway
           }
         }
       }
 
-      console.log('📊 New progress BEFORE save:', {
-        bonusPlaysAvailable: newProgress.bonusPlaysAvailable,
-        gamesUntilBonus: newProgress.gamesUntilBonus,
-        hasPlayedToday: newProgress.hasPlayedToday,
-        lastPlayDate: newProgress.lastPlayDate
-      });
-
       // Save updated progress
       const result = await this.saveUserProgress(userId, newProgress);
 
       if (result.error) {
         console.error('❌ Failed to save progress:', result.error);
-      } else {
-        console.log('✅ Progress saved successfully!');
       }
 
       return result;

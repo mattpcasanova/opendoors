@@ -19,20 +19,16 @@ export default function MontyHallGame({ onGameComplete, numDoors = 3 }: Props) {
 
   useEffect(() => {
     if (gameState === 'final') {
-      console.log('🎮 Game state is FINAL - starting 2 second delay before showing result');
       // Delay showing the final message to allow door opening animation to complete
       setTimeout(() => {
         setShowFinalMessage(true);
         const result = getResult();
-        console.log(`🎮 Final message showing! Result: ${result ? 'WIN' : 'LOSE'}`);
 
         // Play celebration or loss sound when showing the final message
         if (result !== null) {
           if (result) {
-            console.log('🎉 Playing CELEBRATION sound');
             soundService.playCelebration();
           } else {
-            console.log('😔 Playing LOSS sound');
             soundService.playLoss();
           }
 
