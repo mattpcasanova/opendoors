@@ -346,7 +346,12 @@ export default function RedemptionSurveyModal({
     const colors = ['#FFD700', '#FFA500', '#FF6B6B', '#4ECDC4', '#009688'];
 
     return (
-      <Modal visible={visible} animationType="fade" transparent>
+      <Modal
+        visible={visible}
+        animationType="fade"
+        transparent
+        onRequestClose={() => {}} // Prevent Android back button from closing
+      >
         <View style={styles.completionOverlay}>
           <View style={styles.completionContainer}>
             {/* Confetti particles */}
