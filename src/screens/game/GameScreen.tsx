@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useRef, useState } from 'react';
-import { Animated, Dimensions, SafeAreaView, ScrollView, StyleSheet, Text, TextStyle, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { Animated, Dimensions, Image, SafeAreaView, ScrollView, StyleSheet, Text, TextStyle, TouchableOpacity, View, ViewStyle } from 'react-native';
 import Door from '../../components/Door';
 import { Colors, Spacing, BorderRadius, Shadows } from '../../constants';
 
@@ -16,6 +16,7 @@ interface Props {
   prizeName?: string;
   prizeDescription?: string;
   locationName?: string;
+  logoUrl?: string;
   doorCount?: number;
   onGameComplete?: (
     won: boolean,
@@ -34,6 +35,7 @@ export default function GameScreen({
   prizeName = "Free Prize",
   prizeDescription = "Win a prize",
   locationName = "Game Store",
+  logoUrl,
   doorCount = 3,
   onGameComplete,
   onBack
@@ -269,8 +271,21 @@ export default function GameScreen({
         <View style={styles.gameContainer}>
           {/* Prize Preview */}
           <View style={styles.prizePreview}>
-            <View style={styles.prizeIconContainer}>
-              <Ionicons name="gift" size={32} color={Colors.primary} />
+            <View style={[
+              styles.prizeIconContainer,
+              logoUrl && { backgroundColor: 'transparent' }
+            ]}>
+              {logoUrl ? (
+                <View style={styles.logoShadowContainer}>
+                  <Image
+                    source={{ uri: logoUrl }}
+                    style={styles.companyLogo}
+                    resizeMode="contain"
+                  />
+                </View>
+              ) : (
+                <Ionicons name="gift" size={32} color={Colors.primary} />
+              )}
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.prizePreviewTitle}>{prizeName}</Text>
@@ -465,6 +480,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center' as const,
     marginRight: Spacing.md,
   } as ViewStyle,
+  logoShadowContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.white,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
+    overflow: 'hidden',
+  } as ViewStyle,
+  companyLogo: {
+    width: '100%',
+    height: '100%',
+  },
   prizePreviewTitle: {
     fontSize: 18,
     fontWeight: '700' as const,

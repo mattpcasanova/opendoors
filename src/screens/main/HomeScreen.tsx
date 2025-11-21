@@ -1190,6 +1190,7 @@ export default function HomeScreen() {
         prizeName={currentGame.name}
         prizeDescription={currentGame.description}
         locationName={currentGame.location_name || 'Game Store'}
+        logoUrl={currentGame.logo_url || undefined}
         doorCount={typeof currentGame.doors === 'number' ? currentGame.doors : 3}
         onGameComplete={handleGameComplete}
         onBack={handleBackFromGame}
