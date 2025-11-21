@@ -31,6 +31,8 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
   const [isWatching, setIsWatching] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(30);
   const [canClose, setCanClose] = useState(false);
+  const [adsRemaining, setAdsRemaining] = useState<number | null>(null);
+  const [isLoadingLimit, setIsLoadingLimit] = useState(false);
 
   // Animation values
   const slideAnim = useRef(new Animated.Value(600)).current;
@@ -41,6 +43,19 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
       setIsWatching(false);
       setTimeRemaining(30);
       setCanClose(false);
+
+      // Load ad watch limit
+      const loadAdLimit = async () => {
+        if (user?.id) {
+          setIsLoadingLimit(true);
+          const { remaining, error } = await earnedRewardsService.getAdWatchesRemaining(user.id);
+          if (!error) {
+            setAdsRemaining(remaining);
+          }
+          setIsLoadingLimit(false);
+        }
+      };
+      loadAdLimit();
 
       // Animate in
       Animated.parallel([
@@ -62,14 +77,20 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
       slideAnim.setValue(600);
       backdropAnim.setValue(0);
     }
-  }, [visible]);
+  }, [visible, user?.id]);
 
   // Remove this useEffect - it was causing the modal to reset
 
   const startAd = () => {
+    // Check if user has reached daily limit
+    if (adsRemaining !== null && adsRemaining <= 0) {
+      Alert.alert('Daily Limit Reached', 'You have watched the maximum 3 ads for today. Come back tomorrow!');
+      return;
+    }
+
     setIsWatching(true);
     setCanClose(false);
-    
+
     // Simulate ad watching with countdown
     const interval = setInterval(() => {
       setTimeRemaining((prev) => {
@@ -125,11 +146,33 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
                 <Text style={styles.adDescription}>
                   Watch a 30-second ad to earn +1 door
                 </Text>
-                <TouchableOpacity 
-                  style={styles.startButton}
+
+                {/* Daily limit info */}
+                {adsRemaining !== null && (
+                  <View style={styles.limitInfoContainer}>
+                    <Text style={styles.limitInfoText}>
+                      Max 3 ads per day
+                    </Text>
+                    <Text style={[
+                      styles.remainingText,
+                      adsRemaining === 0 && styles.remainingTextZero
+                    ]}>
+                      {adsRemaining} {adsRemaining === 1 ? 'ad' : 'ads'} remaining today
+                    </Text>
+                  </View>
+                )}
+
+                <TouchableOpacity
+                  style={[
+                    styles.startButton,
+                    (adsRemaining !== null && adsRemaining <= 0) && styles.startButtonDisabled
+                  ]}
                   onPress={startAd}
+                  disabled={adsRemaining !== null && adsRemaining <= 0}
                 >
-                  <Text style={styles.startButtonText}>Start Ad</Text>
+                  <Text style={styles.startButtonText}>
+                    {adsRemaining !== null && adsRemaining <= 0 ? 'Come Back Tomorrow' : 'Start Ad'}
+                  </Text>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -151,7 +194,7 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
                     </Text>
                   </>
                 ) : (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.earnRewardButton}
                     onPress={async () => {
                       if (user?.id) {
@@ -159,10 +202,14 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
                           const { data, error } = await earnedRewardsService.addAdWatchReward(user.id);
                           if (error) {
                             console.error('Error adding ad watch reward:', error);
-                            Alert.alert('Error', 'Failed to add reward. Please try again.');
+                            Alert.alert('Error', error);
                             return;
                           }
                           console.log('✅ Ad watch reward added successfully');
+
+                          // Update the remaining ads count
+                          const { remaining } = await earnedRewardsService.getAdWatchesRemaining(user.id);
+                          setAdsRemaining(remaining);
                         } catch (error) {
                           console.error('Error in earn reward:', error);
                           Alert.alert('Error', 'Failed to add reward. Please try again.');
@@ -260,10 +307,38 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 12,
   },
+  startButtonDisabled: {
+    backgroundColor: '#9CA3AF',
+  },
   startButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  limitInfoContainer: {
+    backgroundColor: '#F0FDF4',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    marginBottom: 24,
+    width: '100%',
+  },
+  limitInfoText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#15803D',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  remainingText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#10B981',
+    textAlign: 'center',
+  },
+  remainingTextZero: {
+    color: '#EF4444',
   },
   watchingContainer: {
     alignItems: 'center',

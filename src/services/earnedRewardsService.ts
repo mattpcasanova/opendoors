@@ -123,13 +123,101 @@ class EarnedRewardsService {
     }
   }
 
+  // Helper function to get today's date in EST as YYYY-MM-DD format
+  private getTodayEST(): string {
+    const now = new Date();
+    const estOffset = -5; // EST is UTC-5
+    const estTime = new Date(now.getTime() + (estOffset * 60 * 60 * 1000));
+    return estTime.toISOString().split('T')[0]; // Returns YYYY-MM-DD format
+  }
+
+  // Check how many ads the user has watched today and if they can watch more
+  async getAdWatchesRemaining(userId: string): Promise<{ remaining: number; total: number; error: string | null }> {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('ads_watched_today, last_ad_watch_date')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        return { remaining: 0, total: 3, error: error.message };
+      }
+
+      const todayEST = this.getTodayEST();
+      const maxAdsPerDay = 3;
+
+      // If last watch date is different from today, user has 3 ads available
+      if (!data.last_ad_watch_date || data.last_ad_watch_date !== todayEST) {
+        return { remaining: maxAdsPerDay, total: maxAdsPerDay, error: null };
+      }
+
+      // Otherwise, calculate remaining based on today's watches
+      const adsWatchedToday = data.ads_watched_today || 0;
+      const remaining = Math.max(0, maxAdsPerDay - adsWatchedToday);
+
+      return { remaining, total: maxAdsPerDay, error: null };
+    } catch (error) {
+      return { remaining: 0, total: 3, error: 'Failed to check ad watch limit' };
+    }
+  }
+
   // Convenience wrappers
   async addAdWatchReward(userId: string): Promise<{ data: EarnedReward | null; error: string | null }> {
-    return this.addEarnedReward(userId, {
-      source_type: 'ad_watch',
-      source_name: 'Watch Ad',
-      description: 'Watched a rewarded ad',
-    });
+    try {
+      // First, check if user has reached daily limit
+      const { remaining, error: checkError } = await this.getAdWatchesRemaining(userId);
+
+      if (checkError) {
+        return { data: null, error: checkError };
+      }
+
+      if (remaining <= 0) {
+        return { data: null, error: 'Daily ad watch limit reached (3 per day)' };
+      }
+
+      // Get current ad watch data
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('ads_watched_today, last_ad_watch_date')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) {
+        return { data: null, error: profileError.message };
+      }
+
+      const todayEST = this.getTodayEST();
+      let newAdsWatchedToday = 1;
+
+      // If last watch date is today, increment the count
+      if (profileData.last_ad_watch_date === todayEST) {
+        newAdsWatchedToday = (profileData.ads_watched_today || 0) + 1;
+      }
+
+      // Update the ad watch count and date
+      const { error: updateError } = await supabase
+        .from('user_profiles')
+        .update({
+          ads_watched_today: newAdsWatchedToday,
+          last_ad_watch_date: todayEST,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId);
+
+      if (updateError) {
+        return { data: null, error: updateError.message };
+      }
+
+      // Add the earned reward
+      return this.addEarnedReward(userId, {
+        source_type: 'ad_watch',
+        source_name: 'Watch Ad',
+        description: 'Watched a rewarded ad',
+      });
+    } catch (error) {
+      return { data: null, error: 'Failed to add ad watch reward' };
+    }
   }
 
   // Add referral reward

@@ -36,6 +36,7 @@ const EarnRewardModal: React.FC<EarnRewardModalProps> = ({
 }) => {
   const { user } = useAuth();
   const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [adsRemaining, setAdsRemaining] = useState<number | null>(null);
 
   // Animation values
   const slideAnim = useRef(new Animated.Value(600)).current;
@@ -44,8 +45,12 @@ const EarnRewardModal: React.FC<EarnRewardModalProps> = ({
   useEffect(() => {
     if (user?.id) {
       referralService.getUserReferralCode(user.id).then(code => setReferralCode(code));
+      // Load ad watch limit
+      earnedRewardsService.getAdWatchesRemaining(user.id).then(({ remaining }) => {
+        setAdsRemaining(remaining);
+      });
     }
-  }, [user?.id]);
+  }, [user?.id, visible]); // Reload when modal becomes visible
 
   useEffect(() => {
     if (visible) {
@@ -170,13 +175,23 @@ const EarnRewardModal: React.FC<EarnRewardModalProps> = ({
           {/* Options */}
           <View style={styles.optionsContainer}>
             {/* Watch Ad Option */}
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.optionButton}
-              onPress={onWatchAd}
+              onPress={() => {
+                if (adsRemaining !== null && adsRemaining <= 0) {
+                  Alert.alert(
+                    'Daily Limit Reached',
+                    'You have watched the maximum 3 ads for today. Come back tomorrow for more!',
+                    [{ text: 'OK' }]
+                  );
+                } else {
+                  onWatchAd();
+                }
+              }}
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={["#14B8A6", "#10B981"]}
+                colors={adsRemaining !== null && adsRemaining <= 0 ? ["#9CA3AF", "#9CA3AF"] : ["#14B8A6", "#10B981"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.optionGradient}
@@ -190,6 +205,13 @@ const EarnRewardModal: React.FC<EarnRewardModalProps> = ({
                     <Text style={styles.optionDescription}>
                       Watch a 30-second ad to earn +1 door
                     </Text>
+                    {adsRemaining !== null && (
+                      <Text style={styles.limitText}>
+                        {adsRemaining > 0
+                          ? `${adsRemaining} of 3 remaining today`
+                          : 'Daily limit reached (3/day)'}
+                      </Text>
+                    )}
                   </View>
                   <Ionicons name="chevron-forward" size={20} color="white" />
                 </View>
@@ -312,6 +334,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.9)',
     lineHeight: 20,
+  },
+  limitText: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.85)',
+    marginTop: 4,
+    fontWeight: '600',
   },
   footerText: {
     fontSize: 14,
