@@ -44,14 +44,16 @@ class SurveyService {
         return { data: null, error: surveyError };
       }
 
-      console.log('✅ Survey response saved and bonus door granted! Survey ID:', surveyId);
+      console.log('✅ Survey response saved! Survey ID:', surveyId);
 
-      // Add to earned rewards history
-      const { error: earnedRewardError } = await earnedRewardsService.addSurveyReward(userId);
+      // Add to earned rewards history (this creates a claimable reward)
+      const { data: earnedReward, error: earnedRewardError } = await earnedRewardsService.addSurveyReward(userId);
       if (earnedRewardError) {
         console.error('❌ Error adding survey to earned rewards:', earnedRewardError);
-        // Don't fail the whole operation if earned rewards fails
+        return { data: null, error: new Error(earnedRewardError) };
       }
+
+      console.log('✅ Earned reward created:', earnedReward?.id);
 
       // Track analytics event
       await supabase.from('analytics_events').insert({
@@ -70,6 +72,7 @@ class SurveyService {
         data: {
           surveyId: surveyId,
           doorsGranted: 1,
+          earnedRewardId: earnedReward?.id,
         },
         error: null,
       };

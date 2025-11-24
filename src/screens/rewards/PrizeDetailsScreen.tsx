@@ -95,8 +95,9 @@ export default function PrizeDetailsScreen() {
       } else {
         console.log('✅ Survey completed! Bonus door granted:', data);
         showToast('Survey completed! Bonus door granted!', 'success');
-        // Emit event to refresh user profile/doors count
+        // Emit events to refresh user profile and earned rewards
         DeviceEventEmitter.emit('REFRESH_PROFILE');
+        DeviceEventEmitter.emit('REFRESH_EARNED_DOORS');
       }
     } catch (error) {
       console.error('Error submitting survey:', error);

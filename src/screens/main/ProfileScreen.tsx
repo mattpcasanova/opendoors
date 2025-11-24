@@ -769,12 +769,12 @@ export default function ProfileScreen() {
                   width: 48,
                   height: 48,
                   borderRadius: BorderRadius.full,
-                  backgroundColor: Colors.warningLight,
+                  backgroundColor: '#FEF3C7',
                   alignItems: 'center',
                   justifyContent: 'center',
                   marginBottom: Spacing.sm,
                 }}>
-                  <Ionicons name="trophy" size={24} color={Colors.warning} />
+                  <Ionicons name="trophy" size={24} color="#F59E0B" />
                 </View>
                 <Text style={{
                   fontSize: 24,
