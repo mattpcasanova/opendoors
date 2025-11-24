@@ -29,6 +29,7 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
 }) => {
   const { user } = useAuth();
   const [isWatching, setIsWatching] = useState(false);
+  const [isLoadingAd, setIsLoadingAd] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(30);
   const [canClose, setCanClose] = useState(false);
   const [adsRemaining, setAdsRemaining] = useState<number | null>(null);
@@ -41,6 +42,7 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
   useEffect(() => {
     if (visible) {
       setIsWatching(false);
+      setIsLoadingAd(false);
       setTimeRemaining(30);
       setCanClose(false);
 
@@ -88,19 +90,26 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
       return;
     }
 
-    setIsWatching(true);
+    // Show loading state first
+    setIsLoadingAd(true);
     setCanClose(false);
 
-    // Simulate ad watching with countdown
-    const interval = setInterval(() => {
-      setTimeRemaining((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    // Simulate ad loading for 2 seconds
+    setTimeout(() => {
+      setIsLoadingAd(false);
+      setIsWatching(true);
+
+      // Then start the countdown
+      const interval = setInterval(() => {
+        setTimeRemaining((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }, 2000);
   };
 
   const handleClose = () => {
@@ -139,7 +148,7 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
 
           {/* Ad Content */}
           <View style={styles.adContainer}>
-            {!isWatching ? (
+            {!isWatching && !isLoadingAd ? (
               <View style={styles.adPlaceholder}>
                 <Ionicons name="tv" size={64} color="#10B981" />
                 <Text style={styles.adTitle}>Ready to Watch?</Text>
@@ -174,6 +183,15 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
                     {adsRemaining !== null && adsRemaining <= 0 ? 'Come Back Tomorrow' : 'Start Ad'}
                   </Text>
                 </TouchableOpacity>
+              </View>
+            ) : isLoadingAd ? (
+              <View style={styles.watchingContainer}>
+                <View style={styles.adVideo}>
+                  <ActivityIndicator size="large" color="#10B981" />
+                  <Text style={styles.adText}>
+                    Ad Loading...
+                  </Text>
+                </View>
               </View>
             ) : (
               <View style={styles.watchingContainer}>

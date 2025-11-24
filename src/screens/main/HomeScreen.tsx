@@ -1099,7 +1099,7 @@ export default function HomeScreen() {
           Alert.alert('Error', 'Failed to add reward. Please try again.');
           return;
         }
-        
+
         // Show earned reward popup
         if (reward) {
           setEarnedRewardData({
@@ -1108,14 +1108,16 @@ export default function HomeScreen() {
           });
           setShowEarnedRewardNotification(true);
         }
-        
+
         await loadEarnedRewards();
         return;
       }
-      Alert.alert('No reward granted', 'The ad did not grant a reward this time. Please try again.');
+      // If ad didn't grant reward, fall back to mock modal
+      setShowWatchAdModal(true);
     } catch (e) {
       console.warn('Falling back to mock ad modal:', e);
-      Alert.alert('Ad unavailable', 'The ad failed to load. Please try again shortly.');
+      // Fall back to mock ad modal for development/testing
+      setShowWatchAdModal(true);
     }
   };
 
