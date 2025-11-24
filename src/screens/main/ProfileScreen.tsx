@@ -685,7 +685,9 @@ export default function ProfileScreen() {
                 width: 64,
                 height: 64,
                 borderRadius: BorderRadius.full,
-                backgroundColor: Colors.primaryLight,
+                borderWidth: 2,
+                borderColor: Colors.primary,
+                backgroundColor: 'transparent',
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginRight: Spacing.md,
@@ -731,7 +733,9 @@ export default function ProfileScreen() {
                   width: 48,
                   height: 48,
                   borderRadius: BorderRadius.full,
-                  backgroundColor: Colors.primaryLight,
+                  borderWidth: 2,
+                  borderColor: Colors.primary,
+                  backgroundColor: 'transparent',
                   alignItems: 'center',
                   justifyContent: 'center',
                   marginBottom: Spacing.sm,
@@ -769,12 +773,14 @@ export default function ProfileScreen() {
                   width: 48,
                   height: 48,
                   borderRadius: BorderRadius.full,
-                  backgroundColor: '#FEF3C7',
+                  borderWidth: 2,
+                  borderColor: Colors.primary,
+                  backgroundColor: 'transparent',
                   alignItems: 'center',
                   justifyContent: 'center',
                   marginBottom: Spacing.sm,
                 }}>
-                  <Ionicons name="trophy" size={24} color="#F59E0B" />
+                  <Ionicons name="trophy" size={24} color={Colors.primary} />
                 </View>
                 <Text style={{
                   fontSize: 24,
