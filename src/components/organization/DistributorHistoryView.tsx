@@ -11,6 +11,7 @@ import {
     View
 } from 'react-native';
 import { useAuth } from '../../hooks/useAuth';
+import { useToast } from '../../contexts/ToastContext';
 import {
     DoorDistribution,
     OrganizationMember,
@@ -31,6 +32,7 @@ export default function DistributorHistoryView({
   onRefresh
 }: DistributorHistoryViewProps) {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [members, setMembers] = useState<OrganizationMember[]>([]);
   const [filteredMembers, setFilteredMembers] = useState<OrganizationMember[]>([]);
   const [history, setHistory] = useState<DoorDistribution[]>([]);
@@ -117,7 +119,7 @@ export default function DistributorHistoryView({
       );
 
       if (result.success) {
-        Alert.alert('Success', `Sent ${doorsNum} door${doorsNum > 1 ? 's' : ''} to ${selectedMember.first_name || selectedMember.email}`);
+        showToast(`Successfully sent ${doorsNum} door${doorsNum > 1 ? 's' : ''} to ${selectedMember.first_name || selectedMember.email}`, 'success');
         setShowSendModal(false);
         setSelectedMember(null);
         setDoorsToSend('1');
@@ -125,10 +127,10 @@ export default function DistributorHistoryView({
         loadData();
         onRefresh?.();
       } else {
-        Alert.alert('Error', result.error || 'Failed to send doors');
+        showToast(result.error || 'Failed to send doors', 'error');
       }
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to send doors');
+      showToast(error.message || 'Failed to send doors', 'error');
     } finally {
       setSending(false);
     }
@@ -413,6 +415,8 @@ export default function DistributorHistoryView({
                   numberOfLines={3}
                   value={reason}
                   onChangeText={setReason}
+                  blurOnSubmit={true}
+                  returnKeyType="done"
                 />
 
                 <TouchableOpacity

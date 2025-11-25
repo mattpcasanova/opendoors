@@ -495,13 +495,15 @@ export default function HomeScreen() {
         table: 'door_notifications',
         filter: `user_id=eq.${user.id}`,
       }, async () => {
+        console.log('🔔 Door notification received via realtime!');
         // Check if it's a bonus notification - if so, don't show door notification popup
         const result = await notificationService.getUnreadNotifications(user.id);
         if (result.data) {
-          const filteredNotifications = result.data.filter(n => 
+          const filteredNotifications = result.data.filter(n =>
             !(n.distributor_name === 'OpenDoors' && n.reason === 'Bonus play available! Play any game for free.')
           );
           if (filteredNotifications.length > 0) {
+            console.log('📣 Showing door notification modal');
             setShowDoorNotifications(true);
           }
         }
@@ -516,7 +518,9 @@ export default function HomeScreen() {
         setShowDoorNotifications(true);
         loadEarnedRewards(); // Refresh the earned rewards count
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Realtime subscription status:', status);
+      });
 
     return () => {
       supabase.removeChannel(channel);

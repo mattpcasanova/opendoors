@@ -246,6 +246,7 @@ class OrganizationService {
         : 'Unknown Distributor';
 
       // Create notification for the recipient via RPC
+      // This creates an in-app notification that the recipient will see
       const notificationResult = await notificationService.createDoorNotification(
         recipientId,
         distributorName,
@@ -256,14 +257,10 @@ class OrganizationService {
       if (!notificationResult.success) {
         console.error('Error creating notification:', notificationResult.error);
         // Don't fail the entire operation for notification errors
-      } else {
-        // Send push notification for doors received
-        await pushNotificationService.notifyDoorsReceived(
-          recipientId,
-          distributorName,
-          doorsToSend
-        );
       }
+
+      // Note: Push notifications are not sent here as they require backend infrastructure
+      // The recipient will see the earned rewards modal via realtime subscription in HomeScreen
 
       // Add earned rewards for the recipient via RPC per door
       for (let i = 0; i < doorsToSend; i++) {
