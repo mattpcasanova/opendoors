@@ -183,7 +183,9 @@ export default function HistoryScreen() {
       <View style={{
         width: 64,
         height: 64,
-        backgroundColor: Colors.primaryLight,
+        borderWidth: 2,
+        borderColor: Colors.primary,
+        backgroundColor: 'transparent',
         borderRadius: BorderRadius.full,
         alignItems: 'center',
         justifyContent: 'center',
