@@ -43,25 +43,8 @@ class AuthService {
         }
       });
 
-      console.log('🔍 Signup result:', { 
-        success: !error, 
-        userId: data?.user?.id,
-        hasSession: !!data?.session,
-        error: error?.message,
-        errorCode: error?.code,
-        errorDetails: error?.details,
-        errorHint: error?.hint
-      });
-
       if (error) {
-        console.warn('⚠️ Auth signup error:', error);
-        console.warn('⚠️ Error details:', {
-          code: error.code,
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          status: (error as any).status
-        });
+        console.warn('⚠️ Signup failed:', error.message);
         
         // Check if it's actually an orphaned account issue
         if (error.code === 'user_already_exists' || error.message?.includes('already registered')) {
@@ -190,12 +173,7 @@ class AuthService {
       return { data, error: null };
       
     } catch (error: any) {
-      console.error('❌ Sign up error:', {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint
-      });
+      console.error('❌ Sign up error:', error.message);
       return { data: null, error };
     }
   }

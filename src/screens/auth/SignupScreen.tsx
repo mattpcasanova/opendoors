@@ -508,8 +508,7 @@ export default function SignupScreen() {
                         onChangeText={updateConfirmPassword}
                         secureTextEntry={!showConfirmPassword}
                         autoComplete="new-password"
-                        returnKeyType="done"
-                        onSubmitEditing={handleSignup}
+                        returnKeyType="next"
                       />
                       <TouchableOpacity 
                         onPress={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -537,7 +536,6 @@ export default function SignupScreen() {
                         autoCapitalize="characters"
                         autoComplete="off"
                         returnKeyType="done"
-                        onSubmitEditing={handleSignup}
                       />
                     </View>
                     <Text style={styles.helperText}>
