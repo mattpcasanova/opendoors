@@ -511,7 +511,11 @@ export default function HomeScreen() {
         schema: 'public',
         table: 'earned_rewards',
         filter: `user_id=eq.${user.id}`,
-      }, () => setShowDoorNotifications(true))
+      }, () => {
+        console.log('🎁 New earned reward received via realtime!');
+        setShowDoorNotifications(true);
+        loadEarnedRewards(); // Refresh the earned rewards count
+      })
       .subscribe();
 
     return () => {

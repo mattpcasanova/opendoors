@@ -21,14 +21,19 @@ class ReferralService {
    */
   async getUserReferralCode(userId: string): Promise<string | null> {
     try {
+      console.log('🔍 Getting referral code for user:', userId);
+
       // Check if user already has a referral code
-      const { data: profile } = await supabase
+      const { data: profile, error: fetchError } = await supabase
         .from('user_profiles')
         .select('referral_code')
         .eq('id', userId)
         .single();
 
+      console.log('📋 Existing referral code:', profile?.referral_code, 'Error:', fetchError);
+
       if (profile?.referral_code) {
+        console.log('✅ Using existing referral code:', profile.referral_code);
         return profile.referral_code;
       }
 
@@ -37,6 +42,8 @@ class ReferralService {
       const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
       const referralCode = `REF${baseCode}${randomSuffix}`;
 
+      console.log('📎 Generated new referral code:', referralCode);
+
       // Save to user profile
       const { error } = await supabase
         .from('user_profiles')
@@ -44,10 +51,11 @@ class ReferralService {
         .eq('id', userId);
 
       if (error) {
-        console.error('Error saving referral code:', error);
+        console.error('❌ Error saving referral code:', error);
         return null;
       }
 
+      console.log('✅ Referral code saved successfully');
       return referralCode;
     } catch (error) {
       console.error('Error generating referral code:', error);
@@ -60,6 +68,8 @@ class ReferralService {
    */
   async createReferral(referrerCode: string, referredUserId: string): Promise<{ success: boolean; error: string | null }> {
     try {
+      console.log('🔍 Looking up referrer with code:', referrerCode);
+
       // Find referrer by code
       const { data: referrerProfile, error: findError } = await supabase
         .from('user_profiles')
@@ -67,9 +77,14 @@ class ReferralService {
         .eq('referral_code', referrerCode)
         .single();
 
+      console.log('📋 Referrer lookup result:', { referrerProfile, error: findError });
+
       if (findError || !referrerProfile) {
+        console.warn('❌ Referrer not found for code:', referrerCode, 'Error:', findError);
         return { success: false, error: 'Invalid referral code' };
       }
+
+      console.log('✅ Referrer found:', referrerProfile.id);
 
       const referrerId = referrerProfile.id;
 
@@ -129,23 +144,29 @@ class ReferralService {
    */
   async checkAndGrantReferralRewards(userId: string): Promise<{ granted: boolean; error: string | null }> {
     try {
+      console.log('🎁 Checking referral rewards for user:', userId);
+
       // First, check if this is actually the first game
       const { count: gameCount, error: countError } = await supabase
         .from('game_plays')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId);
 
+      console.log('🎮 Game count:', gameCount, 'Error:', countError);
+
       if (countError) {
-        console.warn('Error checking game count:', countError);
+        console.warn('⚠️ Error checking game count:', countError);
       }
 
       // If user has played more than 1 game (this current one), skip referral check
       // We check > 1 because the current game was just recorded
       if (gameCount && gameCount > 1) {
+        console.log('⏭️ Skipping referral check - user has played', gameCount, 'games');
         return { granted: false, error: null };
       }
 
       // Check if user was referred and hasn't played first game yet
+      console.log('🔍 Looking for referral record for referred_id:', userId);
       const { data: referral, error: refError } = await supabase
         .from('referrals')
         .select('*')
@@ -153,10 +174,14 @@ class ReferralService {
         .eq('referred_played_first_game', false)
         .single();
 
+      console.log('📋 Referral lookup result:', { referral, error: refError });
+
       if (refError || !referral) {
-        // User wasn't referred or already got rewards
+        console.log('❌ No referral found or already rewarded');
         return { granted: false, error: null };
       }
+
+      console.log('✅ Referral found! Processing rewards...');
 
       // Mark that referred user has played first game
       const { error: updateError } = await supabase

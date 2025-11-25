@@ -145,7 +145,10 @@ class AuthService {
       }
       
       // Process referral code if provided
+      console.log('🔍 Referral code check:', { referralCode, hasUser: !!data.user, userId: data.user?.id });
+
       if (referralCode && data.user) {
+        console.log('📎 Creating referral relationship with code:', referralCode);
         try {
           const { success, error: refError } = await referralService.createReferral(
             referralCode,

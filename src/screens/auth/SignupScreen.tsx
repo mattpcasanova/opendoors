@@ -47,6 +47,14 @@ export default function SignupScreen() {
   const [loading, setLoading] = useState(false);
   const [previousBirthDate, setPreviousBirthDate] = useState('');
 
+  // Input refs for keyboard navigation
+  const lastNameRef = useRef<TextInput>(null);
+  const birthDateRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
+  const confirmPasswordRef = useRef<TextInput>(null);
+  const referralCodeRef = useRef<TextInput>(null);
+
   // Animation setup for logo lift
   const logoLiftAnim = useRef(new Animated.Value(0)).current;
 
@@ -189,9 +197,18 @@ export default function SignupScreen() {
       const deepLinkCode = await getAndClearReferralCode();
       const manualCode = formData.referralCode?.trim().toUpperCase();
       const referralCode = manualCode || deepLinkCode;
-      
+
+      console.log('📎 Referral code resolution:', {
+        deepLinkCode,
+        manualCode,
+        finalCode: referralCode,
+        formDataCode: formData.referralCode
+      });
+
       if (referralCode) {
-        console.log('📎 Referral code found:', referralCode, manualCode ? '(manual)' : '(deep link)');
+        console.log('✅ Using referral code:', referralCode, manualCode ? '(manual)' : '(deep link)');
+      } else {
+        console.log('❌ No referral code provided');
       }
       
       const result = await signUp({
@@ -398,6 +415,8 @@ export default function SignupScreen() {
                           autoCapitalize="words"
                           returnKeyType="next"
                           autoFocus={Platform.OS === 'ios'}
+                          onSubmitEditing={() => lastNameRef.current?.focus()}
+                          blurOnSubmit={false}
                         />
                       </View>
                     </View>
@@ -409,6 +428,7 @@ export default function SignupScreen() {
                           <User size={20} color={Colors.primary} />
                         </View>
                         <TextInput
+                          ref={lastNameRef}
                           style={styles.textInput}
                           placeholder="Last name"
                           placeholderTextColor={Colors.gray400}
@@ -416,6 +436,8 @@ export default function SignupScreen() {
                           onChangeText={updateLastName}
                           autoCapitalize="words"
                           returnKeyType="next"
+                          onSubmitEditing={() => birthDateRef.current?.focus()}
+                          blurOnSubmit={false}
                         />
                       </View>
                     </View>
@@ -429,6 +451,7 @@ export default function SignupScreen() {
                         <Calendar size={20} color={Colors.primary} />
                       </View>
                       <TextInput
+                        ref={birthDateRef}
                         style={styles.textInput}
                         placeholder="MM/DD/YYYY"
                         placeholderTextColor={Colors.gray400}
@@ -437,6 +460,8 @@ export default function SignupScreen() {
                         keyboardType="number-pad"
                         maxLength={10}
                         returnKeyType="next"
+                        onSubmitEditing={() => emailRef.current?.focus()}
+                        blurOnSubmit={false}
                       />
                     </View>
                     <Text style={styles.helperText}>
@@ -452,6 +477,7 @@ export default function SignupScreen() {
                         <Mail size={20} color={Colors.primary} />
                       </View>
                       <TextInput
+                        ref={emailRef}
                         style={styles.textInput}
                         placeholder="Enter your email"
                         placeholderTextColor={Colors.gray400}
@@ -462,6 +488,8 @@ export default function SignupScreen() {
                         autoComplete="email"
                         returnKeyType="next"
                         autoFocus={Platform.OS === 'ios' && !formData.firstName}
+                        onSubmitEditing={() => passwordRef.current?.focus()}
+                        blurOnSubmit={false}
                       />
                     </View>
                   </View>
@@ -474,6 +502,7 @@ export default function SignupScreen() {
                         <Lock size={20} color={Colors.primary} />
                       </View>
                       <TextInput
+                        ref={passwordRef}
                         style={styles.textInput}
                         placeholder="Create a password"
                         placeholderTextColor={Colors.gray400}
@@ -482,6 +511,8 @@ export default function SignupScreen() {
                         secureTextEntry={!showPassword}
                         autoComplete="new-password"
                         returnKeyType="next"
+                        onSubmitEditing={() => confirmPasswordRef.current?.focus()}
+                        blurOnSubmit={false}
                       />
                       <TouchableOpacity 
                         onPress={() => setShowPassword(!showPassword)}
@@ -501,6 +532,7 @@ export default function SignupScreen() {
                         <Lock size={20} color={Colors.primary} />
                       </View>
                       <TextInput
+                        ref={confirmPasswordRef}
                         style={styles.textInput}
                         placeholder="Confirm your password"
                         placeholderTextColor={Colors.gray400}
@@ -508,7 +540,10 @@ export default function SignupScreen() {
                         onChangeText={updateConfirmPassword}
                         secureTextEntry={!showConfirmPassword}
                         autoComplete="new-password"
-                        returnKeyType="next"
+                        returnKeyType="done"
+                        onSubmitEditing={() => {
+                          confirmPasswordRef.current?.blur();
+                        }}
                       />
                       <TouchableOpacity 
                         onPress={() => setShowConfirmPassword(!showConfirmPassword)}

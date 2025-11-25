@@ -89,14 +89,19 @@ export default function DoorNotificationComponent({ isVisible, onClose }: DoorNo
 
         console.log(`📊 Notifications remaining: ${notifications.length - 1} (isLast: ${isLastNotification})`);
 
-        // Remove the notification from the list
-        setNotifications(prev => prev.filter(n => n.id !== notificationId));
-
         if (isLastNotification) {
-          // No more notifications, close the modal immediately
+          // No more notifications, close the modal immediately BEFORE removing the notification
+          // This ensures the modal closes cleanly with proper animation
           console.log('🚪 Closing notification modal (last notification)');
           onClose();
+          // Remove the notification after closing to prevent render issues
+          setTimeout(() => {
+            setNotifications([]);
+            setCurrentNotificationIndex(0);
+          }, 100);
         } else {
+          // Remove the notification from the list
+          setNotifications(prev => prev.filter(n => n.id !== notificationId));
           // If there are more notifications, show the next one
           console.log('➡️ Moving to next notification');
           setCurrentNotificationIndex(prev => Math.min(prev, notifications.length - 2));
