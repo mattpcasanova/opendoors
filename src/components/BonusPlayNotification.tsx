@@ -35,15 +35,11 @@ export default function BonusPlayNotification({ isVisible, onClose }: BonusPlayN
         }),
       ]).start();
     } else {
-      // Reset animations
+      // Reset animations when modal closes
       scaleAnim.setValue(0.9);
       fadeAnim.setValue(0);
     }
   }, [isVisible]);
-
-  if (!isVisible) {
-    return null;
-  }
 
   return (
     <Modal
@@ -51,6 +47,7 @@ export default function BonusPlayNotification({ isVisible, onClose }: BonusPlayN
       transparent
       animationType="none"
       onRequestClose={onClose}
+      statusBarTranslucent
     >
       <Animated.View style={{
         flex: 1,
