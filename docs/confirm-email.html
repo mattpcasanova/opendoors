@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reset Password - OpenDoors</title>
+    <title>Confirm Email - OpenDoors</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
@@ -85,35 +85,6 @@
             margin-bottom: 2.5rem;
             line-height: 1.6;
             font-size: 1rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.75rem;
-        }
-
-        label {
-            display: block;
-            color: #333;
-            font-weight: 600;
-            margin-bottom: 0.6rem;
-            font-size: 0.95rem;
-        }
-
-        input {
-            width: 100%;
-            padding: 1.1rem 1.2rem;
-            border: 2px solid #e5e5e5;
-            border-radius: 14px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background: #fafafa;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: #009688;
-            background: white;
-            box-shadow: 0 0 0 4px rgba(0, 150, 136, 0.1);
         }
 
         .btn {
@@ -240,26 +211,21 @@
             display: block;
         }
 
-        #resetForm {
+        #confirmContent {
             display: none;
         }
 
-        #resetForm.show {
+        #confirmContent.show {
             display: block;
         }
 
-        .password-requirements {
-            font-size: 0.85rem;
-            color: #888;
-            margin-top: 0.6rem;
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
+        #checkingSession {
+            text-align: center;
+            display: block;
         }
 
-        .password-requirements::before {
-            content: "ℹ️";
-            font-size: 1rem;
+        #checkingSession.hide {
+            display: none;
         }
 
         .btn-secondary {
@@ -273,16 +239,6 @@
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(0, 150, 136, 0.45);
         }
-
-        #checkingSession {
-            text-align: center;
-            display: block;
-        }
-
-        #checkingSession.hide {
-            display: none;
-        }
-
     </style>
 </head>
 <body>
@@ -292,66 +248,33 @@
                 <div class="logo-glass">
                     <img src="https://raw.githubusercontent.com/mattpcasanova/opendoors/main/assets/images/OpenDoorsLogo.png" alt="OpenDoors Logo">
                 </div>
-                <h1>Reset Password</h1>
+                <h1>Confirm Email</h1>
             </div>
 
             <div id="checkingSession">
                 <div class="loading show">
                     <div class="spinner"></div>
-                    Verifying reset link...
+                    Verifying your email...
                 </div>
             </div>
 
             <div id="invalidToken">
                 <div class="message error show">
                     <strong>Invalid or Expired Link</strong>
-                    This password reset link is invalid or has expired. Please request a new one from the app.
+                    This email confirmation link is invalid or has expired. Please request a new one from the app.
                 </div>
                 <a href="index.html" class="btn btn-secondary">Back to Home</a>
             </div>
 
-            <form id="resetForm">
+            <div id="confirmContent">
                 <div class="subtitle">
-                    Choose a strong password for your account
+                    Your email has been successfully confirmed!
                 </div>
 
                 <div id="messageContainer" class="message"></div>
 
-                <div class="form-group">
-                    <label for="password">New Password</label>
-                    <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        placeholder="Enter your new password"
-                        required
-                        minlength="6"
-                    >
-                    <div class="password-requirements">
-                        Must be at least 6 characters
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="confirmPassword">Confirm Password</label>
-                    <input
-                        type="password"
-                        id="confirmPassword"
-                        name="confirmPassword"
-                        placeholder="Re-enter your password"
-                        required
-                    >
-                </div>
-
-                <button type="submit" class="btn" id="submitBtn">
-                    Reset Password
-                </button>
-
-                <div class="loading" id="loading">
-                    <div class="spinner"></div>
-                    Resetting your password...
-                </div>
-            </form>
+                <a href="index.html" class="btn">Continue to App</a>
+            </div>
 
             <div class="footer">
                 <a href="index.html">← Back to Home</a>
@@ -369,116 +292,89 @@
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        const form = document.getElementById('resetForm');
+        const confirmContent = document.getElementById('confirmContent');
         const invalidToken = document.getElementById('invalidToken');
         const checkingSession = document.getElementById('checkingSession');
         const messageContainer = document.getElementById('messageContainer');
-        const submitBtn = document.getElementById('submitBtn');
-        const loading = document.getElementById('loading');
 
         // Parse URL hash parameters (Supabase uses # not ?)
         function getHashParams() {
             const hash = window.location.hash.substring(1);
+            console.log('Full URL:', window.location.href);
+            console.log('Hash string:', hash);
+
             const params = new URLSearchParams(hash);
-            return {
+            const result = {
                 access_token: params.get('access_token'),
                 refresh_token: params.get('refresh_token'),
                 expires_in: params.get('expires_in'),
                 token_type: params.get('token_type'),
                 type: params.get('type')
             };
+
+            console.log('Parsed params:', result);
+            return result;
         }
 
-        // Check if we have a valid session from the reset link
+        // Check if we have a valid session from the confirmation link
         async function checkSession() {
             try {
+                console.log('=== Starting email confirmation ===');
                 const params = getHashParams();
 
                 // If we have tokens in the URL, set the session
                 if (params.access_token) {
+                    console.log('Found access token in URL, attempting to verify email...');
+
                     const { data, error } = await supabaseClient.auth.setSession({
                         access_token: params.access_token,
                         refresh_token: params.refresh_token || ''
                     });
 
-                    if (error) throw error;
+                    if (error) {
+                        console.error('Error setting session:', error);
+                        throw error;
+                    }
 
+                    console.log('Email verified successfully!', data);
+
+                    // Email is now confirmed
                     checkingSession.classList.add('hide');
-                    form.classList.add('show');
+                    confirmContent.classList.add('show');
+                    messageContainer.innerHTML = '<strong>Success! 🎉</strong>Your email has been confirmed. You can now use all features of the OpenDoors app.';
+                    messageContainer.classList.add('success', 'show');
+
+                    // Auto-redirect after 3 seconds
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 3000);
+
                     return true;
                 }
 
                 // Otherwise check if we already have a valid session
+                console.log('No token in URL, checking for existing session...');
                 const { data: { session }, error } = await supabaseClient.auth.getSession();
 
                 if (error || !session) {
+                    console.error('No valid session:', error);
                     throw new Error('No valid session');
                 }
 
+                console.log('Valid existing session found');
                 checkingSession.classList.add('hide');
-                form.classList.add('show');
+                confirmContent.classList.add('show');
+                messageContainer.innerHTML = '<strong>Already Confirmed</strong>Your email has already been confirmed.';
+                messageContainer.classList.add('success', 'show');
                 return true;
 
             } catch (error) {
+                console.error('Email confirmation failed:', error);
                 checkingSession.classList.add('hide');
                 invalidToken.classList.add('show');
                 return false;
             }
         }
-
-        // Show message
-        function showMessage(text, type) {
-            messageContainer.innerHTML = text;
-            messageContainer.className = `message ${type} show`;
-        }
-
-        // Handle form submission
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-
-            // Validate passwords match
-            if (password !== confirmPassword) {
-                showMessage('<strong>Passwords don\'t match</strong>Please make sure both passwords are the same.', 'error');
-                return;
-            }
-
-            // Validate password length
-            if (password.length < 6) {
-                showMessage('<strong>Password too short</strong>Your password must be at least 6 characters long.', 'error');
-                return;
-            }
-
-            // Disable form
-            submitBtn.disabled = true;
-            loading.classList.add('show');
-            messageContainer.classList.remove('show');
-
-            try {
-                const { data, error } = await supabaseClient.auth.updateUser({
-                    password: password
-                });
-
-                if (error) throw error;
-
-                showMessage('<strong>Success! 🎉</strong>Your password has been reset. You can now sign in to the OpenDoors app with your new password.', 'success');
-                form.reset();
-                submitBtn.style.display = 'none';
-
-                // Redirect after 4 seconds
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 4000);
-
-            } catch (error) {
-                showMessage('<strong>Something went wrong</strong>' + (error.message || 'Please try requesting a new reset link.'), 'error');
-                submitBtn.disabled = false;
-            } finally {
-                loading.classList.remove('show');
-            }
-        });
 
         // Check session on page load
         checkSession();
