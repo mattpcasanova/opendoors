@@ -39,7 +39,7 @@ class AuthService {
             birth_date: cleanBirthDate,
             phone: cleanPhone,
           },
-          emailRedirectTo: 'opendoors://auth/callback',
+          emailRedirectTo: 'https://opendoorsgame.com/confirm-email.html',
         }
       });
 
