@@ -1,16 +1,21 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { AuthStackParamList } from '../types/navigation';
+import { usePasswordResetLink } from '../hooks/usePasswordResetLink';
 
 // Import your auth screens
 import LoginScreen from '../screens/auth/LoginScreen';
 import SignupScreen from '../screens/auth/SignupScreen';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
+import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 
 export default function AuthNavigator() {
+  // Handle password reset deep links
+  usePasswordResetLink();
+
   return (
     <AuthStack.Navigator
       screenOptions={{
@@ -45,6 +50,10 @@ export default function AuthNavigator() {
       <AuthStack.Screen
         name="ForgotPassword"
         component={ForgotPasswordScreen}
+      />
+      <AuthStack.Screen
+        name="ResetPassword"
+        component={ResetPasswordScreen}
       />
     </AuthStack.Navigator>
   );
