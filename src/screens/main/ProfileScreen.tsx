@@ -467,7 +467,14 @@ export default function ProfileScreen() {
       'Contact Support',
       'Get in touch with our support team:',
       [
-        { text: 'Email', onPress: () => Linking.openURL('mailto:support@opendoors.com?subject=Support Request') },
+        { text: 'Email', onPress: () => Linking.openURL('mailto:support@opendoorsgame.com?subject=Support Request') },
+        { text: 'View Support Page', onPress: async () => {
+          try {
+            await Linking.openURL('https://opendoorsgame.com/support.html');
+          } catch (error) {
+            Alert.alert('Error', 'Failed to open support page');
+          }
+        }},
         { text: 'Cancel', style: 'cancel' }
       ]
     );
@@ -511,19 +518,36 @@ export default function ProfileScreen() {
     }
   };
 
-  const showTermsOfService = () => {
+  const showTermsOfService = async () => {
+    const termsUrl = 'https://opendoorsgame.com/terms.html';
+
     Alert.alert(
       'Terms of Service',
-      `OpenDoors Terms of Service\n\nLast updated: ${new Date().toLocaleDateString()}\n\n1. Acceptance of Terms\nBy using the OpenDoors app, you agree to these terms and conditions.\n\n2. Service Description\nOpenDoors is a gamified rewards platform that allows users to play probability-based door games to win prizes from local businesses.\n\n3. User Eligibility\nYou must be at least 18 years old to use this service.\n\n4. Game Rules\n- Each user gets one free daily game\n- Games are based on probability and chance\n- Prizes are provided by partner businesses\n- All game results are final\n\n5. Rewards and Redemption\n- Rewards must be claimed within 30 days\n- Redemption is subject to business availability\n- OpenDoors is not responsible for business closures or changes\n\n6. Privacy\nYour privacy is important to us. See our Privacy Policy for details.\n\n7. Limitation of Liability\nOpenDoors is not liable for any damages arising from use of the service.\n\n8. Changes to Terms\nWe may update these terms at any time. Continued use constitutes acceptance.\n\n9. Contact\nFor questions about these terms, contact support@opendoors.com`,
-      [{ text: 'OK' }]
+      'View our terms of service in your browser?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Open in Browser',
+          onPress: async () => {
+            try {
+              const supported = await Linking.canOpenURL(termsUrl);
+              if (supported) {
+                await Linking.openURL(termsUrl);
+              } else {
+                Alert.alert('Error', 'Unable to open terms of service URL');
+              }
+            } catch (error) {
+              Alert.alert('Error', 'Failed to open terms of service');
+            }
+          }
+        }
+      ]
     );
   };
 
   const showPrivacyPolicy = async () => {
-    // Privacy policy must be a web URL (required by App Store/AdMob)
-    // Update this URL once you have your privacy policy hosted
-    const privacyPolicyUrl = 'https://opendoors.app/privacy'; // TODO: Update with actual URL
-    
+    const privacyPolicyUrl = 'https://opendoorsgame.com/privacy.html';
+
     Alert.alert(
       'Privacy Policy',
       'View our privacy policy in your browser?',

@@ -17,9 +17,11 @@ export default function BonusPlayNotification({ isVisible, onClose }: BonusPlayN
   // Animation values
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [isClosing, setIsClosing] = React.useState(false);
 
   useEffect(() => {
     if (isVisible) {
+      setIsClosing(false);
       // Animate in
       Animated.parallel([
         Animated.spring(scaleAnim, {
@@ -41,12 +43,25 @@ export default function BonusPlayNotification({ isVisible, onClose }: BonusPlayN
     }
   }, [isVisible]);
 
+  const handleClose = () => {
+    if (isClosing) return; // Prevent double-close
+    setIsClosing(true);
+
+    // Close modal immediately
+    onClose();
+
+    // Reset closing flag after animation
+    setTimeout(() => {
+      setIsClosing(false);
+    }, 300);
+  };
+
   return (
     <Modal
       visible={isVisible}
       transparent
       animationType="none"
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
       statusBarTranslucent
     >
       <Animated.View style={{
@@ -60,7 +75,7 @@ export default function BonusPlayNotification({ isVisible, onClose }: BonusPlayN
         <TouchableOpacity
           style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
           activeOpacity={1}
-          onPress={onClose}
+          onPress={handleClose}
         />
         <Animated.View style={{
           backgroundColor: 'white',
@@ -111,7 +126,8 @@ export default function BonusPlayNotification({ isVisible, onClose }: BonusPlayN
               borderRadius: 12,
               alignItems: 'center'
             }}
-            onPress={onClose}
+            onPress={handleClose}
+            disabled={isClosing}
           >
             <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
               Got it!
