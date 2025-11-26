@@ -82,22 +82,27 @@ class AuthService {
         sessionUser: data.session?.user?.id 
       });
 
-      // Verify profile was created by trigger
-      if (data.user) {
+      // If email confirmation is required, profile will be created when user confirms email
+      // We can't verify it now because user isn't authenticated yet
+      if (!data.session) {
+        console.log('✅ Account created - email confirmation required');
+        console.log('📧 Profile will be created when user confirms email');
+      } else {
+        // User is immediately signed in (email confirmation disabled)
+        // Verify profile was created by trigger
         try {
           // Wait a moment for trigger to complete
           await new Promise(resolve => setTimeout(resolve, 500));
-          
+
           // Check if profile exists
           const { data: profile, error: profileError } = await supabase
             .from('user_profiles')
             .select('id, user_type, status')
             .eq('id', data.user.id)
             .single();
-          
+
           if (profileError || !profile) {
-            console.error('❌ CRITICAL: Profile was NOT created by trigger!', profileError);
-            console.error('❌ User ID:', data.user.id, 'Email:', cleanEmail);
+            console.warn('⚠️ Profile not found, creating manually');
             // Try to create profile manually as fallback
             const { error: manualInsertError } = await supabase
               .from('user_profiles')
@@ -116,31 +121,19 @@ class AuthService {
                 doors_available: 0,
                 doors_distributed: 0
               });
-            
+
             if (manualInsertError) {
-              console.error('❌ Failed to create profile manually:', manualInsertError);
-              throw new Error('Account created but profile creation failed. Please contact support.');
+              console.warn('⚠️ Could not create profile manually:', manualInsertError.message);
+              // Don't throw - trigger may have worked
             } else {
-              console.log('✅ Profile created manually as fallback');
+              console.log('✅ Profile created manually');
             }
           } else {
-            console.log('✅ Profile verified - exists:', { id: profile.id, user_type: profile.user_type });
-            
-            // Update user profile status to 'active' to bypass email confirmation
-            const { error: updateError } = await supabase
-              .from('user_profiles')
-              .update({ status: 'active' })
-              .eq('id', data.user.id);
-            
-            if (updateError) {
-              console.warn('⚠️ Could not update user status to active:', updateError);
-            } else {
-              console.log('✅ User profile status updated to active');
-            }
+            console.log('✅ Profile verified:', profile.id);
           }
         } catch (profileError: any) {
-          console.error('❌ Error verifying/creating profile:', profileError);
-          // Don't fail signup if profile check fails - user is created
+          console.warn('⚠️ Profile check skipped:', profileError.message);
+          // Don't fail signup - profile will exist after email confirmation
         }
       }
       

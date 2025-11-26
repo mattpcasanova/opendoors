@@ -30,11 +30,16 @@ class AnalyticsService {
         });
 
       if (error) {
-        console.error('Analytics tracking error:', error);
+        // Only log analytics errors in development (non-critical)
+        if (__DEV__) {
+          console.warn('Analytics tracking failed (non-critical):', error.message);
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       // Don't throw - analytics failures shouldn't break the app
-      console.error('Analytics error:', error);
+      if (__DEV__) {
+        console.warn('Analytics error (non-critical):', error?.message || error);
+      }
     }
   }
 

@@ -244,6 +244,12 @@ export default function SignupScreen() {
         Alert.alert('Sign Up Error', errorMessage);
       } else {
         console.log('✅ Signup successful, letting RootNavigator handle flow');
+        // Show success message
+        Alert.alert(
+          'Account Created! 🎉',
+          'Please check your email to confirm your account before signing in.',
+          [{ text: 'OK', style: 'default' }]
+        );
         // Do not navigate or reset navigation here. RootNavigator will handle the flow based on auth state.
       }
     } catch (error) {
