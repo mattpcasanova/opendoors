@@ -16,6 +16,7 @@ export default function MiniGame({ onComplete }: MiniGameProps) {
   const [prizeLocation] = useState(() => Math.floor(Math.random() * 3) + 1);
   const [switchedChoice, setSwitchedChoice] = useState(false);
   const [gameResult, setGameResult] = useState<{ won: boolean; message: string } | null>(null);
+  const [choiceLocked, setChoiceLocked] = useState(false);
 
   const openDoor = useCallback((doorNumber: number) => {
     setRevealedDoors(prev => [...prev, doorNumber]);
@@ -47,56 +48,51 @@ export default function MiniGame({ onComplete }: MiniGameProps) {
 
   const handleStayChoice = () => {
     if (gameState === 'montyReveal' && selectedDoor) {
-      const won = selectedDoor === prizeLocation;
-      openDoor(selectedDoor);
-      
-      // Set game stage to result but don't show message yet
-      setGameState('result');
-      
-      // Reveal all remaining doors after a delay
-      setTimeout(() => {
-        const allRemainingDoors: number[] = [];
-        for (let i = 1; i <= 3; i++) {
-          if (i !== selectedDoor && !revealedDoors.includes(i)) {
-            allRemainingDoors.push(i);
-            openDoor(i);
-          }
-        }
-        // Update revealedDoors state to include all doors
-        setRevealedDoors(prev => [...prev, selectedDoor, ...allRemainingDoors]);
-      }, 500);
-      
-      // Show result message after door animation completes (1.5 seconds)
-      setTimeout(() => {
-        const message = won ? 
-          '🎉 Congratulations! You won!' : 
-          '😔 Sorry! Better luck next time!';
-        
-        setGameResult({ won, message });
-      }, 1500);
-      
-      // Auto-complete tutorial after showing result
-      setTimeout(() => {
-        onComplete();
-      }, 3000);
-    }
-  };
-
-  const handleSwitchChoice = () => {
-    if (gameState === 'montyReveal') {
+      setSwitchedChoice(false);
+      setChoiceLocked(false); // Reset lock when making initial choice
       setGameState('finalChoice');
     }
   };
 
-  const handleSwitchDoorClick = (doorNumber: number) => {
-    if (gameState === 'finalChoice' && !revealedDoors.includes(doorNumber)) {
-      setSelectedDoor(doorNumber); // Update glow to new door
+  const handleSwitchChoice = () => {
+    if (gameState === 'montyReveal' && selectedDoor) {
+      setSwitchedChoice(true);
+      setChoiceLocked(false);
+
+      // For 3-door game, automatically switch to the only other unopened door
+      const remainingDoors = Array.from({ length: 3 }, (_, i) => i + 1)
+        .filter(num => num !== selectedDoor && !revealedDoors.includes(num));
+
+      if (remainingDoors.length === 1) {
+        // Only one door to switch to, select it automatically
+        setSelectedDoor(remainingDoors[0]);
+      }
+
+      setGameState('finalChoice');
+    }
+  };
+
+  const handleFinalDoorClick = (doorNumber: number) => {
+    if (gameState === 'finalChoice') {
+      // Prevent clicks if choice is locked or door is already revealed
+      if (choiceLocked || revealedDoors.includes(doorNumber)) {
+        return;
+      }
+
+      // Only allow clicking the currently selected door (whether stayed or switched)
+      if (doorNumber !== selectedDoor) {
+        return;
+      }
+
+      // Lock the choice immediately to prevent multiple clicks
+      setChoiceLocked(true);
+
       const won = doorNumber === prizeLocation;
       openDoor(doorNumber);
-      
+
       // Set game stage to result but don't show message yet
       setGameState('result');
-      
+
       // Reveal all remaining doors after a delay
       setTimeout(() => {
         const allRemainingDoors: number[] = [];
@@ -109,16 +105,16 @@ export default function MiniGame({ onComplete }: MiniGameProps) {
         // Update revealedDoors state to include all doors
         setRevealedDoors(prev => [...prev, doorNumber, ...allRemainingDoors]);
       }, 500);
-      
+
       // Show result message after door animation completes (1.5 seconds)
       setTimeout(() => {
-        const message = won ? 
-          '🎉 Congratulations! You won!' : 
+        const message = won ?
+          '🎉 Congratulations! You won!' :
           '😔 Sorry! Better luck next time!';
-        
+
         setGameResult({ won, message });
       }, 1500);
-      
+
       // Auto-complete tutorial after showing result
       setTimeout(() => {
         onComplete();
@@ -135,7 +131,7 @@ export default function MiniGame({ onComplete }: MiniGameProps) {
       case 'montyReveal':
         return 'Step 2: I revealed a goat. Would you like to switch or stay?';
       case 'finalChoice':
-        return 'Step 2: Choose a door to switch to!';
+        return `Step 3: You ${switchedChoice ? 'switched to' : 'stayed with'} Door ${selectedDoor}. Click it to reveal!`;
       case 'result':
         return gameResult?.message || 'Opening doors...';
       default:
@@ -151,13 +147,11 @@ export default function MiniGame({ onComplete }: MiniGameProps) {
   };
 
   const getDoorContent = (doorNumber: number) => {
-    if (gameState === 'result') {
-      return doorNumber === prizeLocation
-        ? { type: 'icon' as const, name: 'gift', color: Colors.gold }
-        : { type: 'icon' as const, name: 'close-circle', color: Colors.error };
-    }
+    // Always show icon if door is open
     if (revealedDoors.includes(doorNumber)) {
-      return { type: 'icon' as const, name: 'close-circle', color: Colors.error };
+      return doorNumber === prizeLocation
+        ? { type: 'icon' as const, name: 'gift', color: '#FFD700' }
+        : { type: 'icon' as const, name: 'close-circle', color: Colors.error };
     }
     return null;
   };
@@ -197,11 +191,12 @@ export default function MiniGame({ onComplete }: MiniGameProps) {
                 if (gameState === 'selection') {
                   handleDoorClick(doorNumber);
                 } else if (gameState === 'finalChoice') {
-                  handleSwitchDoorClick(doorNumber);
+                  handleFinalDoorClick(doorNumber);
                 }
               }}
               disabled={isDoorDisabled(doorNumber)}
               isWinningDoor={isWinningDoor(doorNumber)}
+              isFinalReveal={gameState === 'result'}
             />
           </View>
         ))}
