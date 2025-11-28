@@ -49,7 +49,8 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
+  PanResponder
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../constants';
@@ -235,7 +236,15 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
   };
 
   const handleRewardTypeToggle = (type: string) => {
-    setRewardTypes((prev) => (prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]));
+    setRewardTypes((prev) => {
+      if (prev.includes(type)) {
+        // Remove the item - all items below move up
+        return prev.filter((t) => t !== type);
+      } else {
+        // Add to the end of the list
+        return [...prev, type];
+      }
+    });
   };
 
   const moveRewardType = (type: string, direction: 'up' | 'down') => {
@@ -249,6 +258,18 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
       [newOrder[currentIndex], newOrder[currentIndex + 1]] = [newOrder[currentIndex + 1], newOrder[currentIndex]];
       setRewardTypes(newOrder);
     }
+  };
+
+  const moveRewardTypeToPosition = (type: string, newPosition: number) => {
+    const currentIndex = rewardTypes.indexOf(type);
+    if (currentIndex === -1 || currentIndex === newPosition) return;
+
+    const newOrder = [...rewardTypes];
+    // Remove from current position
+    const [item] = newOrder.splice(currentIndex, 1);
+    // Insert at new position
+    newOrder.splice(newPosition, 0, item);
+    setRewardTypes(newOrder);
   };
 
   const nextSlide = () => {
@@ -387,11 +408,14 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
               ]}>
                 {category.label}
               </Text>
-              {selectedCategories.includes(category.key) && (
-                <View style={styles.checkmarkContainer}>
+              <View style={[
+                styles.checkmarkContainer,
+                !selectedCategories.includes(category.key) && styles.checkmarkContainerHidden
+              ]}>
+                {selectedCategories.includes(category.key) && (
                   <Check size={16} color={Colors.white} />
-                </View>
-              )}
+                )}
+              </View>
             </View>
           </TouchableOpacity>
         ))}
@@ -507,100 +531,167 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
     </View>
   );
 
-  const renderSlide4 = () => (
-    <View style={styles.slideContainer}>
-      <View style={styles.slideHeader}>
-        <Text style={styles.slideTitle}>Rank your favorites</Text>
-        <Text style={styles.slideSubtitle}>Select and reorder by preference</Text>
-      </View>
+  const renderSlide4 = () => {
+    // Sort options: selected items by rank order first, then unselected items
+    const sortedOptions = [...rewardTypeOptions].sort((a, b) => {
+      const aSelected = rewardTypes.includes(a.value);
+      const bSelected = rewardTypes.includes(b.value);
 
-      <View style={styles.optionsList}>
-        {rewardTypeOptions.map((option) => {
-          const isSelected = rewardTypes.includes(option.value);
-          const rankPosition = isSelected ? rewardTypes.indexOf(option.value) + 1 : null;
+      if (aSelected && bSelected) {
+        // Both selected: sort by rank position
+        return rewardTypes.indexOf(a.value) - rewardTypes.indexOf(b.value);
+      } else if (aSelected) {
+        // Only a is selected: a comes first
+        return -1;
+      } else if (bSelected) {
+        // Only b is selected: b comes first
+        return 1;
+      } else {
+        // Neither selected: maintain original order
+        return 0;
+      }
+    });
 
-          return (
-            <View
-              key={option.value}
-              style={[
-                styles.optionCard,
-                isSelected && styles.optionCardSelected
-              ]}
-            >
-              <View style={styles.optionContent}>
-                <TouchableOpacity
-                  onPress={() => handleRewardTypeToggle(option.value)}
-                  style={[styles.optionTextContainer, { flexDirection: 'row', alignItems: 'center' }]}
-                >
-                  <View style={[styles.optionIconContainerOuter, { marginRight: 12 }]}>
-                    <View style={styles.optionIconContainer}>
-                      <IconComponent
-                        name={option.icon}
-                        size={24}
-                        color={isSelected ? Colors.primary : Colors.white}
-                      />
-                    </View>
-                  </View>
-                  <Text style={[
-                    styles.optionTitle,
-                    isSelected && styles.optionTitleSelected
-                  ]}>
-                    {option.value}
-                  </Text>
-                </TouchableOpacity>
-
-                {isSelected && (
-                  <View style={styles.rankingControls}>
-                    <View style={styles.arrowButtons}>
-                      <TouchableOpacity
-                        onPress={() => moveRewardType(option.value, 'up')}
-                        disabled={rankPosition === 1}
-                        style={[
-                          styles.arrowButton,
-                          rankPosition === 1 && styles.arrowButtonDisabled
-                        ]}
-                      >
-                        <ArrowUp size={16} color={rankPosition === 1 ? Colors.gray400 : Colors.gray500} />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => moveRewardType(option.value, 'down')}
-                        disabled={rankPosition === rewardTypes.length}
-                        style={[
-                          styles.arrowButton,
-                          rankPosition === rewardTypes.length && styles.arrowButtonDisabled
-                        ]}
-                      >
-                        <ArrowDown size={16} color={rankPosition === rewardTypes.length ? Colors.gray400 : Colors.gray500} />
-                      </TouchableOpacity>
-                    </View>
-                    <View style={styles.rankBadge}>
-                      <Text style={styles.rankNumber}>{rankPosition}</Text>
-                    </View>
-                  </View>
-                )}
-              </View>
-            </View>
-          );
-        })}
-      </View>
-
-      {rewardTypes.length > 0 && (
-        <View style={styles.rankingSummary}>
-          <Text style={styles.rankingTitle}>Your ranking:</Text>
-          <View style={styles.rankingList}>
-            {rewardTypes.map((item, index) => (
-              <View key={item} style={styles.rankingItem}>
-                <View style={styles.rankBadge}>
-                  <Text style={styles.rankNumber}>{index + 1}</Text>
-                </View>
-                <Text style={styles.rankingText}>{item}</Text>
-              </View>
-            ))}
-          </View>
+    return (
+      <View style={styles.slideContainer}>
+        <View style={styles.slideHeader}>
+          <Text style={styles.slideTitle}>Rank your favorites</Text>
+          <Text style={styles.slideSubtitle}>Tap to select (ranks 1-5 in order)</Text>
         </View>
-      )}
-    </View>
-  );
+
+        <View style={styles.optionsList}>
+          {sortedOptions.map((option) => {
+            const isSelected = rewardTypes.includes(option.value);
+            const rankPosition = isSelected ? rewardTypes.indexOf(option.value) + 1 : null;
+
+            return (
+              <View
+                key={option.value}
+                style={[
+                  styles.optionCard,
+                  isSelected && styles.optionCardSelected
+                ]}
+              >
+                <View style={styles.optionContent}>
+                  <TouchableOpacity
+                    onPress={() => handleRewardTypeToggle(option.value)}
+                    style={[styles.optionTextContainer, { flexDirection: 'row', alignItems: 'center' }]}
+                  >
+                    <View style={[styles.optionIconContainerOuter, { marginRight: 12 }]}>
+                      <View style={styles.optionIconContainer}>
+                        <IconComponent
+                          name={option.icon}
+                          size={24}
+                          color={isSelected ? Colors.primary : Colors.white}
+                        />
+                      </View>
+                    </View>
+                    <Text style={[
+                      styles.optionTitle,
+                      isSelected && styles.optionTitleSelected
+                    ]}>
+                      {option.value}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {isSelected && (
+                    <View style={styles.rankingControls}>
+                      <View style={styles.arrowButtons}>
+                        <TouchableOpacity
+                          onPress={() => moveRewardType(option.value, 'up')}
+                          disabled={rankPosition === 1}
+                          style={[
+                            styles.arrowButton,
+                            rankPosition === 1 && styles.arrowButtonDisabled
+                          ]}
+                        >
+                          <ArrowUp size={16} color={rankPosition === 1 ? Colors.gray400 : Colors.gray500} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => moveRewardType(option.value, 'down')}
+                          disabled={rankPosition === rewardTypes.length}
+                          style={[
+                            styles.arrowButton,
+                            rankPosition === rewardTypes.length && styles.arrowButtonDisabled
+                          ]}
+                        >
+                          <ArrowDown size={16} color={rankPosition === rewardTypes.length ? Colors.gray400 : Colors.gray500} />
+                        </TouchableOpacity>
+                      </View>
+                      <View style={styles.rankBadge}>
+                        <Text style={styles.rankNumber}>{rankPosition}</Text>
+                      </View>
+                    </View>
+                  )}
+                </View>
+              </View>
+            );
+          })}
+        </View>
+
+        {rewardTypes.length > 0 && (
+          <View style={styles.rankingSummary}>
+            <Text style={styles.rankingTitle}>Your ranking (drag to reorder):</Text>
+            <View style={styles.rankingList}>
+              {rewardTypes.map((item, index) => {
+                const pan = new Animated.ValueXY();
+                const panResponder = PanResponder.create({
+                  onStartShouldSetPanResponder: () => true,
+                  onMoveShouldSetPanResponder: () => true,
+                  onPanResponderGrant: () => {
+                    pan.setOffset({
+                      x: 0,
+                      y: 0,
+                    });
+                  },
+                  onPanResponderMove: Animated.event([
+                    null,
+                    { dy: pan.y }
+                  ], { useNativeDriver: false }),
+                  onPanResponderRelease: (_, gesture) => {
+                    pan.flattenOffset();
+                    // Calculate which position they dragged to
+                    const itemHeight = 60; // Approximate height of each ranking item
+                    const draggedPositions = Math.round(gesture.dy / itemHeight);
+                    const newIndex = Math.max(0, Math.min(rewardTypes.length - 1, index + draggedPositions));
+
+                    if (newIndex !== index) {
+                      moveRewardTypeToPosition(item, newIndex);
+                    }
+
+                    // Reset animation
+                    Animated.spring(pan, {
+                      toValue: { x: 0, y: 0 },
+                      useNativeDriver: false,
+                    }).start();
+                  },
+                });
+
+                return (
+                  <Animated.View
+                    key={item}
+                    {...panResponder.panHandlers}
+                    style={[
+                      styles.rankingItem,
+                      {
+                        transform: [{ translateY: pan.y }],
+                      },
+                    ]}
+                  >
+                    <View style={styles.rankBadge}>
+                      <Text style={styles.rankNumber}>{index + 1}</Text>
+                    </View>
+                    <Text style={styles.rankingText}>{item}</Text>
+                    <Text style={styles.dragHandle}>⋮⋮</Text>
+                  </Animated.View>
+                );
+              })}
+            </View>
+          </View>
+        )}
+      </View>
+    );
+  };
 
   const renderSlide5 = () => (
     <View style={styles.slideContainer}>
@@ -728,11 +819,14 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
               ]}>
                 {option.value}
               </Text>
-              {discovery === option.value && (
-                <View style={styles.checkmarkContainer}>
+              <View style={[
+                styles.checkmarkContainer,
+                discovery !== option.value && styles.checkmarkContainerHidden
+              ]}>
+                {discovery === option.value && (
                   <Check size={16} color={Colors.white} />
-                </View>
-              )}
+                )}
+              </View>
             </View>
           </TouchableOpacity>
         ))}
@@ -1027,6 +1121,7 @@ const styles = StyleSheet.create({
   },
   categoryCard: {
     width: (width - 80) / 2,
+    minHeight: 150,
     padding: 24,
     borderRadius: 24,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -1077,6 +1172,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 12,
+  },
+  checkmarkContainerHidden: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: Colors.white,
   },
   optionsList: {
     gap: 16,
@@ -1181,10 +1281,21 @@ const styles = StyleSheet.create({
   rankingItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
   },
   rankingText: {
     color: Colors.white,
     marginLeft: 12,
+    flex: 1,
+  },
+  dragHandle: {
+    color: Colors.white,
+    fontSize: 20,
+    marginLeft: 8,
+    opacity: 0.5,
   },
   ratingsList: {
     marginTop: 16,
