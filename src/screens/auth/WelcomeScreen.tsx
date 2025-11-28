@@ -260,6 +260,7 @@ const styles = StyleSheet.create({
     borderRadius: 90,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.4)',
   },
@@ -269,7 +270,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     borderRadius: 90,
   },
   logoImage: {

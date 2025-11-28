@@ -249,31 +249,32 @@ export default function Header({
             {showLogo && (
               <View
                 style={{
-                  width: 100,
-                  height: 100,
-                  borderRadius: 50,
+                  width: 120,
+                  height: 120,
+                  borderRadius: 60,
                   overflow: "hidden",
-                  shadowColor: Colors.black,
-                  shadowOffset: { width: 0, height: 10 },
-                  shadowOpacity: 0.3,
+                  shadowColor: Colors.primary,
+                  shadowOffset: { width: 0, height: 12 },
+                  shadowOpacity: 0.5,
                   shadowRadius: 24,
-                  elevation: 18,
+                  elevation: 15,
                 }}
               >
                 <BlurView
-                  intensity={Platform.OS === "ios" ? 90 : 100}
+                  intensity={Platform.OS === "ios" ? 95 : 100}
                   tint="light"
                   style={{
                     width: "100%",
                     height: "100%",
+                    borderRadius: 60,
                     alignItems: "center",
                     justifyContent: "center",
-                    borderWidth: 1.5,
+                    backgroundColor: "rgba(255, 255, 255, 0.2)",
+                    borderWidth: 2,
                     borderColor: "rgba(255, 255, 255, 0.4)",
-                    borderRadius: 50,
                   }}
                 >
-                  {/* Subtle white overlay for extra depth */}
+                  {/* Liquid glass overlay */}
                   <View
                     style={{
                       position: "absolute",
@@ -281,15 +282,15 @@ export default function Header({
                       left: 0,
                       right: 0,
                       bottom: 0,
-                      backgroundColor: "rgba(255, 255, 255, 0.75)",
-                      borderRadius: 50,
+                      backgroundColor: "rgba(255, 255, 255, 0.25)",
+                      borderRadius: 60,
                     }}
                     pointerEvents="none"
                   />
 
                   <Image
                     source={require("../../../assets/images/OpenDoorsLogo.png")}
-                    style={{ width: 80, height: 80, resizeMode: "contain", zIndex: 1 }}
+                    style={{ width: 90, height: 90, resizeMode: "contain", zIndex: 1 }}
                   />
                 </BlurView>
               </View>
