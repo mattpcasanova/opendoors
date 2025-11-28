@@ -151,8 +151,8 @@ export default function GameScreen({
         return;
       }
 
-      // If user chose to stay, only allow clicking the selected door
-      if (!switchedChoice && doorNumber !== selectedDoor) {
+      // Only allow clicking the currently selected door (whether stayed or switched)
+      if (doorNumber !== selectedDoor) {
         return;
       }
 
