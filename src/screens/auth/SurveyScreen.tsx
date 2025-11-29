@@ -1,64 +1,72 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import * as Notifications from 'expo-notifications';
-import { LinearGradient } from 'expo-linear-gradient';
 import {
   ArrowDown,
   ArrowUp,
+  Car,
   Check,
   ChevronLeft,
   ChevronRight,
-  Star,
-  UtensilsCrossed,
-  ShoppingBag,
   Coffee,
-  Film,
-  Dumbbell,
-  Sparkles,
-  Footprints,
-  Car,
-  Plane,
-  MapPin,
-  Shield,
-  Scale,
-  Target,
-  Gift,
-  Percent,
-  Repeat,
   Crown,
-  Zap,
-  Volume2,
-  MessageCircle,
+  Dumbbell,
+  Film,
+  Footprints,
+  Gift,
+  HelpCircle,
   Lock,
-  Smartphone,
-  Users,
+  MapPin,
+  MessageCircle,
+  Percent,
+  Plane,
+  Repeat,
+  Scale,
   Search,
+  Shield,
+  ShoppingBag,
+  Smartphone,
+  Sparkles,
+  Star,
+  Target,
   Tv,
-  HelpCircle
+  Users,
+  UtensilsCrossed,
+  Volume2,
+  Zap
 } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Alert,
   Animated,
   Dimensions,
   Image,
+  InteractionManager,
   KeyboardAvoidingView,
+  LayoutAnimation,
+  PanResponder,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
-  PanResponder
+  UIManager,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../constants';
 import { useAuth } from '../../hooks/useAuth';
-import { supabase } from '../../services/supabase/client';
 import { pushNotificationService } from '../../services/pushNotificationService';
+import { supabase } from '../../services/supabase/client';
 import { userPreferencesService } from '../../services/userPreferencesService';
 import { RootStackParamList } from '../../types/navigation';
+
+// Enable LayoutAnimation on Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 const { width, height } = Dimensions.get('window');
 
@@ -97,6 +105,80 @@ const IconComponent = ({ name, size = 24, color = Colors.primary }: { name: stri
     case 'HelpCircle': return <HelpCircle {...iconProps} />;
     default: return <HelpCircle {...iconProps} />;
   }
+};
+
+// Draggable Ranking Item Component
+interface DraggableRankingItemProps {
+  item: string;
+  index: number;
+  totalItems: number;
+  onReorder: (item: string, newPosition: number) => void;
+}
+
+const DraggableRankingItem: React.FC<DraggableRankingItemProps> = ({ item, index, totalItems, onReorder }) => {
+  const pan = useRef(new Animated.ValueXY()).current;
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        // Scale up slightly when dragging starts
+        Animated.spring(scale, {
+          toValue: 1.05,
+          useNativeDriver: true,
+        }).start();
+      },
+      onPanResponderMove: Animated.event(
+        [null, { dy: pan.y }],
+        { useNativeDriver: false }
+      ),
+      onPanResponderRelease: (_, gesture) => {
+        // Scale back to normal
+        Animated.spring(scale, {
+          toValue: 1,
+          useNativeDriver: true,
+        }).start();
+
+        // Calculate which position they dragged to
+        const itemHeight = 60; // Height of each ranking item
+        const draggedPositions = Math.round(gesture.dy / itemHeight);
+        const newIndex = Math.max(0, Math.min(totalItems - 1, index + draggedPositions));
+
+        if (newIndex !== index) {
+          onReorder(item, newIndex);
+        }
+
+        // Reset position animation
+        Animated.spring(pan, {
+          toValue: { x: 0, y: 0 },
+          useNativeDriver: false,
+        }).start();
+      },
+    })
+  ).current;
+
+  return (
+    <Animated.View
+      {...panResponder.panHandlers}
+      style={[
+        styles.rankingItem,
+        {
+          transform: [
+            { translateY: pan.y },
+            { scale: scale }
+          ],
+        },
+      ]}
+    >
+      <View style={styles.rankBadge}>
+        <Text style={styles.rankNumber}>{index + 1}</Text>
+      </View>
+      <Text style={styles.rankingText}>{item}</Text>
+      <Text style={styles.dragHandle}>⋮⋮</Text>
+    </Animated.View>
+  );
 };
 
 export default function SurveyScreen({ onComplete }: { onComplete: () => void }) {
@@ -565,7 +647,7 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
             const rankPosition = isSelected ? rewardTypes.indexOf(option.value) + 1 : null;
 
             return (
-              <View
+              <Animated.View
                 key={option.value}
                 style={[
                   styles.optionCard,
@@ -624,7 +706,7 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
                     </View>
                   )}
                 </View>
-              </View>
+              </Animated.View>
             );
           })}
         </View>
@@ -633,59 +715,15 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
           <View style={styles.rankingSummary}>
             <Text style={styles.rankingTitle}>Your ranking (drag to reorder):</Text>
             <View style={styles.rankingList}>
-              {rewardTypes.map((item, index) => {
-                const pan = new Animated.ValueXY();
-                const panResponder = PanResponder.create({
-                  onStartShouldSetPanResponder: () => true,
-                  onMoveShouldSetPanResponder: () => true,
-                  onPanResponderGrant: () => {
-                    pan.setOffset({
-                      x: 0,
-                      y: 0,
-                    });
-                  },
-                  onPanResponderMove: Animated.event([
-                    null,
-                    { dy: pan.y }
-                  ], { useNativeDriver: false }),
-                  onPanResponderRelease: (_, gesture) => {
-                    pan.flattenOffset();
-                    // Calculate which position they dragged to
-                    const itemHeight = 60; // Approximate height of each ranking item
-                    const draggedPositions = Math.round(gesture.dy / itemHeight);
-                    const newIndex = Math.max(0, Math.min(rewardTypes.length - 1, index + draggedPositions));
-
-                    if (newIndex !== index) {
-                      moveRewardTypeToPosition(item, newIndex);
-                    }
-
-                    // Reset animation
-                    Animated.spring(pan, {
-                      toValue: { x: 0, y: 0 },
-                      useNativeDriver: false,
-                    }).start();
-                  },
-                });
-
-                return (
-                  <Animated.View
-                    key={item}
-                    {...panResponder.panHandlers}
-                    style={[
-                      styles.rankingItem,
-                      {
-                        transform: [{ translateY: pan.y }],
-                      },
-                    ]}
-                  >
-                    <View style={styles.rankBadge}>
-                      <Text style={styles.rankNumber}>{index + 1}</Text>
-                    </View>
-                    <Text style={styles.rankingText}>{item}</Text>
-                    <Text style={styles.dragHandle}>⋮⋮</Text>
-                  </Animated.View>
-                );
-              })}
+              {rewardTypes.map((item, index) => (
+                <DraggableRankingItem
+                  key={item}
+                  item={item}
+                  index={index}
+                  totalItems={rewardTypes.length}
+                  onReorder={moveRewardTypeToPosition}
+                />
+              ))}
             </View>
           </View>
         )}
