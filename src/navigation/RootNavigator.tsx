@@ -2,7 +2,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as Location from 'expo-location';
 import * as Notifications from 'expo-notifications';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, DeviceEventEmitter, View, AppState } from 'react-native';
+import { ActivityIndicator, DeviceEventEmitter, View, AppState, InteractionManager } from 'react-native';
 import DoorNotificationComponent from '../components/DoorNotification';
 import TutorialOverlay from '../components/TutorialOverlay';
 import { useAuth } from '../hooks/useAuth';
@@ -170,9 +170,10 @@ export default function RootNavigator() {
     };
 
     if (user?.id && surveyCompleted && !showTutorial) {
-      // Small delay to ensure app is ready
-      const timer = setTimeout(requestInitialPermissions, 500);
-      return () => clearTimeout(timer);
+      // Run in background without blocking UI - use InteractionManager for better performance
+      InteractionManager.runAfterInteractions(() => {
+        requestInitialPermissions();
+      });
     }
   }, [user?.id, surveyCompleted, showTutorial]);
 
@@ -220,15 +221,20 @@ export default function RootNavigator() {
     };
 
     if (user?.id && surveyCompleted && !showTutorial) {
-      const timer = setTimeout(initNotifications, 1000); // Small delay to ensure app is ready
+      // Run in background without blocking UI
+      InteractionManager.runAfterInteractions(() => {
+        initNotifications();
+      });
+
       // Also re-check when app comes to foreground
       const sub = AppState.addEventListener('change', (state) => {
         if (state === 'active') {
-          initNotifications();
+          InteractionManager.runAfterInteractions(() => {
+            initNotifications();
+          });
         }
       });
       return () => {
-        clearTimeout(timer);
         sub.remove();
       };
     }

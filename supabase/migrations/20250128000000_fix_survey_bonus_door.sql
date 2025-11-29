@@ -1,5 +1,6 @@
--- Prevent bonus door stacking - only allow max 1 bonus door at a time
--- Update the survey submission function to not stack bonuses
+-- Fix survey submission to NOT grant bonus doors
+-- Survey rewards are handled as earned rewards in the application layer
+-- Only the 5-game progress should grant bonus doors
 
 CREATE OR REPLACE FUNCTION public.submit_redemption_survey(
   p_user_id UUID,
@@ -17,7 +18,6 @@ AS $$
 DECLARE
   v_survey_id UUID;
   v_reward_exists BOOLEAN;
-  v_bonus_doors INTEGER;
 BEGIN
   -- Verify user_id matches authenticated user
   IF p_user_id != auth.uid() THEN
@@ -25,7 +25,6 @@ BEGIN
   END IF;
 
   -- Verify reward_id exists if provided (optional check)
-  -- If reward doesn't exist or doesn't belong to user, set to NULL to avoid FK constraint violation
   IF p_reward_id IS NOT NULL THEN
     BEGIN
       SELECT EXISTS(
@@ -35,12 +34,10 @@ BEGIN
       ) INTO v_reward_exists;
 
       IF NOT v_reward_exists THEN
-        -- If reward doesn't exist, set to NULL (survey can still be submitted)
         p_reward_id := NULL;
       END IF;
     EXCEPTION
       WHEN OTHERS THEN
-        -- If any error occurs checking reward, set to NULL
         p_reward_id := NULL;
     END;
   END IF;
@@ -69,7 +66,7 @@ BEGIN
       p_spend_amount,
       p_will_return,
       p_discovery_source,
-      true
+      false  -- Survey does NOT grant bonus doors
     )
     RETURNING id INTO v_survey_id;
   EXCEPTION
@@ -81,7 +78,6 @@ BEGIN
 
   -- Survey rewards are handled as earned rewards in the application layer
   -- They do NOT grant bonus doors - only the 5-game progress does that
-  -- This function just records the survey response
 
   RETURN v_survey_id;
 END;
@@ -91,4 +87,4 @@ $$;
 REVOKE ALL ON FUNCTION public.submit_redemption_survey(UUID, UUID, UUID, BOOLEAN, TEXT, TEXT, TEXT) FROM public;
 GRANT EXECUTE ON FUNCTION public.submit_redemption_survey(UUID, UUID, UUID, BOOLEAN, TEXT, TEXT, TEXT) TO authenticated;
 
-COMMENT ON FUNCTION public.submit_redemption_survey(UUID, UUID, UUID, BOOLEAN, TEXT, TEXT, TEXT) IS 'Submit redemption survey and grant +1 bonus door only if user has none (prevents stacking) - SECURITY DEFINER';
+COMMENT ON FUNCTION public.submit_redemption_survey(UUID, UUID, UUID, BOOLEAN, TEXT, TEXT, TEXT) IS 'Submit redemption survey - rewards handled as earned rewards, not bonus doors - SECURITY DEFINER';

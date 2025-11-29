@@ -113,9 +113,10 @@ class UserProgressService {
       };
 
       if (usedBonus) {
-        // Consume bonus play and reset progress
+        // Consume bonus play - bonus games do NOT count towards the 5-game progress
         newProgress.bonusPlaysAvailable = Math.max(0, currentProgress.bonusPlaysAvailable - 1);
-        newProgress.gamesUntilBonus = 5; // Reset progress bar
+        // Keep games_until_bonus unchanged - bonus plays are "free" and don't affect progress
+        newProgress.gamesUntilBonus = currentProgress.gamesUntilBonus;
       } else {
         // Normal game progression
         const newGamesUntilBonus = Math.max(0, currentProgress.gamesUntilBonus - 1);
@@ -126,8 +127,10 @@ class UserProgressService {
           // Only give bonus if user doesn't already have one
           if (currentProgress.bonusPlaysAvailable === 0) {
             newProgress.bonusPlaysAvailable = 1;
+            newProgress.gamesUntilBonus = 5; // Reset progress bar after granting bonus
           } else {
-            newProgress.bonusPlaysAvailable = currentProgress.bonusPlaysAvailable; // Keep existing bonus
+            // User already has a bonus - don't grant another, but reset progress bar
+            newProgress.bonusPlaysAvailable = currentProgress.bonusPlaysAvailable;
             newProgress.gamesUntilBonus = 5; // Reset progress bar anyway
           }
         }
