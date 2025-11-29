@@ -37,22 +37,18 @@ import {
   Volume2,
   Zap
 } from 'lucide-react-native';
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Alert,
   Animated,
   Dimensions,
   Image,
-  InteractionManager,
   KeyboardAvoidingView,
-  LayoutAnimation,
-  PanResponder,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  UIManager,
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -62,11 +58,6 @@ import { pushNotificationService } from '../../services/pushNotificationService'
 import { supabase } from '../../services/supabase/client';
 import { userPreferencesService } from '../../services/userPreferencesService';
 import { RootStackParamList } from '../../types/navigation';
-
-// Enable LayoutAnimation on Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 const { width, height } = Dimensions.get('window');
 
@@ -105,80 +96,6 @@ const IconComponent = ({ name, size = 24, color = Colors.primary }: { name: stri
     case 'HelpCircle': return <HelpCircle {...iconProps} />;
     default: return <HelpCircle {...iconProps} />;
   }
-};
-
-// Draggable Ranking Item Component
-interface DraggableRankingItemProps {
-  item: string;
-  index: number;
-  totalItems: number;
-  onReorder: (item: string, newPosition: number) => void;
-}
-
-const DraggableRankingItem: React.FC<DraggableRankingItemProps> = ({ item, index, totalItems, onReorder }) => {
-  const pan = useRef(new Animated.ValueXY()).current;
-  const scale = useRef(new Animated.Value(1)).current;
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: () => {
-        // Scale up slightly when dragging starts
-        Animated.spring(scale, {
-          toValue: 1.05,
-          useNativeDriver: true,
-        }).start();
-      },
-      onPanResponderMove: Animated.event(
-        [null, { dy: pan.y }],
-        { useNativeDriver: false }
-      ),
-      onPanResponderRelease: (_, gesture) => {
-        // Scale back to normal
-        Animated.spring(scale, {
-          toValue: 1,
-          useNativeDriver: true,
-        }).start();
-
-        // Calculate which position they dragged to
-        const itemHeight = 60; // Height of each ranking item
-        const draggedPositions = Math.round(gesture.dy / itemHeight);
-        const newIndex = Math.max(0, Math.min(totalItems - 1, index + draggedPositions));
-
-        if (newIndex !== index) {
-          onReorder(item, newIndex);
-        }
-
-        // Reset position animation
-        Animated.spring(pan, {
-          toValue: { x: 0, y: 0 },
-          useNativeDriver: false,
-        }).start();
-      },
-    })
-  ).current;
-
-  return (
-    <Animated.View
-      {...panResponder.panHandlers}
-      style={[
-        styles.rankingItem,
-        {
-          transform: [
-            { translateY: pan.y },
-            { scale: scale }
-          ],
-        },
-      ]}
-    >
-      <View style={styles.rankBadge}>
-        <Text style={styles.rankNumber}>{index + 1}</Text>
-      </View>
-      <Text style={styles.rankingText}>{item}</Text>
-      <Text style={styles.dragHandle}>⋮⋮</Text>
-    </Animated.View>
-  );
 };
 
 export default function SurveyScreen({ onComplete }: { onComplete: () => void }) {
@@ -340,18 +257,6 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
       [newOrder[currentIndex], newOrder[currentIndex + 1]] = [newOrder[currentIndex + 1], newOrder[currentIndex]];
       setRewardTypes(newOrder);
     }
-  };
-
-  const moveRewardTypeToPosition = (type: string, newPosition: number) => {
-    const currentIndex = rewardTypes.indexOf(type);
-    if (currentIndex === -1 || currentIndex === newPosition) return;
-
-    const newOrder = [...rewardTypes];
-    // Remove from current position
-    const [item] = newOrder.splice(currentIndex, 1);
-    // Insert at new position
-    newOrder.splice(newPosition, 0, item);
-    setRewardTypes(newOrder);
   };
 
   const nextSlide = () => {
@@ -710,23 +615,6 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
             );
           })}
         </View>
-
-        {rewardTypes.length > 0 && (
-          <View style={styles.rankingSummary}>
-            <Text style={styles.rankingTitle}>Your ranking (drag to reorder):</Text>
-            <View style={styles.rankingList}>
-              {rewardTypes.map((item, index) => (
-                <DraggableRankingItem
-                  key={item}
-                  item={item}
-                  index={index}
-                  totalItems={rewardTypes.length}
-                  onReorder={moveRewardTypeToPosition}
-                />
-              ))}
-            </View>
-          </View>
-        )}
       </View>
     );
   };
@@ -1300,40 +1188,6 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontWeight: 'bold',
     fontSize: 16,
-  },
-  rankingSummary: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 24,
-    padding: 24,
-  },
-  rankingTitle: {
-    fontWeight: 'bold',
-    color: Colors.white,
-    marginBottom: 16,
-  },
-  rankingList: {
-    gap: 12,
-  },
-  rankingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
-  },
-  rankingText: {
-    color: Colors.white,
-    marginLeft: 12,
-    flex: 1,
-  },
-  dragHandle: {
-    color: Colors.white,
-    fontSize: 20,
-    marginLeft: 8,
-    opacity: 0.5,
   },
   ratingsList: {
     marginTop: 16,
