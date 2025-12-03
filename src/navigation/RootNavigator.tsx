@@ -3,7 +3,6 @@ import * as Location from 'expo-location';
 import * as Notifications from 'expo-notifications';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, DeviceEventEmitter, View, AppState, InteractionManager } from 'react-native';
-import DoorNotificationComponent from '../components/DoorNotification';
 import TutorialOverlay from '../components/TutorialOverlay';
 import { useAuth } from '../hooks/useAuth';
 import { useTutorial } from '../hooks/useTutorial';
@@ -28,7 +27,6 @@ export default function RootNavigator() {
   const { showTutorial, isLoading: tutorialLoading, completeTutorial, skipTutorial } = useTutorial();
   const [surveyCompleted, setSurveyCompleted] = useState<boolean | null>(null);
   const [checkingSurvey, setCheckingSurvey] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
 
   // Debug logs
   console.log('🔍 RootNavigator state:', {
@@ -177,7 +175,7 @@ export default function RootNavigator() {
     }
   }, [user?.id, surveyCompleted, showTutorial]);
 
-  // Register for push notifications and check notifications when user is authenticated
+  // Register for push notifications and run automatic notification checks when user is authenticated
   useEffect(() => {
     const initNotifications = async () => {
       if (user?.id && surveyCompleted && !showTutorial) {
@@ -186,34 +184,11 @@ export default function RootNavigator() {
           const { pushNotificationService } = await import('../services/pushNotificationService');
           await pushNotificationService.registerForPushNotifications(user.id);
 
-          // Check for existing unread notifications (excluding bonus notifications - they have their own popup)
-          const { notificationService } = await import('../services/notificationService');
-          const result = await notificationService.getUnreadNotifications(user.id);
-          if (result.data) {
-            // Filter out bonus notifications
-            const filteredNotifications = result.data.filter(n => 
-              !(n.distributor_name === 'OpenDoors' && n.reason === 'Bonus play available! Play any game for free.')
-            );
-            if (filteredNotifications.length > 0) {
-              setShowNotifications(true);
-            }
-          }
-
           // Run automatic notification checks (daily reset, expiring rewards, etc.)
           const { autoNotificationService } = await import('../services/autoNotificationService');
           await autoNotificationService.checkAllNotifications(user.id);
-          
-          // Re-check notifications after auto checks may have created new ones
-          const updatedResult = await notificationService.getUnreadNotifications(user.id);
-          if (updatedResult.data) {
-            // Filter out bonus notifications
-            const filteredNotifications = updatedResult.data.filter(n => 
-              !(n.distributor_name === 'OpenDoors' && n.reason === 'Bonus play available! Play any game for free.')
-            );
-            if (filteredNotifications.length > 0) {
-              setShowNotifications(true);
-            }
-          }
+
+          // Note: Door notification popups are now handled by HomeScreen
         } catch (error) {
           console.error('Error initializing notifications:', error);
         }
@@ -240,52 +215,7 @@ export default function RootNavigator() {
     }
   }, [user?.id, surveyCompleted, showTutorial]);
 
-  // Realtime: show notification popup immediately when a new door_notification is inserted for this user
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const channel = supabase
-      .channel(`door_notifications_${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'door_notifications',
-          filter: `user_id=eq.${user.id}`,
-        },
-        async () => {
-          // Check if it's a bonus notification - if so, don't show door notification popup
-          const { notificationService } = await import('../services/notificationService');
-          const result = await notificationService.getUnreadNotifications(user.id);
-          if (result.data) {
-            const filteredNotifications = result.data.filter(n => 
-              !(n.distributor_name === 'OpenDoors' && n.reason === 'Bonus play available! Play any game for free.')
-            );
-            if (filteredNotifications.length > 0) {
-              setShowNotifications(true);
-            }
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'earned_rewards',
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => {
-          setShowNotifications(true);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user?.id]);
+  // Note: Realtime door notification popups are now handled by HomeScreen
 
   // Handle survey completion
   const handleSurveyComplete = () => {
@@ -330,19 +260,15 @@ export default function RootNavigator() {
         <RootStack.Screen name="PrizeDetails" component={PrizeDetailsScreen} />
         <RootStack.Screen name="EarnedRewards" component={EarnedRewardsScreen} />
       </RootStack.Navigator>
-      
+
       {/* Tutorial Overlay */}
       <TutorialOverlay
         isVisible={showTutorial}
         onComplete={completeTutorial}
         onSkip={skipTutorial}
       />
-      
-      {/* Door Notifications */}
-      <DoorNotificationComponent
-        isVisible={showNotifications}
-        onClose={() => setShowNotifications(false)}
-      />
+
+      {/* Door Notifications are now handled by HomeScreen */}
     </>
   );
 }

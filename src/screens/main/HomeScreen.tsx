@@ -392,6 +392,7 @@ export default function HomeScreen() {
   const [showWatchAdModal, setShowWatchAdModal] = useState(false);
   const { user, session } = useAuth();
   const [showDoorNotifications, setShowDoorNotifications] = useState(false);
+  const [doorNotificationData, setDoorNotificationData] = useState<{ distributorName: string; doorsSent: number; reason?: string; notificationId: string } | null>(null);
   const [showBonusNotification, setShowBonusNotification] = useState(false);
   const [showEarnedRewardNotification, setShowEarnedRewardNotification] = useState(false);
   const [earnedRewardData, setEarnedRewardData] = useState<{ sourceName: string; doorsEarned: number } | null>(null);
@@ -471,22 +472,53 @@ export default function HomeScreen() {
 
   // Notifications: check unread on mount/login and subscribe to realtime inserts
   useEffect(() => {
+    // Helper to show a door notification with guards
+    const showDoorNotification = (notification: {
+      id: string;
+      distributor_name: string;
+      doors_sent: number;
+      reason?: string | null;
+    }) => {
+      // Guard: Don't show if already showing one
+      if (isShowingDoorNotificationRef.current) {
+        return;
+      }
+
+      // Guard: Validate data exists
+      if (!notification.distributor_name || !notification.doors_sent || notification.doors_sent <= 0) {
+        return;
+      }
+
+      isShowingDoorNotificationRef.current = true;
+
+      setDoorNotificationData({
+        distributorName: notification.distributor_name,
+        doorsSent: notification.doors_sent,
+        reason: notification.reason || undefined,
+        notificationId: notification.id
+      });
+      setShowDoorNotifications(true);
+    };
+
     const init = async () => {
       if (!user?.id) return;
+
       const result = await notificationService.getUnreadNotifications(user.id);
-      if (result.data) {
+      if (result.data && result.data.length > 0) {
         // Filter out bonus notifications - they have their own popup component
-        const filteredNotifications = result.data.filter(n => 
+        const filteredNotifications = result.data.filter(n =>
           !(n.distributor_name === 'OpenDoors' && n.reason === 'Bonus play available! Play any game for free.')
         );
+
         if (filteredNotifications.length > 0) {
-          setShowDoorNotifications(true);
+          showDoorNotification(filteredNotifications[0]);
         }
       }
     };
     init();
 
     if (!user?.id) return;
+
     const channel = supabase
       .channel(`home_notifications_${user.id}`)
       .on('postgres_changes', {
@@ -495,16 +527,19 @@ export default function HomeScreen() {
         table: 'door_notifications',
         filter: `user_id=eq.${user.id}`,
       }, async () => {
-        console.log('🔔 Door notification received via realtime!');
-        // Check if it's a bonus notification - if so, don't show door notification popup
+        // Guard: Don't process if already showing
+        if (isShowingDoorNotificationRef.current) {
+          return;
+        }
+
         const result = await notificationService.getUnreadNotifications(user.id);
-        if (result.data) {
+        if (result.data && result.data.length > 0) {
           const filteredNotifications = result.data.filter(n =>
             !(n.distributor_name === 'OpenDoors' && n.reason === 'Bonus play available! Play any game for free.')
           );
+
           if (filteredNotifications.length > 0) {
-            console.log('📣 Showing door notification modal');
-            setShowDoorNotifications(true);
+            showDoorNotification(filteredNotifications[0]);
           }
         }
       })
@@ -514,13 +549,9 @@ export default function HomeScreen() {
         table: 'earned_rewards',
         filter: `user_id=eq.${user.id}`,
       }, () => {
-        console.log('🎁 New earned reward received via realtime!');
-        setShowDoorNotifications(true);
-        loadEarnedRewards(); // Refresh the earned rewards count
+        loadEarnedRewards();
       })
-      .subscribe((status) => {
-        console.log('📡 Realtime subscription status:', status);
-      });
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
@@ -581,11 +612,14 @@ export default function HomeScreen() {
   }, [filteredGames]);
 
   const currentGameIsBonus = useRef(false);
+  const isShowingDoorNotificationRef = useRef(false);
 
   // Load earned rewards and update count
   const loadEarnedRewards = async () => {
-    if (!user?.id) return;
-    
+    if (!user?.id) {
+      return;
+    }
+
     try {
       const { data: rewards, error: rewardsError } = await earnedRewardsService.getUserEarnedRewards(user.id);
       if (rewardsError) {
@@ -623,6 +657,41 @@ export default function HomeScreen() {
       refreshListener.remove();
     };
   }, []);
+
+  // NUCLEAR TEST: Cleanup useEffect DISABLED
+  // useEffect(() => {
+  //   console.log('🔄 HomeScreen cleanup useEffect triggered');
+  //   console.log('  showDoorNotifications:', showDoorNotifications);
+  //   console.log('  doorNotificationData:', doorNotificationData ? 'exists' : 'null');
+  //   console.log('  cleanupInProgress:', cleanupInProgressRef.current);
+
+  //   if (!showDoorNotifications && doorNotificationData && !cleanupInProgressRef.current) {
+  //     console.log('🧹 HomeScreen - Modal just closed, starting cleanup');
+  //     cleanupInProgressRef.current = true;
+
+  //     // Modal just closed, do cleanup
+  //     const notificationId = doorNotificationData.notificationId;
+
+  //     console.log('🗑️ HomeScreen - Clearing doorNotificationData');
+  //     // Clear the data
+  //     setDoorNotificationData(null);
+
+  //     // Only mark as read - DON'T call loadEarnedRewards
+  //     // The realtime listener will handle updating earned rewards automatically
+  //     if (notificationId) {
+  //       console.log('📝 HomeScreen - Marking notification as read:', notificationId);
+  //       notificationService.markNotificationAsRead(notificationId)
+  //         .catch(err => console.error('❌ Error marking notification as read:', err));
+  //     }
+  //     console.log('✅ HomeScreen - Cleanup completed');
+
+  //     // Reset cleanup flag after a delay
+  //     setTimeout(() => {
+  //       console.log('🔓 HomeScreen - Cleanup flag reset, ready for next notification');
+  //       cleanupInProgressRef.current = false;
+  //     }, 500);
+  //   }
+  // }, [showDoorNotifications, doorNotificationData]);
 
   useEffect(() => {
     const fetchGames = async () => {
@@ -1016,8 +1085,6 @@ export default function HomeScreen() {
       if (referralGranted) {
         // Refresh earned rewards to show new door
         await loadEarnedRewards();
-        // Show referral notification popup immediately (no delay)
-        setShowDoorNotifications(true);
       }
 
       // Notify history screen to refresh immediately (game was recorded)
@@ -1449,11 +1516,6 @@ export default function HomeScreen() {
         onAdComplete={handleAdComplete}
       />
 
-      <DoorNotificationComponent
-        isVisible={showDoorNotifications}
-        onClose={() => setShowDoorNotifications(false)}
-      />
-
       <BonusPlayNotification
         isVisible={showBonusNotification}
         onClose={() => setShowBonusNotification(false)}
@@ -1468,6 +1530,35 @@ export default function HomeScreen() {
           }}
           sourceName={earnedRewardData.sourceName}
           doorsEarned={earnedRewardData.doorsEarned}
+        />
+      )}
+
+      {showDoorNotifications &&
+       doorNotificationData &&
+       doorNotificationData.distributorName &&
+       doorNotificationData.doorsSent > 0 && (
+        <DoorNotificationComponent
+          isVisible={true}
+          onClose={() => {
+            const notificationId = doorNotificationData.notificationId;
+
+            // Mark notification as read
+            if (notificationId) {
+              notificationService.markNotificationAsRead(notificationId)
+                .catch(err => console.error('Error marking notification as read:', err));
+            }
+
+            // Reset the guard ref so future notifications can show
+            isShowingDoorNotificationRef.current = false;
+
+            // Clear state
+            setShowDoorNotifications(false);
+            setDoorNotificationData(null);
+          }}
+          distributorName={doorNotificationData.distributorName}
+          doorsSent={doorNotificationData.doorsSent}
+          reason={doorNotificationData.reason}
+          notificationId={doorNotificationData.notificationId}
         />
       )}
     </SafeAreaView>
