@@ -83,9 +83,9 @@ export const userPreferencesService = {
 
   async saveSurveyAnswers(userId: string, answers: {
     reward_style: string;
-    reward_types: string[];
-    social_sharing: string;
-    category_ratings: Record<string, number>;
+    reward_types?: string[];
+    social_sharing?: string;
+    category_ratings?: Record<string, number>;
     discovery_source: string;
   }): Promise<{ error: string | null }> {
     try {
@@ -94,9 +94,9 @@ export const userPreferencesService = {
         .upsert({
           user_id: userId,
           reward_style: answers.reward_style,
-          reward_types: answers.reward_types,
-          social_sharing: answers.social_sharing,
-          category_ratings: answers.category_ratings,
+          reward_types: answers.reward_types || [],
+          social_sharing: answers.social_sharing || 'Not specified',
+          category_ratings: answers.category_ratings || {},
           discovery_source: answers.discovery_source,
         }, { onConflict: 'user_id' });
       if (error) {

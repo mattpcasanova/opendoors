@@ -78,20 +78,15 @@ const EarnRewardModal: React.FC<EarnRewardModalProps> = ({
     }
   }, [visible]);
 
-  // Use deep link for referral (works without website)
-  // Format: opendoors://signup?ref=CODE - navigates directly to signup with code
-  const deepLinkUrl = referralCode
+  // Generate deep link that opens directly to signup with referral code
+  const deepLink = referralCode
     ? `opendoors://signup?ref=${referralCode}`
     : 'opendoors://signup';
 
-  // Also generate web URL if configured (for future use with website)
-  const referralUrl = (Constants.expoConfig as any)?.extra?.referralUrl;
-  const webUrl = referralUrl && referralCode
-    ? `${referralUrl}/signup?ref=${referralCode}`
-    : null;
-
-  // Use deep link as primary, web URL as fallback if available
-  const shareUrl = deepLinkUrl;
+  // For sharing, use the deep link directly
+  // Note: This won't appear as clickable in Messages, but will work when manually opened
+  // Or we can provide a web URL that redirects to the deep link
+  const shareUrl = deepLink;
 
   const handleReferFriend = async () => {
     if (!referralCode) {
@@ -99,8 +94,11 @@ const EarnRewardModal: React.FC<EarnRewardModalProps> = ({
       return;
     }
 
-    // Updated message with deep link (works for testing and production)
+    // Updated message with web URL (clickable in text messages)
     const referralMessage = `Hey! I'm using OpenDoors - a fun game where you can win real prizes! Join me and we'll both get extra doors to play with.\n\nOpen this link: ${shareUrl}\n\nOr enter referral code: ${referralCode}`;
+
+    console.log('📎 Sharing referral with URL:', shareUrl);
+    console.log('📎 Full message:', referralMessage);
     
     try {
       const result = await Share.share({

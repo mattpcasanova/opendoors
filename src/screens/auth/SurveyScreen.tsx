@@ -4,8 +4,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import * as Notifications from 'expo-notifications';
 import {
-  ArrowDown,
-  ArrowUp,
   Car,
   Check,
   ChevronLeft,
@@ -105,13 +103,10 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [distance, setDistance] = useState('');
   const [rewardStyle, setRewardStyle] = useState('');
-  const [rewardTypes, setRewardTypes] = useState<string[]>([]);
-  const [socialSharing, setSocialSharing] = useState('');
-  const [ratings, setRatings] = useState<Record<string, number>>({});
   const [discovery, setDiscovery] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const totalSlides = 7;
+  const totalSlides = 4;
   const progressPercentage = (currentSlide / totalSlides) * 100;
 
   // Request location and push notification permissions
@@ -196,28 +191,6 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
     },
   ];
 
-  const rewardTypeOptions = [
-    { value: 'Free items', icon: 'Gift' },
-    { value: 'Percentage discounts', icon: 'Percent' },
-    { value: 'BOGO offers', icon: 'Repeat' },
-    { value: 'Exclusive experiences', icon: 'Crown' },
-    { value: 'Early access deals', icon: 'Zap' },
-  ];
-
-  const socialOptions = [
-    { value: "Yes, I'd love to share", icon: 'Volume2', description: 'Share the excitement!' },
-    { value: 'Maybe occasionally', icon: 'MessageCircle', description: 'Sometimes' },
-    { value: 'Prefer to keep private', icon: 'Lock', description: 'Just for me' },
-  ];
-
-  const ratingCategories = [
-    'Quick meals & snacks',
-    'Sit-down dining experiences',
-    'Retail shopping deals',
-    'Tech & electronics',
-    'Local services (spa, salon, etc.)',
-    'Experiences & activities',
-  ];
 
   const discoveryOptions = [
     { value: 'Social media', icon: 'Smartphone' },
@@ -232,31 +205,6 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
     setSelectedCategories((prev) =>
       prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category],
     );
-  };
-
-  const handleRewardTypeToggle = (type: string) => {
-    setRewardTypes((prev) => {
-      if (prev.includes(type)) {
-        // Remove the item - all items below move up
-        return prev.filter((t) => t !== type);
-      } else {
-        // Add to the end of the list
-        return [...prev, type];
-      }
-    });
-  };
-
-  const moveRewardType = (type: string, direction: 'up' | 'down') => {
-    const currentIndex = rewardTypes.indexOf(type);
-    if (direction === 'up' && currentIndex > 0) {
-      const newOrder = [...rewardTypes];
-      [newOrder[currentIndex], newOrder[currentIndex - 1]] = [newOrder[currentIndex - 1], newOrder[currentIndex]];
-      setRewardTypes(newOrder);
-    } else if (direction === 'down' && currentIndex < rewardTypes.length - 1) {
-      const newOrder = [...rewardTypes];
-      [newOrder[currentIndex], newOrder[currentIndex + 1]] = [newOrder[currentIndex + 1], newOrder[currentIndex]];
-      setRewardTypes(newOrder);
-    }
   };
 
   const nextSlide = () => {
@@ -293,16 +241,6 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
       return;
     }
 
-    if (rewardTypes.length === 0) {
-      Alert.alert('Error', 'Please select at least one reward type.');
-      return;
-    }
-
-    if (!socialSharing) {
-      Alert.alert('Error', 'Please select a social sharing preference.');
-      return;
-    }
-
     if (!discovery) {
       Alert.alert('Error', 'Please select how you discovered OpenDoors.');
       return;
@@ -322,9 +260,6 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
       // Save user_survey_answers
       const surveyAnswers = {
         reward_style: rewardStyle,
-        reward_types: rewardTypes,
-        social_sharing: socialSharing,
-        category_ratings: ratings,
         discovery_source: discovery,
       };
       await userPreferencesService.saveSurveyAnswers(user.id, surveyAnswers);
@@ -523,206 +458,8 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
     </View>
   );
 
-  const renderSlide4 = () => {
-    // Sort options: selected items by rank order first, then unselected items
-    const sortedOptions = [...rewardTypeOptions].sort((a, b) => {
-      const aSelected = rewardTypes.includes(a.value);
-      const bSelected = rewardTypes.includes(b.value);
 
-      if (aSelected && bSelected) {
-        // Both selected: sort by rank position
-        return rewardTypes.indexOf(a.value) - rewardTypes.indexOf(b.value);
-      } else if (aSelected) {
-        // Only a is selected: a comes first
-        return -1;
-      } else if (bSelected) {
-        // Only b is selected: b comes first
-        return 1;
-      } else {
-        // Neither selected: maintain original order
-        return 0;
-      }
-    });
-
-    return (
-      <View style={styles.slideContainer}>
-        <View style={styles.slideHeader}>
-          <Text style={styles.slideTitle}>Rank your favorites</Text>
-          <Text style={styles.slideSubtitle}>Tap to select (ranks 1-5 in order)</Text>
-        </View>
-
-        <View style={styles.optionsList}>
-          {sortedOptions.map((option) => {
-            const isSelected = rewardTypes.includes(option.value);
-            const rankPosition = isSelected ? rewardTypes.indexOf(option.value) + 1 : null;
-
-            return (
-              <Animated.View
-                key={option.value}
-                style={[
-                  styles.optionCard,
-                  isSelected && styles.optionCardSelected
-                ]}
-              >
-                <View style={[styles.optionContent, { flexWrap: 'nowrap' }]}>
-                  <TouchableOpacity
-                    onPress={() => handleRewardTypeToggle(option.value)}
-                    style={{ flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 0 }}
-                  >
-                    <View style={[styles.optionIconContainerOuter, { marginRight: 12, flexShrink: 0 }]}>
-                      <View style={styles.optionIconContainer}>
-                        <IconComponent
-                          name={option.icon}
-                          size={24}
-                          color={isSelected ? Colors.primary : Colors.white}
-                        />
-                      </View>
-                    </View>
-                    <Text
-                      numberOfLines={1}
-                      adjustsFontSizeToFit
-                      minimumFontScale={0.85}
-                      style={[
-                        styles.optionTitle,
-                        isSelected && styles.optionTitleSelected,
-                        { marginBottom: 0 }
-                      ]}
-                    >
-                      {option.value}
-                    </Text>
-                  </TouchableOpacity>
-
-                  {isSelected && (
-                    <View style={[styles.rankingControls, { marginLeft: 8, flexShrink: 0 }]}>
-                      <View style={styles.arrowButtons}>
-                        <TouchableOpacity
-                          onPress={() => moveRewardType(option.value, 'up')}
-                          disabled={rankPosition === 1}
-                          style={[
-                            styles.arrowButton,
-                            rankPosition === 1 && styles.arrowButtonDisabled
-                          ]}
-                        >
-                          <ArrowUp size={16} color={rankPosition === 1 ? Colors.gray400 : Colors.gray500} />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={() => moveRewardType(option.value, 'down')}
-                          disabled={rankPosition === rewardTypes.length}
-                          style={[
-                            styles.arrowButton,
-                            rankPosition === rewardTypes.length && styles.arrowButtonDisabled
-                          ]}
-                        >
-                          <ArrowDown size={16} color={rankPosition === rewardTypes.length ? Colors.gray400 : Colors.gray500} />
-                        </TouchableOpacity>
-                      </View>
-                      <View style={styles.rankBadge}>
-                        <Text style={styles.rankNumber}>{rankPosition}</Text>
-                      </View>
-                    </View>
-                  )}
-                </View>
-              </Animated.View>
-            );
-          })}
-        </View>
-      </View>
-    );
-  };
-
-  const renderSlide5 = () => (
-    <View style={styles.slideContainer}>
-      <View style={styles.slideHeader}>
-        <Text style={styles.slideTitle}>Share your wins?</Text>
-        <Text style={styles.slideSubtitle}>How social do you want to be?</Text>
-      </View>
-
-      <View style={styles.optionsList}>
-        {socialOptions.map((option) => (
-          <TouchableOpacity
-            key={option.value}
-            onPress={() => setSocialSharing(option.value)}
-            style={[
-              styles.optionCard,
-              socialSharing === option.value && styles.optionCardSelected
-            ]}
-            activeOpacity={0.8}
-          >
-            <View style={styles.optionContent}>
-              <View style={styles.optionIconContainerOuter}>
-                <View style={styles.optionIconContainer}>
-                  <IconComponent
-                    name={option.icon}
-                    size={24}
-                    color={socialSharing === option.value ? Colors.primary : Colors.white}
-                  />
-                </View>
-              </View>
-              <View style={styles.optionTextContainer}>
-                <Text style={[
-                  styles.optionTitle,
-                  socialSharing === option.value && styles.optionTitleSelected
-                ]}>
-                  {option.value}
-                </Text>
-                <Text style={[
-                  styles.optionDescription,
-                  socialSharing === option.value && styles.optionDescriptionSelected
-                ]}>
-                  {option.description}
-                </Text>
-              </View>
-              {socialSharing === option.value && (
-                <View style={styles.checkmarkContainer}>
-                  <Check size={20} color={Colors.white} />
-                </View>
-              )}
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </View>
-  );
-
-  const renderSlide6 = () => (
-    <View style={styles.slideContainer}>
-      <View style={styles.slideHeader}>
-        <Text style={styles.slideTitle}>Rate your interests</Text>
-        <Text style={styles.slideSubtitle}>1 = Not interested, 7 = Very interested</Text>
-      </View>
-
-      <View style={styles.ratingsList}>
-        {ratingCategories.map((category) => (
-          <View key={category} style={styles.ratingCard}>
-            <Text style={styles.ratingTitle}>{category}</Text>
-            <View style={styles.ratingButtonsContainer}>
-              {[1, 2, 3, 4, 5, 6, 7].map((rating) => (
-                <TouchableOpacity
-                  key={rating}
-                  onPress={() => setRatings((prev) => ({ ...prev, [category]: rating }))}
-                  style={[
-                    styles.ratingButton,
-                    ratings[category] === rating && styles.ratingButtonSelected,
-                  ]}
-                >
-                  <Text 
-                    style={[
-                      styles.ratingButtonText,
-                      ratings[category] === rating && styles.ratingButtonTextSelected,
-                    ]}
-                  >
-                    {rating}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-
-  const renderSlide7 = () => (
+  const renderSlide4 = () => (
     <View style={styles.slideContainer}>
       <View style={styles.slideHeader}>
         <Text style={styles.slideTitle}>How did you find us?</Text>
@@ -786,12 +523,6 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
         return renderSlide3();
       case 4:
         return renderSlide4();
-      case 5:
-        return renderSlide5();
-      case 6:
-        return renderSlide6();
-      case 7:
-        return renderSlide7();
       default:
         return renderSlide1();
     }

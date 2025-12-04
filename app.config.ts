@@ -20,6 +20,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.opendoors.app',
+    associatedDomains: [
+      'applinks:opendoorsgame.com',
+      'applinks:www.opendoorsgame.com'
+    ],
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false
     }
