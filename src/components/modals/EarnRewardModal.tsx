@@ -5,6 +5,7 @@ import {
     Alert,
     Animated,
     Dimensions,
+    Linking,
     Modal,
     Share,
     StyleSheet,
@@ -12,6 +13,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import Constants from 'expo-constants';
 import { useAuth } from '../../hooks/useAuth';
 import { analyticsService } from '../../services/analyticsService';
@@ -125,12 +127,18 @@ const EarnRewardModal: React.FC<EarnRewardModalProps> = ({
         "Share this message with your friend:\n\n" + referralMessage,
         [
           { text: "Cancel", style: "cancel" },
-          { 
-            text: "Copy Link", 
-            onPress: () => {
-              // Show link in alert - user can manually copy
-              // When website is live, we can add proper clipboard support
-              Alert.alert('Referral Link', `${shareUrl}\n\nOr share code: ${referralCode}`, [
+          {
+            text: "Copy Link",
+            onPress: async () => {
+              // Copy link to clipboard
+              await Clipboard.setStringAsync(shareUrl);
+              Alert.alert('Link Copied!', `Referral link copied to clipboard:\n${shareUrl}\n\nOr share code: ${referralCode}`, [
+                {
+                  text: 'Open Link',
+                  onPress: () => {
+                    Linking.openURL(shareUrl).catch(err => console.error('Error opening link:', err));
+                  }
+                },
                 { text: 'OK' }
               ]);
               // Reward is granted when friend plays first game

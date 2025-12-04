@@ -70,14 +70,16 @@ class ReferralService {
     try {
       console.log('🔍 Looking up referrer with code:', referrerCode);
 
-      // Find referrer by code
-      const { data: referrerProfile, error: findError } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('referral_code', referrerCode)
-        .single();
+      // Find referrer by code using RPC function (bypasses RLS for unauthenticated users)
+      const { data: referrerData, error: findError } = await supabase
+        .rpc('get_user_id_by_referral_code', { code: referrerCode });
 
-      console.log('📋 Referrer lookup result:', { referrerProfile, error: findError });
+      console.log('📋 Referrer lookup result:', { referrerData, error: findError });
+
+      // Extract the user_id from the result
+      const referrerProfile = referrerData && referrerData.length > 0
+        ? { id: referrerData[0].user_id }
+        : null;
 
       if (findError || !referrerProfile) {
         console.warn('❌ Referrer not found for code:', referrerCode, 'Error:', findError);
@@ -143,8 +145,10 @@ class ReferralService {
    * Check if this is user's first game and grant referral rewards if applicable
    */
   async checkAndGrantReferralRewards(userId: string): Promise<{ granted: boolean; error: string | null }> {
+    console.log('🎁 ============ REFERRAL REWARD CHECK START ============');
+    console.log('🎁 Checking referral rewards for user:', userId);
+
     try {
-      console.log('🎁 Checking referral rewards for user:', userId);
 
       // First, check if this is actually the first game
       const { count: gameCount, error: countError } = await supabase
@@ -152,7 +156,7 @@ class ReferralService {
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId);
 
-      console.log('🎮 Game count:', gameCount, 'Error:', countError);
+      console.log('🎮 Game count for user:', gameCount, 'Error:', countError);
 
       if (countError) {
         console.warn('⚠️ Error checking game count:', countError);
@@ -161,12 +165,14 @@ class ReferralService {
       // If user has played more than 1 game (this current one), skip referral check
       // We check > 1 because the current game was just recorded
       if (gameCount && gameCount > 1) {
-        console.log('⏭️ Skipping referral check - user has played', gameCount, 'games');
+        console.log('⏭️ Skipping referral check - user has already played', gameCount, 'games (not first game)');
         return { granted: false, error: null };
       }
 
+      console.log('✅ This IS the first game (count =', gameCount, ')');
+
       // Check if user was referred and hasn't played first game yet
-      console.log('🔍 Looking for referral record for referred_id:', userId);
+      console.log('🔍 Looking for referral record where referred_id =', userId);
       const { data: referral, error: refError } = await supabase
         .from('referrals')
         .select('*')
@@ -174,10 +180,19 @@ class ReferralService {
         .eq('referred_played_first_game', false)
         .single();
 
-      console.log('📋 Referral lookup result:', { referral, error: refError });
+      console.log('📋 Referral lookup result:', JSON.stringify({ referral, error: refError }, null, 2));
 
-      if (refError || !referral) {
-        console.log('❌ No referral found or already rewarded');
+      if (refError) {
+        console.log('❌ Error looking up referral:', refError);
+        console.log('❌ Error code:', refError.code);
+        console.log('❌ Error message:', refError.message);
+        console.log('❌ Error details:', refError.details);
+        console.log('❌ Error hint:', refError.hint);
+        return { granted: false, error: refError.message };
+      }
+
+      if (!referral) {
+        console.log('❌ No referral found - user may not have been referred or already rewarded');
         return { granted: false, error: null };
       }
 
@@ -227,19 +242,22 @@ class ReferralService {
         : 'Your friend';
 
       // Grant reward to referrer
+      console.log('🎁 Granting reward to REFERRER:', referrerId);
       if (!referral.referrer_rewarded) {
-        await earnedRewardsService.addReferralReward(
+        const referrerRewardResult = await earnedRewardsService.addReferralReward(
           referrerId,
           referredName
         );
+        console.log('✅ Referrer reward result:', referrerRewardResult);
 
         // Create notification for referrer
-        await notificationService.createDoorNotification(
+        const referrerNotifResult = await notificationService.createDoorNotification(
           referrerId,
           'OpenDoors',
           1,
           `Your friend ${referredName} played their first game! You both earned +1 door.`
         );
+        console.log('✅ Referrer notification result:', referrerNotifResult);
 
         // Send push notification only to the referrer (not a local notification)
         // Only send if this is the logged-in user on this device
@@ -260,19 +278,22 @@ class ReferralService {
       }
 
       // Grant reward to referred user
+      console.log('🎁 Granting reward to REFERRED USER:', referredId);
       if (!referral.referred_rewarded) {
-        await earnedRewardsService.addReferralReward(
+        const referredRewardResult = await earnedRewardsService.addReferralReward(
           referredId,
           referrerName
         );
+        console.log('✅ Referred user reward result:', referredRewardResult);
 
         // Create notification for referred user
-        await notificationService.createDoorNotification(
+        const referredNotifResult = await notificationService.createDoorNotification(
           referredId,
           'OpenDoors',
           1,
           `Thanks for joining! You and ${referrerName} both earned +1 door for playing your first game.`
         );
+        console.log('✅ Referred user notification result:', referredNotifResult);
 
         // Send push notification only to the referred user (not a local notification)
         // Only send if this is the logged-in user on this device
