@@ -110,8 +110,10 @@ export default function GameScreen({
       case 'montyReveal':
         if (doorCount === 3) {
           return `You chose Door ${selectedDoor}. Would you like to switch to the other unopened door?`;
+        } else if (switchPickMode) {
+          return `Click on any unopened door to switch to it`;
         } else {
-          return `You chose Door ${selectedDoor}. I've revealed one goat. Would you like to switch to one of the other unopened doors?`;
+          return `You chose Door ${selectedDoor}. I've revealed one goat. Would you like to switch or stay?`;
         }
       case 'finalChoice':
         return `You ${switchedChoice ? 'switched to' : 'stayed with'} Door ${selectedDoor}. Click it to see what's behind your door.`;
@@ -246,7 +248,49 @@ export default function GameScreen({
   const handleSwitchPick = (doorNumber: number) => {
     setSelectedDoor(doorNumber);
     setSwitchPickMode(false);
-    setGameStage('finalChoice');
+    setSwitchedChoice(true);
+    setChoiceLocked(true);
+
+    // Immediately open the selected door and show results
+    const won = doorNumber === prizeLocation;
+    openDoor(doorNumber);
+
+    // Set game stage to result
+    setGameStage('result');
+
+    // Reveal all remaining doors after a delay
+    setTimeout(() => {
+      const allRemainingDoors: number[] = [];
+      for (let i = 1; i <= doorCount; i++) {
+        if (i !== doorNumber && !revealedDoors.includes(i)) {
+          allRemainingDoors.push(i);
+          openDoor(i);
+        }
+      }
+      // Update revealedDoors state to include all doors
+      setRevealedDoors(prev => [...prev, doorNumber, ...allRemainingDoors]);
+    }, 500);
+
+    // Show result message after door animation completes
+    setTimeout(() => {
+      const message = won ?
+        `Congratulations! You won the ${prizeName}!` :
+        'Sorry! Better luck next time!';
+
+      setGameResult({ won, message });
+    }, 2100);
+
+    // Call completion callback
+    setTimeout(() => {
+      onGameComplete?.(
+        won,
+        true, // switched = true
+        doorNumber,
+        prizeLocation,
+        revealedDoors.length > 0 ? revealedDoors[0] : null,
+        0 // no timer tracking
+      );
+    }, 2000);
   };
 
   const getDoorContent = (doorNumber: number): { type: 'icon'; name: string; color: string } | null => {
@@ -276,44 +320,42 @@ export default function GameScreen({
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
+      {/* Consolidated Header with Prize Info */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={Colors.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{locationName}</Text>
+
+        <View style={styles.headerContent}>
+          <View style={[
+            styles.headerIconContainer,
+            logoUrl && { backgroundColor: 'transparent' }
+          ]}>
+            {logoUrl ? (
+              <Image
+                source={{ uri: logoUrl }}
+                style={styles.headerLogo}
+                resizeMode="contain"
+              />
+            ) : (
+              <Ionicons name="gift" size={20} color={Colors.primary} />
+            )}
+          </View>
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.headerTitle} numberOfLines={1}>{prizeName}</Text>
+            <Text style={styles.headerSubtitle} numberOfLines={1}>{locationName}</Text>
+          </View>
+        </View>
+
         <View style={styles.headerSpacer} />
       </View>
 
       {/* Game Content */}
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: Spacing.xl }}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: Spacing.md }}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.gameContainer}>
-          {/* Prize Preview */}
-          <View style={styles.prizePreview}>
-            <View style={[
-              styles.prizeIconContainer,
-              logoUrl && { backgroundColor: 'transparent' }
-            ]}>
-              {logoUrl ? (
-                <View style={styles.logoShadowContainer}>
-                  <Image
-                    source={{ uri: logoUrl }}
-                    style={styles.companyLogo}
-                    resizeMode="contain"
-                  />
-                </View>
-              ) : (
-                <Ionicons name="gift" size={32} color={Colors.primary} />
-              )}
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.prizePreviewTitle}>{prizeName}</Text>
-              <Text style={styles.prizePreviewSubtitle}>{prizeDescription}</Text>
-            </View>
-          </View>
 
           <View style={styles.instructionsContainer}>
             <Ionicons
@@ -386,38 +428,7 @@ export default function GameScreen({
                 </TouchableOpacity>
               </>
             )}
-            {gameStage === 'montyReveal' && switchPickMode && (
-              <View style={{ width: '100%', alignItems: 'center', flex: 1 }}>
-                <Text style={{ fontSize: 16, color: Colors.gray900, marginBottom: 16, fontWeight: '600' }}>
-                  Pick a door to switch to:
-                </Text>
-                <ScrollView
-                  style={{ maxHeight: 220, width: '100%' }}
-                  contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 12 }}
-                  showsVerticalScrollIndicator={false}
-                >
-                  {availableSwitchDoors.map(doorNum => (
-                    <TouchableOpacity
-                      key={doorNum}
-                      style={{
-                        backgroundColor: Colors.primary,
-                        borderRadius: BorderRadius.md,
-                        paddingVertical: 18,
-                        paddingHorizontal: 28,
-                        margin: 8,
-                        ...Shadows.md,
-                      }}
-                      onPress={() => handleSwitchPick(doorNum)}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={{ color: Colors.white, fontSize: 16, fontWeight: '600' }}>
-                        Door {doorNum}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
+            {/* No buttons shown when in switchPickMode - user clicks door directly */}
           </View>
 
           {/* Compact Result Banner */}
@@ -461,7 +472,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     justifyContent: 'space-between' as const,
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: Colors.gray200,
@@ -469,72 +480,58 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   backButton: {
     padding: 8,
+    marginRight: 8,
+  } as ViewStyle,
+  headerContent: {
+    flex: 1,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    minWidth: 0,
+  } as ViewStyle,
+  headerIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.primaryLight,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    marginRight: Spacing.md,
+    flexShrink: 0,
+  } as ViewStyle,
+  headerLogo: {
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.full,
+  },
+  headerTextContainer: {
+    flex: 1,
+    minWidth: 0,
   } as ViewStyle,
   headerTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '600' as const,
     color: Colors.gray900,
+    marginBottom: 2,
+  } as TextStyle,
+  headerSubtitle: {
+    fontSize: 14,
+    color: Colors.gray600,
   } as TextStyle,
   headerSpacer: {
     width: 40,
   } as ViewStyle,
   gameContainer: {
     flex: 1,
-    padding: Spacing.lg,
+    padding: Spacing.md,
+    paddingTop: Spacing.md,
   } as ViewStyle,
-  prizePreview: {
-    backgroundColor: Colors.white,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    marginBottom: Spacing.lg,
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    ...Shadows.sm,
-    borderWidth: 1,
-    borderColor: Colors.gray100,
-  } as ViewStyle,
-  prizeIconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.primaryLight,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    marginRight: Spacing.md,
-  } as ViewStyle,
-  logoShadowContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.white,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 4,
-    overflow: 'hidden',
-  } as ViewStyle,
-  companyLogo: {
-    width: '100%',
-    height: '100%',
-  },
-  prizePreviewTitle: {
-    fontSize: 18,
-    fontWeight: '700' as const,
-    color: Colors.gray900,
-    marginBottom: 4,
-  } as TextStyle,
-  prizePreviewSubtitle: {
-    fontSize: 14,
-    color: Colors.gray600,
-  } as TextStyle,
   instructionsContainer: {
     backgroundColor: Colors.white,
     padding: Spacing.lg,
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
     borderColor: Colors.gray100,
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.md,
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     ...Shadows.sm,
@@ -547,14 +544,14 @@ const styles = StyleSheet.create({
   } as TextStyle,
   doorsContainer: {
     alignItems: 'center' as const,
-    marginVertical: 25,
+    marginVertical: Spacing.xl,
     width: '100%',
   } as ViewStyle,
   doorRow: {
     flexDirection: 'row' as const,
     justifyContent: 'center' as const,
-    gap: 12,
-    marginBottom: 20,
+    gap: 16,
+    marginBottom: 16,
     width: '100%',
     paddingHorizontal: 10,
   } as ViewStyle,
@@ -567,7 +564,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row' as const,
     justifyContent: 'center' as const,
     gap: Spacing.md,
-    marginTop: Spacing.xl,
+    marginTop: Spacing.lg,
   } as ViewStyle,
   gameButton: {
     flexDirection: 'row' as const,
