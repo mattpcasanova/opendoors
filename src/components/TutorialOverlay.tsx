@@ -17,6 +17,7 @@ import {
     Dimensions,
     Image,
     Platform,
+    ScrollView,
     StatusBar,
     StyleSheet,
     Text,
@@ -187,55 +188,62 @@ export default function TutorialOverlay({ isVisible, onComplete, onSkip }: Tutor
             </Text>
           </View>
 
-          {/* Step Content */}
-          <View style={styles.stepContent}>
-            <View style={styles.iconContainerOuter}>
-              {step.icon === 'logo' ? (
-                <BlurView
-                  intensity={Platform.OS === 'ios' ? 95 : 100}
-                  tint="light"
-                  style={styles.iconContainer}
-                >
-                  <View style={styles.iconOverlay} pointerEvents="none" />
-                  <Image
-                    source={require('../../assets/images/OpenDoorsLogo.png')}
-                    style={styles.logoImage}
-                  />
-                </BlurView>
-              ) : (
-                <View style={styles.iconContainer}>
-                  {step.icon === 'play-circle' ? (
-                    <PlayCircle size={60} color={Colors.white} />
-                  ) : step.icon === 'list' ? (
-                    <List size={60} color={Colors.white} />
-                  ) : step.icon === 'gamepad2' ? (
-                    <Gamepad2 size={60} color={Colors.white} />
-                  ) : step.icon === 'gift' ? (
-                    <Gift size={60} color={Colors.white} />
-                  ) : step.icon === 'plus-circle' ? (
-                    <PlusCircle size={60} color={Colors.white} />
-                  ) : step.icon === 'check-circle' ? (
-                    <CheckCircle size={60} color={Colors.white} />
-                  ) : null}
+          {/* Step Content - Scrollable */}
+          <ScrollView
+            style={styles.scrollContainer}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={true}
+            persistentScrollbar={true}
+          >
+            <View style={styles.stepContent}>
+              <View style={styles.iconContainerOuter}>
+                {step.icon === 'logo' ? (
+                  <BlurView
+                    intensity={Platform.OS === 'ios' ? 95 : 100}
+                    tint="light"
+                    style={styles.iconContainer}
+                  >
+                    <View style={styles.iconOverlay} pointerEvents="none" />
+                    <Image
+                      source={require('../../assets/images/OpenDoorsLogo.png')}
+                      style={styles.logoImage}
+                    />
+                  </BlurView>
+                ) : (
+                  <View style={styles.iconContainer}>
+                    {step.icon === 'play-circle' ? (
+                      <PlayCircle size={60} color={Colors.white} />
+                    ) : step.icon === 'list' ? (
+                      <List size={60} color={Colors.white} />
+                    ) : step.icon === 'gamepad2' ? (
+                      <Gamepad2 size={60} color={Colors.white} />
+                    ) : step.icon === 'gift' ? (
+                      <Gift size={60} color={Colors.white} />
+                    ) : step.icon === 'plus-circle' ? (
+                      <PlusCircle size={60} color={Colors.white} />
+                    ) : step.icon === 'check-circle' ? (
+                      <CheckCircle size={60} color={Colors.white} />
+                    ) : null}
+                  </View>
+                )}
+              </View>
+
+              <Text style={styles.stepTitle}>{step.title}</Text>
+              <Text style={styles.stepDescription}>{step.description}</Text>
+
+              {/* Mini Game for Step 4 */}
+              {step.id === 4 && (
+                <View style={styles.miniGameContainer}>
+                  <MiniGame onComplete={() => setCurrentStep(currentStep + 1)} />
                 </View>
               )}
+
+              {/* Visual Components for Steps 2, 3, 5, 6 */}
+              {(step.id === 2 || step.id === 3 || step.id === 5 || step.id === 6) && (
+                <TutorialVisuals stepId={step.id} />
+              )}
             </View>
-            
-            <Text style={styles.stepTitle}>{step.title}</Text>
-            <Text style={styles.stepDescription}>{step.description}</Text>
-            
-            {/* Mini Game for Step 4 */}
-            {step.id === 4 && (
-              <View style={styles.miniGameContainer}>
-                <MiniGame onComplete={() => setCurrentStep(currentStep + 1)} />
-              </View>
-            )}
-            
-            {/* Visual Components for Steps 2, 3, 5, 6 */}
-            {(step.id === 2 || step.id === 3 || step.id === 5 || step.id === 6) && (
-              <TutorialVisuals stepId={step.id} />
-            )}
-          </View>
+          </ScrollView>
 
           {/* Navigation Buttons */}
           <View style={styles.navigationContainer}>
@@ -339,9 +347,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '600',
   },
+  scrollContainer: {
+    maxHeight: height * 0.5,
+    marginBottom: 24,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
   stepContent: {
     alignItems: 'center',
-    marginBottom: 32,
+    paddingBottom: 16,
   },
   iconContainerOuter: {
     width: 120,
@@ -392,26 +407,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 12,
+    gap: 16,
   },
   previousButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
     paddingVertical: 12,
     backgroundColor: Colors.white,
     borderRadius: 25,
-    gap: 8,
+    gap: 6,
     shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 4,
     minHeight: 48,
+    maxWidth: '45%',
   },
   previousText: {
     color: Colors.primary,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
   },
   nextButtonContainer: {
@@ -421,7 +437,7 @@ const styles = StyleSheet.create({
   nextButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
     paddingVertical: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: 25,
@@ -434,6 +450,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 6,
     minHeight: 48,
+    maxWidth: '100%',
   },
   finishButton: {
     backgroundColor: Colors.success,

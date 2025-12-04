@@ -178,8 +178,8 @@ export default function SignupScreen() {
     }
 
     // Password validation
-    if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters long');
+    if (password.length < 8) {
+      Alert.alert('Error', 'Password must be at least 8 characters long');
       return;
     }
 
@@ -520,7 +520,7 @@ export default function SignupScreen() {
                         onSubmitEditing={() => confirmPasswordRef.current?.focus()}
                         blurOnSubmit={false}
                       />
-                      <TouchableOpacity 
+                      <TouchableOpacity
                         onPress={() => setShowPassword(!showPassword)}
                         style={styles.eyeButton}
                         activeOpacity={0.7}
@@ -528,6 +528,7 @@ export default function SignupScreen() {
                         {showPassword ? <EyeOff size={20} color={Colors.gray500} /> : <Eye size={20} color={Colors.gray500} />}
                       </TouchableOpacity>
                     </View>
+                    <Text style={styles.inputHint}>Must be at least 8 characters</Text>
                   </View>
 
                   {/* Confirm Password Field */}
@@ -824,6 +825,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.gray700,
     marginBottom: 8,
+  },
+  inputHint: {
+    fontSize: 12,
+    color: Colors.gray500,
+    marginTop: 6,
   },
   helperText: {
     fontSize: 12,

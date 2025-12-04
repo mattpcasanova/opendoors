@@ -219,7 +219,7 @@ export default function ProfileScreen() {
     { id: 'help', label: 'Help & Support', icon: 'help-circle', type: 'navigate' },
     { id: 'terms', label: 'Terms of Service', icon: 'document-text', type: 'navigate' },
     { id: 'privacy', label: 'Privacy Policy', icon: 'shield', type: 'navigate' },
-    { id: 'about', label: 'About Open Doors', icon: 'information-circle', type: 'navigate' },
+    { id: 'about', label: 'About OpenDoors', icon: 'information-circle', type: 'navigate' },
   ];
 
   // Add state variables
@@ -357,8 +357,8 @@ export default function ProfileScreen() {
         break;
       case 'about':
         Alert.alert(
-          'About Open Doors',
-          `Version: 1.0.0\nBuild: 2024.1\n\nOpen Doors is a gamified rewards platform that lets you win real prizes from local businesses through probability-based door games.\n\n© 2024 Open Doors Inc.`,
+          'About OpenDoors',
+          `Version: 1.0.0\nBuild: 2024.1\n\nOpenDoors is a gamified rewards platform that lets you win real prizes from local businesses through probability-based door games.\n\n© 2024 OpenDoors Inc.`,
           [{ text: 'OK' }]
         );
         break;
@@ -1177,7 +1177,7 @@ export default function ProfileScreen() {
               fontSize: 12,
               color: Colors.gray500
             }}>
-              Open Doors v1.0.0
+              OpenDoors v1.0.0
             </Text>
           </View>
         </ScrollView>

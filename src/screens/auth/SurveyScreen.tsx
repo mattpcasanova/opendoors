@@ -304,7 +304,7 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
     }
 
     if (!discovery) {
-      Alert.alert('Error', 'Please select how you discovered Open Doors.');
+      Alert.alert('Error', 'Please select how you discovered OpenDoors.');
       return;
     }
 
@@ -389,10 +389,15 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
                   />
                 </View>
               </View>
-              <Text style={[
-                styles.categoryLabel,
-                selectedCategories.includes(category.key) && styles.categoryLabelSelected
-              ]}>
+              <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+                style={[
+                  styles.categoryLabel,
+                  selectedCategories.includes(category.key) && styles.categoryLabelSelected
+                ]}
+              >
                 {category.label}
               </Text>
               <View style={[
@@ -559,12 +564,12 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
                   isSelected && styles.optionCardSelected
                 ]}
               >
-                <View style={styles.optionContent}>
+                <View style={[styles.optionContent, { flexWrap: 'nowrap' }]}>
                   <TouchableOpacity
                     onPress={() => handleRewardTypeToggle(option.value)}
-                    style={[styles.optionTextContainer, { flexDirection: 'row', alignItems: 'center' }]}
+                    style={{ flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 0 }}
                   >
-                    <View style={[styles.optionIconContainerOuter, { marginRight: 12 }]}>
+                    <View style={[styles.optionIconContainerOuter, { marginRight: 12, flexShrink: 0 }]}>
                       <View style={styles.optionIconContainer}>
                         <IconComponent
                           name={option.icon}
@@ -573,16 +578,22 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
                         />
                       </View>
                     </View>
-                    <Text style={[
-                      styles.optionTitle,
-                      isSelected && styles.optionTitleSelected
-                    ]}>
+                    <Text
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.85}
+                      style={[
+                        styles.optionTitle,
+                        isSelected && styles.optionTitleSelected,
+                        { marginBottom: 0 }
+                      ]}
+                    >
                       {option.value}
                     </Text>
                   </TouchableOpacity>
 
                   {isSelected && (
-                    <View style={styles.rankingControls}>
+                    <View style={[styles.rankingControls, { marginLeft: 8, flexShrink: 0 }]}>
                       <View style={styles.arrowButtons}>
                         <TouchableOpacity
                           onPress={() => moveRewardType(option.value, 'up')}
@@ -739,10 +750,15 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
                   />
                 </View>
               </View>
-              <Text style={[
-                styles.categoryLabel,
-                discovery === option.value && styles.categoryLabelSelected
-              ]}>
+              <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+                style={[
+                  styles.categoryLabel,
+                  discovery === option.value && styles.categoryLabelSelected
+                ]}
+              >
                 {option.value}
               </Text>
               <View style={[
@@ -1082,7 +1098,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.4)',
   },
   categoryLabel: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
     color: Colors.white,
     textAlign: 'center',
@@ -1150,6 +1166,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.white,
     marginBottom: 4,
+    flexShrink: 1,
   },
   optionTitleSelected: {
     color: Colors.gray900,

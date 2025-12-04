@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
   },
   rewardHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   iconContainer: {
     width: 56,
@@ -317,22 +317,29 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
     marginRight: 12,
+    flexShrink: 0,
   },
   rewardInfo: {
     flex: 1,
+    marginRight: 12,
+    minWidth: 0,
   },
   rewardTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#1F2937',
     marginBottom: 2,
+    flexWrap: 'wrap',
   },
   rewardReason: {
     fontSize: 14,
     color: '#374151',
+    flexWrap: 'wrap',
   },
   dateContainer: {
     alignItems: 'flex-end',
+    minWidth: 70,
+    flexShrink: 0,
   },
   rewardDate: {
     fontSize: 12,

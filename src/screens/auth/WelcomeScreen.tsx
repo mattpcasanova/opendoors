@@ -78,7 +78,7 @@ export default function WelcomeScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Welcome to</Text>
-          <Text style={styles.brandTitle}>Open Doors</Text>
+          <Text style={styles.brandTitle}>OpenDoors</Text>
           <Text style={styles.headerSubtitle}>
             Discover amazing prizes in your neighborhood
           </Text>
@@ -157,10 +157,6 @@ export default function WelcomeScreen() {
               <Text style={styles.createAccountButtonText}>Create Account</Text>
             </TouchableOpacity>
           </View>
-          
-          <Text style={styles.ctaSubtext}>
-            Open the door to a better day
-          </Text>
         </View>
       </SafeAreaView>
     </LinearGradient>
@@ -235,9 +231,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
+    gap: 48,
   },
   logoContainer: {
-    marginBottom: 48,
+    // Logo container
   },
   logoWrapper: {
     width: 180,
@@ -342,10 +339,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: Colors.white,
-  },
-  ctaSubtext: {
-    fontSize: 14,
-    color: Colors.primaryLightest,
-    textAlign: 'center',
   },
 }); 
