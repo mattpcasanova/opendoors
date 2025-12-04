@@ -338,8 +338,9 @@ export default function RewardsScreen() {
         if (timeSinceLastFetch > 5000) {
           fetchRewards(true); // Background refresh
         }
-      } else if (user && rewards.length === 0) {
-        // If no data, fetch immediately
+      } else if (user && rewards.length === 0 && lastFetchTime === 0) {
+        // If no data AND we haven't fetched yet, fetch immediately
+        // This prevents infinite loop when user truly has no rewards
         fetchRewards();
       }
       return () => {};
