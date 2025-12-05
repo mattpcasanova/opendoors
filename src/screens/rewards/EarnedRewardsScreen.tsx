@@ -14,9 +14,11 @@ import {
 } from 'react-native';
 import EarnRewardModal from '../../components/modals/EarnRewardModal';
 import WatchAdModal from '../../components/modals/WatchAdModal';
+import { LoadingSpinner } from '../../components/ui';
 import { useAuth } from '../../hooks/useAuth';
 import { EarnedReward, earnedRewardsService } from '../../services/earnedRewardsService';
 import { adsService } from '../../services/adsService';
+import { Colors, Shadows } from '../../constants';
 
 const EarnedRewardsScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -25,6 +27,7 @@ const EarnedRewardsScreen: React.FC = () => {
   const [showEarnModal, setShowEarnModal] = useState(false);
   const [showWatchAdModal, setShowWatchAdModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isLoadingAd, setIsLoadingAd] = useState(false);
 
   // Load earned rewards from database
   const loadEarnedRewards = async () => {
@@ -55,22 +58,39 @@ const EarnedRewardsScreen: React.FC = () => {
   };
 
   const handleWatchAd = async () => {
+    // Prevent multiple simultaneous ad loads
+    if (isLoadingAd) {
+      console.log('[ads] Already loading an ad, ignoring click');
+      return;
+    }
+
     setShowEarnModal(false);
+    setIsLoadingAd(true);
+
     try {
       await adsService.init();
       const result = await adsService.showRewardedAd();
+
       if (result.userEarnedReward && user?.id) {
         const { error } = await earnedRewardsService.addAdWatchReward(user.id);
         if (error) {
           console.error('Error adding ad reward:', error);
+          Alert.alert('Error', 'Failed to add reward. Please try again.');
+          setIsLoadingAd(false);
+          return;
         }
+
         await loadEarnedRewards();
         DeviceEventEmitter.emit('REFRESH_EARNED_DOORS');
+        setIsLoadingAd(false);
         return;
       }
+
+      setIsLoadingAd(false);
       Alert.alert('No reward granted', 'The ad did not grant a reward this time. Please try again.');
     } catch (e) {
       console.warn('[ads] Falling back, ad failed:', e);
+      setIsLoadingAd(false);
       Alert.alert('Ad unavailable', 'The ad failed to load. Please try again shortly.');
     }
   };
@@ -221,6 +241,50 @@ const EarnedRewardsScreen: React.FC = () => {
         onClose={() => setShowWatchAdModal(false)}
         onAdComplete={handleAdComplete}
       />
+
+      {/* Ad Loading Overlay */}
+      {isLoadingAd && (
+        <View style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 9999,
+        }}>
+          <View style={{
+            backgroundColor: '#FFFFFF',
+            paddingVertical: 40,
+            paddingHorizontal: 32,
+            borderRadius: 24,
+            alignItems: 'center',
+            minWidth: 200,
+            ...Shadows.lg,
+          }}>
+            <LoadingSpinner size="large" color={Colors.primary} />
+            <Text style={{
+              marginTop: 20,
+              fontSize: 18,
+              fontWeight: '700',
+              color: Colors.gray900,
+            }}>
+              Loading Ad
+            </Text>
+            <Text style={{
+              marginTop: 8,
+              fontSize: 14,
+              color: Colors.gray600,
+              textAlign: 'center',
+              lineHeight: 20,
+            }}>
+              Please wait while we prepare{'\n'}your reward
+            </Text>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 };

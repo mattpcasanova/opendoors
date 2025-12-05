@@ -75,13 +75,36 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
         }),
       ]).start();
     } else {
+      // Clean up timers when modal closes
+      cleanupTimers();
+
       // Reset animations
       slideAnim.setValue(600);
       backdropAnim.setValue(0);
     }
+
+    // Cleanup on unmount
+    return () => {
+      cleanupTimers();
+    };
   }, [visible, user?.id]);
 
   // Remove this useEffect - it was causing the modal to reset
+
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup function to clear all timers
+  const cleanupTimers = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+      loadingTimeoutRef.current = null;
+    }
+  };
 
   const startAd = () => {
     // Check if user has reached daily limit
@@ -90,20 +113,26 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
       return;
     }
 
+    // Clear any existing timers
+    cleanupTimers();
+
     // Show loading state first
     setIsLoadingAd(true);
     setCanClose(false);
 
     // Simulate ad loading for 2 seconds
-    setTimeout(() => {
+    loadingTimeoutRef.current = setTimeout(() => {
       setIsLoadingAd(false);
       setIsWatching(true);
 
       // Then start the countdown
-      const interval = setInterval(() => {
+      intervalRef.current = setInterval(() => {
         setTimeRemaining((prev) => {
           if (prev <= 1) {
-            clearInterval(interval);
+            if (intervalRef.current) {
+              clearInterval(intervalRef.current);
+              intervalRef.current = null;
+            }
             return 0;
           }
           return prev - 1;
@@ -113,6 +142,14 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
   };
 
   const handleClose = () => {
+    // Clear all timers
+    cleanupTimers();
+
+    // Reset all state when closing
+    setIsWatching(false);
+    setIsLoadingAd(false);
+    setTimeRemaining(30);
+    setCanClose(false);
     onClose();
   };
 
@@ -234,6 +271,17 @@ const WatchAdModal: React.FC<WatchAdModalProps> = ({
                           return;
                         }
                       }
+
+                      // Clear all timers
+                      cleanupTimers();
+
+                      // Reset state before completing
+                      setIsWatching(false);
+                      setIsLoadingAd(false);
+                      setTimeRemaining(30);
+                      setCanClose(false);
+
+                      // Call completion handlers
                       onAdComplete();
                       onClose();
                     }}

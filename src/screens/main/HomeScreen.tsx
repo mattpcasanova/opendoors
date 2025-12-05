@@ -390,6 +390,7 @@ export default function HomeScreen() {
   const [earnedRewards, setEarnedRewards] = useState<EarnedReward[]>([]);
   const [showEarnRewardModal, setShowEarnRewardModal] = useState(false);
   const [showWatchAdModal, setShowWatchAdModal] = useState(false);
+  const [isLoadingAd, setIsLoadingAd] = useState(false);
   const { user, session } = useAuth();
   const [showDoorNotifications, setShowDoorNotifications] = useState(false);
   const [doorNotificationData, setDoorNotificationData] = useState<{ distributorName: string; doorsSent: number; reason?: string; notificationId: string } | null>(null);
@@ -1163,15 +1164,25 @@ export default function HomeScreen() {
   };
 
   const handleWatchAd = async () => {
+    // Prevent multiple simultaneous ad loads
+    if (isLoadingAd) {
+      console.log('[ads] Already loading an ad, ignoring click');
+      return;
+    }
+
     setShowEarnRewardModal(false);
+    setIsLoadingAd(true);
+
     try {
       await adsService.init();
       const result = await adsService.showRewardedAd();
+
       if (result.userEarnedReward && user?.id) {
         const { data: reward, error } = await earnedRewardsService.addAdWatchReward(user.id);
         if (error) {
           console.error('Error adding ad reward:', error);
           Alert.alert('Error', 'Failed to add reward. Please try again.');
+          setIsLoadingAd(false);
           return;
         }
 
@@ -1185,13 +1196,16 @@ export default function HomeScreen() {
         }
 
         await loadEarnedRewards();
+        setIsLoadingAd(false);
         return;
       }
       // If ad didn't grant reward, fall back to mock modal
+      setIsLoadingAd(false);
       setShowWatchAdModal(true);
     } catch (e) {
       console.warn('Falling back to mock ad modal:', e);
       // Fall back to mock ad modal for development/testing
+      setIsLoadingAd(false);
       setShowWatchAdModal(true);
     }
   };
@@ -1560,6 +1574,50 @@ export default function HomeScreen() {
           reason={doorNotificationData.reason}
           notificationId={doorNotificationData.notificationId}
         />
+      )}
+
+      {/* Ad Loading Overlay */}
+      {isLoadingAd && (
+        <View style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 9999,
+        }}>
+          <View style={{
+            backgroundColor: Colors.white,
+            paddingVertical: 40,
+            paddingHorizontal: 32,
+            borderRadius: 24,
+            alignItems: 'center',
+            minWidth: 200,
+            ...Shadows.lg,
+          }}>
+            <LoadingSpinner size="large" color={Colors.primary} />
+            <Text style={{
+              marginTop: 20,
+              fontSize: 18,
+              fontWeight: '700',
+              color: Colors.gray900,
+            }}>
+              Loading Ad
+            </Text>
+            <Text style={{
+              marginTop: 8,
+              fontSize: 14,
+              color: Colors.gray600,
+              textAlign: 'center',
+              lineHeight: 20,
+            }}>
+              Please wait while we prepare{'\n'}your reward
+            </Text>
+          </View>
+        </View>
       )}
     </SafeAreaView>
   );
