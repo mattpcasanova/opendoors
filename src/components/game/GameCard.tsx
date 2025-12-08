@@ -289,7 +289,7 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
             }}>
               <Star size={16} color={Colors.primary} />
               <Text style={{ color: Colors.primary, fontSize: 14, fontWeight: 'bold' }}>
-                TODAY'S SPECIAL
+                FEATURED GAME
               </Text>
             </View>
           </View>

@@ -49,7 +49,27 @@ class GamesService {
     }
   }
 
+  // Get all featured/special games (marked as special)
+  async getFeaturedGames() {
+    try {
+      // Get all games marked as special
+      const { data: specialGames, error: specialError } = await supabase
+        .from('active_games')
+        .select('id, name, description, value, logo_url, image_url, prize_type, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, created_at')
+        .eq('is_special', true)
+        .order('value', { ascending: false });
+
+      if (specialError) throw specialError;
+
+      return { data: specialGames || [], error: null };
+    } catch (error: any) {
+      console.error('❌ Error fetching featured games:', error);
+      return { data: [], error };
+    }
+  }
+
   // Get featured/special game (marked as special OR highest value)
+  // @deprecated Use getFeaturedGames() instead for multiple special games
   async getFeaturedGame() {
     try {
       // First try to get games marked as special

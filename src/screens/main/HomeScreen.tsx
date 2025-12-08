@@ -375,7 +375,7 @@ export default function HomeScreen() {
   const [filteredGames, setFilteredGames] = useState<Prize[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [featuredGame, setFeaturedGame] = useState<Prize | null>(null);
+  const [featuredGames, setFeaturedGames] = useState<Prize[]>([]);
   const [regularGames, setRegularGames] = useState<Prize[]>([]);
   const [gamesWithDistances, setGamesWithDistances] = useState<Array<{ prize: Prize; distance: number }>>([]);
   
@@ -704,14 +704,14 @@ export default function HomeScreen() {
         const allGamesResult = await gamesService.getActiveGames();
         
         const [featuredResult, regularResult] = await Promise.all([
-          gamesService.getFeaturedGame(),
+          gamesService.getFeaturedGames(),
           gamesService.getRegularGames()
         ]);
 
         if (featuredResult.error) {
-          console.error('❌ Error fetching featured game:', featuredResult.error);
+          console.error('❌ Error fetching featured games:', featuredResult.error);
         } else {
-          setFeaturedGame(featuredResult.data);
+          setFeaturedGames(featuredResult.data);
         }
 
         if (regularResult.error) {
@@ -982,14 +982,15 @@ export default function HomeScreen() {
       // return;
     }
 
-    // Use featured game from database (marked with is_special = true)
-    if (!featuredGame) {
-      console.error('❌ No featured game available');
+    // Use first featured game from database (marked with is_special = true)
+    if (!featuredGames || featuredGames.length === 0) {
+      console.error('❌ No featured games available');
       Alert.alert('No Game Available', 'There is no special game available at this time. Please try again later.');
       return;
     }
 
-    setCurrentGame(featuredGame);
+    // Use the first featured game (they're already sorted by value descending)
+    setCurrentGame(featuredGames[0]);
     setShowGameScreen(true);
   };
 
@@ -1372,8 +1373,8 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Today's Special - Only show when not searching and a featured game exists */}
-        {!searchText && featuredGame && (
+        {/* Featured Games - Only show when not searching and featured games exist */}
+        {!searchText && featuredGames.length > 0 && (
           <>
             <Text style={{
               color: Colors.gray900,
@@ -1381,14 +1382,17 @@ export default function HomeScreen() {
               fontWeight: '600',
               marginBottom: Spacing.md,
             }}>
-              Today's special
+              Featured games
             </Text>
-            <GameCard
-              variant="featured"
-              prize={featuredGame}
-              userLocation={location}
-              onPress={() => playGame(featuredGame)}
-            />
+            {featuredGames.map((game) => (
+              <GameCard
+                key={game.id}
+                variant="featured"
+                prize={game}
+                userLocation={location}
+                onPress={() => playGame(game)}
+              />
+            ))}
           </>
         )}
 
