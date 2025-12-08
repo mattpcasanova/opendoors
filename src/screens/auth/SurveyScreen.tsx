@@ -156,7 +156,7 @@ export default function SurveyScreen({ onComplete }: { onComplete: () => void })
 
   const categories = [
     { key: 'food', label: 'Food & Dining', icon: 'UtensilsCrossed', color: 'from-orange-400 to-red-500' },
-    { key: 'shopping', label: 'Shopping', icon: 'ShoppingBag', color: 'from-pink-400 to-purple-500' },
+    { key: 'shopping', label: 'Retail', icon: 'ShoppingBag', color: 'from-pink-400 to-purple-500' },
     { key: 'coffee', label: 'Coffee & Drinks', icon: 'Coffee', color: 'from-amber-400 to-orange-500' },
     { key: 'entertainment', label: 'Entertainment', icon: 'Film', color: 'from-blue-400 to-indigo-500' },
     { key: 'fitness', label: 'Fitness & Health', icon: 'Dumbbell', color: 'from-green-400 to-emerald-500' },

@@ -1,5 +1,5 @@
 // src/components/game/GameCard.tsx
-import { DoorOpen, Heart, MapPin, Star, UtensilsCrossed, Coffee, Dumbbell, Sparkles, ShoppingBag, Film } from 'lucide-react-native';
+import { DoorOpen, Heart, MapPin, Star, UtensilsCrossed, Coffee, Dumbbell, Sparkles, ShoppingBag, Film, Package } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { DeviceEventEmitter, Image, Text, TouchableOpacity, View } from 'react-native';
 import { Colors } from '../../constants';
@@ -24,46 +24,49 @@ interface Props {
 
 // Helper function to format category for display
 const formatCategory = (category?: string): string => {
-  if (!category) return 'Food & Drinks';
-  
+  if (!category) return 'Other';
+
   switch (category) {
     case 'food_and_dining': return 'Food & Dining';
     case 'coffee_and_drinks': return 'Coffee & Drinks';
-    case 'shopping': return 'Shopping';
+    case 'shopping': return 'Retail';
+    case 'retail': return 'Retail';
     case 'entertainment': return 'Entertainment';
     case 'fitness_and_health': return 'Fitness & Health';
     case 'beauty_and_wellness': return 'Beauty & Wellness';
-    default: return 'Food & Drinks';
+    default: return 'Other';
   }
 };
 
 // Helper function to get category icon component
 const getCategoryIcon = (category?: string) => {
-  if (!category) return UtensilsCrossed;
+  if (!category) return Package;
 
   switch (category) {
     case 'food_and_dining': return UtensilsCrossed;
     case 'coffee_and_drinks': return Coffee;
     case 'shopping': return ShoppingBag;
+    case 'retail': return ShoppingBag;
     case 'entertainment': return Film;
     case 'fitness_and_health': return Dumbbell;
     case 'beauty_and_wellness': return Sparkles;
-    default: return UtensilsCrossed;
+    default: return Package;
   }
 };
 
 // Helper function to get category color
 const getCategoryColor = (category?: string): { bg: string; text: string; icon: string } => {
-  if (!category) return { bg: '#fef3c7', text: '#d97706', icon: '#d97706' };
+  if (!category) return { bg: '#f3f4f6', text: '#6b7280', icon: '#9ca3af' };
 
   switch (category) {
     case 'food_and_dining': return { bg: '#fef3c7', text: '#d97706', icon: '#ea580c' };
     case 'coffee_and_drinks': return { bg: '#dbeafe', text: '#0369a1', icon: '#0284c7' };
     case 'shopping': return { bg: '#f3e8ff', text: '#7c3aed', icon: '#9333ea' };
+    case 'retail': return { bg: '#f3e8ff', text: '#7c3aed', icon: '#9333ea' };
     case 'entertainment': return { bg: '#fce7f3', text: '#be185d', icon: '#db2777' };
     case 'fitness_and_health': return { bg: '#dcfce7', text: '#15803d', icon: '#16a34a' };
     case 'beauty_and_wellness': return { bg: '#fce7f3', text: '#be185d', icon: '#ec4899' };
-    default: return { bg: '#fef3c7', text: '#d97706', icon: '#ea580c' };
+    default: return { bg: '#f3f4f6', text: '#6b7280', icon: '#9ca3af' };
   }
 };
 

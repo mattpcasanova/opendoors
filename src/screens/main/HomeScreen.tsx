@@ -378,7 +378,7 @@ export default function HomeScreen() {
   const [featuredGames, setFeaturedGames] = useState<Prize[]>([]);
   const [regularGames, setRegularGames] = useState<Prize[]>([]);
   const [gamesWithDistances, setGamesWithDistances] = useState<Array<{ prize: Prize; distance: number }>>([]);
-  
+
   // Game state tracking
   const [gamesUntilBonus, setGamesUntilBonus] = useState(5);
   const [hasPlayedAnyGameToday, setHasPlayedAnyGameToday] = useState(false);
@@ -404,11 +404,40 @@ export default function HomeScreen() {
   const [distance, setDistance] = useState<string | null>(null); // null = not loaded yet
   const [sortBy, setSortBy] = useState<string | null>(null); // null = not loaded yet
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false); // Default to OFF
-  
+
   // Get user preference categories for emphasis
   const [userPreferenceCategories, setUserPreferenceCategories] = useState<string[]>([]);
 
   const categories = ['Food', 'Drinks', 'Activities', 'Wellness', 'Retail', 'Entertainment', 'Other'];
+
+  // Helper function to map category string to database category format
+  const mapCategoryToDBFormat = (category: string): string => {
+    switch (category) {
+      case 'Food': return 'food_and_dining';
+      case 'Drinks': return 'coffee_and_drinks';
+      case 'Activities': return 'fitness_and_health';
+      case 'Wellness': return 'beauty_and_wellness';
+      case 'Retail': return 'shopping';
+      case 'Entertainment': return 'entertainment';
+      default: return category.toLowerCase();
+    }
+  };
+
+  // Helper function to map database category to display format
+  const mapDBCategoryToDisplay = (dbCategory?: string): string => {
+    if (!dbCategory) return 'Other';
+
+    switch (dbCategory) {
+      case 'food_and_dining': return 'Food';
+      case 'coffee_and_drinks': return 'Drinks';
+      case 'fitness_and_health': return 'Activities';
+      case 'beauty_and_wellness': return 'Wellness';
+      case 'shopping': return 'Retail';
+      case 'retail': return 'Retail';
+      case 'entertainment': return 'Entertainment';
+      default: return 'Other';
+    }
+  };
 
   // Load user preferences to pre-select categories and load filter settings
   useEffect(() => {
@@ -607,7 +636,7 @@ export default function HomeScreen() {
   const categoryCounts = React.useMemo(() => {
     const counts: Record<string, number> = {};
     categories.forEach(cat => {
-      counts[cat] = filteredGames.filter(game => game.category === cat).length;
+      counts[cat] = filteredGames.filter(game => mapDBCategoryToDisplay(game.category) === cat).length;
     });
     return counts;
   }, [filteredGames]);
@@ -787,19 +816,6 @@ export default function HomeScreen() {
       saveUserProgress();
     }
   }, [user, gamesUntilBonus, hasPlayedAnyGameToday, lastPlayDate, bonusPlaysAvailable]);
-
-  // Helper function to map category string to database category format
-  const mapCategoryToDBFormat = (category: string): string => {
-    switch (category) {
-      case 'Food': return 'food_and_dining';
-      case 'Drinks': return 'coffee_and_drinks';
-      case 'Activities': return 'fitness_and_health';
-      case 'Wellness': return 'beauty_and_wellness';
-      case 'Retail': return 'shopping';
-      case 'Entertainment': return 'entertainment';
-      default: return category.toLowerCase();
-    }
-  };
 
   // Get favorites list for filtering
   const [favoritePrizeIds, setFavoritePrizeIds] = useState<string[]>([]);

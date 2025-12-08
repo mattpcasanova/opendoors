@@ -59,7 +59,7 @@ const formatUserName = (email: string) => {
 
 const CATEGORIES: { key: PreferenceKey; label: string; icon: string }[] = [
   { key: 'food_and_dining', label: 'Food & Dining', icon: 'utensils' },
-  { key: 'shopping', label: 'Shopping', icon: 'shopping-bag' },
+  { key: 'shopping', label: 'Retail', icon: 'shopping-bag' },
   { key: 'coffee_and_drinks', label: 'Coffee & Drinks', icon: 'coffee' },
   { key: 'entertainment', label: 'Entertainment', icon: 'film' },
   { key: 'fitness_and_health', label: 'Fitness & Health', icon: 'heartbeat' },
