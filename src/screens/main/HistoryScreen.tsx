@@ -11,6 +11,7 @@ import {
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import PastGameCard from '../../components/PastGameCard';
 import BottomNavBar from '../../components/main/BottomNavBar';
@@ -21,6 +22,8 @@ import { useAuth } from '../../hooks/useAuth';
 import { GamePlay, historyService, UserStats } from '../../services/historyService';
 import { getUserProfileWithRetry, testSupabaseConnection } from '../../utils/supabaseHelpers';
 import { Colors, Spacing, BorderRadius, Shadows } from '../../constants';
+
+type HistoryTab = 'games' | 'distributions';
 
 export default function HistoryScreen() {
   const { user } = useAuth();
@@ -34,6 +37,32 @@ export default function HistoryScreen() {
   const [doorsAvailable, setDoorsAvailable] = useState(0);
   const [doorsDistributed, setDoorsDistributed] = useState(0);
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
+  const [activeTab, setActiveTab] = useState<HistoryTab>('distributions');
+
+  // Load saved tab preference
+  useEffect(() => {
+    const loadTabPreference = async () => {
+      try {
+        const savedTab = await AsyncStorage.getItem('history_active_tab');
+        if (savedTab === 'games' || savedTab === 'distributions') {
+          setActiveTab(savedTab);
+        }
+      } catch (error) {
+        console.error('Error loading tab preference:', error);
+      }
+    };
+    loadTabPreference();
+  }, []);
+
+  // Save tab preference when it changes
+  const handleTabChange = async (tab: HistoryTab) => {
+    setActiveTab(tab);
+    try {
+      await AsyncStorage.setItem('history_active_tab', tab);
+    } catch (error) {
+      console.error('Error saving tab preference:', error);
+    }
+  };
 
   // Initial load
   useEffect(() => {
@@ -212,6 +241,41 @@ export default function HistoryScreen() {
     </View>
   );
 
+  const renderToggleBar = () => (
+    <View style={styles.toggleContainer}>
+      <TouchableOpacity
+        style={[
+          styles.toggleButton,
+          activeTab === 'distributions' && styles.toggleButtonActive
+        ]}
+        onPress={() => handleTabChange('distributions')}
+        activeOpacity={0.7}
+      >
+        <Text style={[
+          styles.toggleButtonText,
+          activeTab === 'distributions' && styles.toggleButtonTextActive
+        ]}>
+          Distributions
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[
+          styles.toggleButton,
+          activeTab === 'games' && styles.toggleButtonActive
+        ]}
+        onPress={() => handleTabChange('games')}
+        activeOpacity={0.7}
+      >
+        <Text style={[
+          styles.toggleButtonText,
+          activeTab === 'games' && styles.toggleButtonTextActive
+        ]}>
+          Games
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   const renderGameHistory = () => (
     <View style={styles.historyContainer}>
       <Text style={styles.sectionTitle}>Recent Games</Text>
@@ -356,13 +420,32 @@ export default function HistoryScreen() {
     console.log('✅ Showing Distributor Dashboard');
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50 }}>
-        <Header variant="page" title="Distributor Dashboard" subtitle="Manage door distributions" />
-        <DistributorHistoryView
-          organizationId={organizationId}
-          doorsAvailable={doorsAvailable}
-          doorsDistributed={doorsDistributed}
-          onRefresh={fetchHistory}
-        />
+        <Header variant="page" title="History" subtitle={activeTab === 'distributions' ? 'Manage door distributions' : 'Your game history'} />
+        {renderToggleBar()}
+        {activeTab === 'distributions' ? (
+          <DistributorHistoryView
+            organizationId={organizationId}
+            doorsAvailable={doorsAvailable}
+            doorsDistributed={doorsDistributed}
+            onRefresh={fetchHistory}
+          />
+        ) : (
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 100 }}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={() => fetchHistory(true)}
+                tintColor={Colors.primary}
+                colors={[Colors.primary]}
+              />
+            }
+          >
+            {renderStats()}
+            {renderGameHistory()}
+          </ScrollView>
+        )}
         <BottomNavBar />
       </SafeAreaView>
     );
@@ -403,5 +486,34 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: Spacing.md,
     color: Colors.gray900,
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    backgroundColor: Colors.gray100,
+    borderRadius: BorderRadius.full,
+    padding: 4,
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+    ...Shadows.sm,
+  },
+  toggleButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: BorderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toggleButtonActive: {
+    backgroundColor: Colors.white,
+    ...Shadows.sm,
+  },
+  toggleButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.gray600,
+  },
+  toggleButtonTextActive: {
+    color: Colors.primary,
   },
 }); 

@@ -420,7 +420,6 @@ export default function SignupScreen() {
                           onChangeText={updateFirstName}
                           autoCapitalize="words"
                           returnKeyType="next"
-                          autoFocus={Platform.OS === 'ios'}
                           onSubmitEditing={() => lastNameRef.current?.focus()}
                           blurOnSubmit={false}
                         />
@@ -493,7 +492,6 @@ export default function SignupScreen() {
                         autoCapitalize="none"
                         autoComplete="email"
                         returnKeyType="next"
-                        autoFocus={Platform.OS === 'ios' && !formData.firstName}
                         onSubmitEditing={() => passwordRef.current?.focus()}
                         blurOnSubmit={false}
                       />
