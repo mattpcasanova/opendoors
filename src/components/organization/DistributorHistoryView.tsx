@@ -43,6 +43,8 @@ export default function DistributorHistoryView({
   const [reason, setReason] = useState('');
   const [sending, setSending] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [displayedHistoryCount, setDisplayedHistoryCount] = useState(10);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -90,6 +92,27 @@ export default function DistributorHistoryView({
     }
   };
 
+  const loadMoreHistory = () => {
+    if (loadingMore || displayedHistoryCount >= history.length) return;
+
+    setLoadingMore(true);
+    // Simulate a slight delay for smooth UX
+    setTimeout(() => {
+      setDisplayedHistoryCount(prev => Math.min(prev + 10, history.length));
+      setLoadingMore(false);
+    }, 300);
+  };
+
+  const handleScroll = (event: any) => {
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    const paddingToBottom = 200; // Increased threshold to trigger earlier
+
+    // Check if user scrolled near the bottom
+    if (layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom) {
+      loadMoreHistory();
+    }
+  };
+
   const handleSendDoors = async () => {
     if (!user?.id || !selectedMember) return;
 
@@ -124,6 +147,7 @@ export default function DistributorHistoryView({
         setSelectedMember(null);
         setDoorsToSend('1');
         setReason('');
+        setDisplayedHistoryCount(10); // Reset to show first 10
         loadData();
         onRefresh?.();
       } else {
@@ -145,7 +169,11 @@ export default function DistributorHistoryView({
   }
 
   return (
-    <ScrollView style={{ flex: 1 }}>
+    <ScrollView
+      style={{ flex: 1 }}
+      onScroll={handleScroll}
+      scrollEventThrottle={400}
+    >
       {/* Distributor Stats */}
       <View style={{ padding: 16, backgroundColor: 'white', marginBottom: 16 }}>
         <Text style={{ fontSize: 20, fontWeight: '600', color: '#111827', marginBottom: 16 }}>
@@ -302,39 +330,67 @@ export default function DistributorHistoryView({
             No distributions yet
           </Text>
         ) : (
-          history.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map((dist) => (
-            <View
-              key={dist.id}
-              style={{
-                padding: 16,
-                backgroundColor: 'white',
-                borderRadius: 12,
-                marginBottom: 8,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-                elevation: 3,
-                borderWidth: 1,
-                borderColor: '#F3F4F6'
-              }}
-            >
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#111827' }}>
-                  {dist.recipient_name}
-                </Text>
-                <Text style={{ fontSize: 16, fontWeight: '700', color: '#009688' }}>
-                  +{dist.doors_sent} door{dist.doors_sent > 1 ? 's' : ''}
+          <>
+            {history
+              .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+              .slice(0, displayedHistoryCount)
+              .map((dist) => (
+                <View
+                  key={dist.id}
+                  style={{
+                    padding: 16,
+                    backgroundColor: 'white',
+                    borderRadius: 12,
+                    marginBottom: 8,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 4,
+                    elevation: 3,
+                    borderWidth: 1,
+                    borderColor: '#F3F4F6'
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <Text style={{ fontSize: 16, fontWeight: '600', color: '#111827' }}>
+                      {dist.recipient_name}
+                    </Text>
+                    <Text style={{ fontSize: 16, fontWeight: '700', color: '#009688' }}>
+                      +{dist.doors_sent} door{dist.doors_sent > 1 ? 's' : ''}
+                    </Text>
+                  </View>
+                  <Text style={{ fontSize: 14, color: '#6B7280', marginBottom: 4 }}>
+                    {dist.reason}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+                    {new Date(dist.created_at).toLocaleDateString()} at {new Date(dist.created_at).toLocaleTimeString()}
+                  </Text>
+                </View>
+              ))}
+
+            {/* Loading More Indicator */}
+            {loadingMore && (
+              <View style={{ padding: 20, alignItems: 'center' }}>
+                <ActivityIndicator size="small" color="#009688" />
+                <Text style={{ color: '#6B7280', marginTop: 8, fontSize: 14 }}>
+                  Loading more...
                 </Text>
               </View>
-              <Text style={{ fontSize: 14, color: '#6B7280', marginBottom: 4 }}>
-                {dist.reason}
+            )}
+
+            {/* Show count and total */}
+            {displayedHistoryCount < history.length && !loadingMore && (
+              <Text style={{ color: '#6B7280', textAlign: 'center', padding: 16, fontSize: 14 }}>
+                Showing {displayedHistoryCount} of {history.length} distributions
               </Text>
-              <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
-                {new Date(dist.created_at).toLocaleDateString()} at {new Date(dist.created_at).toLocaleTimeString()}
+            )}
+
+            {displayedHistoryCount >= history.length && history.length > 10 && (
+              <Text style={{ color: '#6B7280', textAlign: 'center', padding: 16, fontSize: 14 }}>
+                All {history.length} distributions loaded
               </Text>
-            </View>
-          ))
+            )}
+          </>
         )}
       </View>
 

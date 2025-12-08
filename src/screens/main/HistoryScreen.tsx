@@ -38,6 +38,8 @@ export default function HistoryScreen() {
   const [doorsDistributed, setDoorsDistributed] = useState(0);
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
   const [activeTab, setActiveTab] = useState<HistoryTab>('distributions');
+  const [displayedGamesCount, setDisplayedGamesCount] = useState(10);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // Load saved tab preference
   useEffect(() => {
@@ -61,6 +63,27 @@ export default function HistoryScreen() {
       await AsyncStorage.setItem('history_active_tab', tab);
     } catch (error) {
       console.error('Error saving tab preference:', error);
+    }
+  };
+
+  const loadMoreGames = () => {
+    if (loadingMore || displayedGamesCount >= gamePlays.length) return;
+
+    setLoadingMore(true);
+    // Simulate a slight delay for smooth UX
+    setTimeout(() => {
+      setDisplayedGamesCount(prev => Math.min(prev + 10, gamePlays.length));
+      setLoadingMore(false);
+    }, 300);
+  };
+
+  const handleGameHistoryScroll = (event: any) => {
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    const paddingToBottom = 200;
+    const isNearBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
+
+    if (isNearBottom) {
+      loadMoreGames();
     }
   };
 
@@ -282,16 +305,41 @@ export default function HistoryScreen() {
       {gamePlays.length === 0 ? (
         <EmptyState variant="no-history" />
       ) : (
-        gamePlays.map((game) => (
-          <PastGameCard
-            key={game.id}
-            game={game}
-            onPress={() => {
-              // Could add navigation to game details in the future
-              console.log('Game pressed:', game.id);
-            }}
-          />
-        ))
+        <>
+          {gamePlays.slice(0, displayedGamesCount).map((game) => (
+            <PastGameCard
+              key={game.id}
+              game={game}
+              onPress={() => {
+                // Could add navigation to game details in the future
+                console.log('Game pressed:', game.id);
+              }}
+            />
+          ))}
+
+          {/* Loading More Indicator */}
+          {loadingMore && (
+            <View style={{ padding: 20, alignItems: 'center' }}>
+              <LoadingSpinner size="small" color={Colors.primary} />
+              <Text style={{ color: Colors.gray600, marginTop: 8, fontSize: 14 }}>
+                Loading more...
+              </Text>
+            </View>
+          )}
+
+          {/* Show count and total */}
+          {displayedGamesCount < gamePlays.length && !loadingMore && (
+            <Text style={{ color: Colors.gray600, textAlign: 'center', padding: 16, fontSize: 14 }}>
+              Showing {displayedGamesCount} of {gamePlays.length} games
+            </Text>
+          )}
+
+          {displayedGamesCount >= gamePlays.length && gamePlays.length > 10 && (
+            <Text style={{ color: Colors.gray600, textAlign: 'center', padding: 16, fontSize: 14 }}>
+              All {gamePlays.length} games loaded
+            </Text>
+          )}
+        </>
       )}
     </View>
   );
@@ -433,6 +481,8 @@ export default function HistoryScreen() {
           <ScrollView
             style={{ flex: 1 }}
             contentContainerStyle={{ paddingBottom: 100 }}
+            onScroll={handleGameHistoryScroll}
+            scrollEventThrottle={16}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -460,6 +510,8 @@ export default function HistoryScreen() {
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: 100 }}
+        onScroll={handleGameHistoryScroll}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

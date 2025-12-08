@@ -28,6 +28,8 @@ const EarnedRewardsScreen: React.FC = () => {
   const [showWatchAdModal, setShowWatchAdModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isLoadingAd, setIsLoadingAd] = useState(false);
+  const [displayedRewardsCount, setDisplayedRewardsCount] = useState(10);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // Load earned rewards from database
   const loadEarnedRewards = async () => {
@@ -52,6 +54,27 @@ const EarnedRewardsScreen: React.FC = () => {
   useEffect(() => {
     loadEarnedRewards();
   }, [user?.id]);
+
+  const loadMoreRewards = () => {
+    if (loadingMore || displayedRewardsCount >= earnedRewards.length) return;
+
+    setLoadingMore(true);
+    // Simulate a slight delay for smooth UX
+    setTimeout(() => {
+      setDisplayedRewardsCount(prev => Math.min(prev + 10, earnedRewards.length));
+      setLoadingMore(false);
+    }, 300);
+  };
+
+  const handleScroll = (event: any) => {
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    const paddingToBottom = 200; // Increased threshold to trigger earlier
+
+    // Check if user scrolled near the bottom
+    if (layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom) {
+      loadMoreRewards();
+    }
+  };
 
   const handleEarnReward = () => {
     setShowEarnModal(true);
@@ -80,6 +103,7 @@ const EarnedRewardsScreen: React.FC = () => {
           return;
         }
 
+        setDisplayedRewardsCount(10); // Reset to show first 10
         await loadEarnedRewards();
         DeviceEventEmitter.emit('REFRESH_EARNED_DOORS');
         setIsLoadingAd(false);
@@ -99,18 +123,20 @@ const EarnedRewardsScreen: React.FC = () => {
     setShowEarnModal(false);
     // Refer friend functionality is handled in the modal
     // Reload rewards to show the new one that was added by the modal
+    setDisplayedRewardsCount(10); // Reset to show first 10
     await loadEarnedRewards();
-    
+
     // Notify HomeScreen to refresh its earned doors count
     DeviceEventEmitter.emit('REFRESH_EARNED_DOORS');
   };
 
   const handleAdComplete = async () => {
     setShowWatchAdModal(false);
-    
+
     // Reload rewards to show the new one that was added by the modal
+    setDisplayedRewardsCount(10); // Reset to show first 10
     await loadEarnedRewards();
-    
+
     // Notify HomeScreen to refresh its earned doors count
     DeviceEventEmitter.emit('REFRESH_EARNED_DOORS');
   };
@@ -185,7 +211,12 @@ const EarnedRewardsScreen: React.FC = () => {
         <View style={styles.placeholder} />
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={400}
+      >
         {/* Earn a Reward Button */}
         <TouchableOpacity 
           style={styles.earnButton}
@@ -221,9 +252,34 @@ const EarnedRewardsScreen: React.FC = () => {
               </Text>
             </View>
           ) : (
-            earnedRewards.map((reward) => (
-              <RewardCard key={reward.id} reward={reward} />
-            ))
+            <>
+              {earnedRewards.slice(0, displayedRewardsCount).map((reward) => (
+                <RewardCard key={reward.id} reward={reward} />
+              ))}
+
+              {/* Loading More Indicator */}
+              {loadingMore && (
+                <View style={{ padding: 20, alignItems: 'center' }}>
+                  <LoadingSpinner size="small" color={Colors.primary} />
+                  <Text style={{ color: Colors.gray600, marginTop: 8, fontSize: 14 }}>
+                    Loading more...
+                  </Text>
+                </View>
+              )}
+
+              {/* Show count and total */}
+              {displayedRewardsCount < earnedRewards.length && !loadingMore && (
+                <Text style={{ color: Colors.gray600, textAlign: 'center', padding: 16, fontSize: 14 }}>
+                  Showing {displayedRewardsCount} of {earnedRewards.length} rewards
+                </Text>
+              )}
+
+              {displayedRewardsCount >= earnedRewards.length && earnedRewards.length > 10 && (
+                <Text style={{ color: Colors.gray600, textAlign: 'center', padding: 16, fontSize: 14 }}>
+                  All {earnedRewards.length} rewards loaded
+                </Text>
+              )}
+            </>
           )}
         </View>
       </ScrollView>

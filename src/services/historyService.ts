@@ -124,7 +124,7 @@ class HistoryService {
     return { data, error };
   }
 
-  // Get the last 20 games played by the user
+  // Get all games played by the user
   async getUserGamePlays(userId: string) {
     try {
       // First get game plays
@@ -137,8 +137,7 @@ class HistoryService {
           prize_id
         `)
         .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(20);
+        .order('created_at', { ascending: false });
 
       if (gamePlaysError) {
         console.error('Error fetching game plays:', gamePlaysError);
