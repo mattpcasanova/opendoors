@@ -233,7 +233,7 @@ export default function PrizeDetailsScreen() {
                 <Image
                   source={{ uri: reward.logo_url }}
                   style={{ width: '100%', height: '100%' }}
-                  resizeMode="cover"
+                  resizeMode="contain"
                 />
               ) : (
                 <Text style={{ fontSize: 24, textAlign: 'center', lineHeight: 48 }}>

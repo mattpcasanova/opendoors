@@ -284,7 +284,7 @@ export default function RewardCard({ reward, onPress }: Props) {
             {reward.logo_url ? (
               <Image
                 source={{ uri: reward.logo_url }}
-                style={{ width: 72, height: 72, resizeMode: 'cover' }}
+                style={{ width: 72, height: 72, resizeMode: 'contain' }}
               />
             ) : (
               <Text style={{ fontSize: 36 }}>{reward.icon}</Text>
