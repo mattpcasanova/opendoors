@@ -46,7 +46,21 @@ export default function ForgotPasswordScreen() {
       const { error } = await resetPassword(email);
 
       if (error) {
-        Alert.alert('Error', error.message || 'Failed to send reset email');
+        // Check if it's a network error
+        const isNetworkError =
+          error?.message?.toLowerCase().includes('network') ||
+          error?.message?.toLowerCase().includes('fetch') ||
+          error?.message?.toLowerCase().includes('timeout');
+
+        if (isNetworkError) {
+          Alert.alert(
+            'Connection Error',
+            'We had trouble connecting to the server. Please check your internet connection and try again.',
+            [{ text: 'OK' }]
+          );
+        } else {
+          Alert.alert('Error', error.message || 'Failed to send reset email');
+        }
       } else {
         Alert.alert(
           'Check Your Email 📧',

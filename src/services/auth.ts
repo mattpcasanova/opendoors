@@ -293,8 +293,11 @@ class AuthService {
     }
   }
 
-  // Reset password
-  async resetPassword(email: string) {
+  // Reset password with retry logic
+  async resetPassword(email: string, retryCount = 0): Promise<{ error: any | null }> {
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY = 1000; // 1 second
+
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: 'opendoors://reset-password',
@@ -303,6 +306,22 @@ class AuthService {
       return { error: null };
     } catch (error: any) {
       console.error('Reset password error:', error);
+
+      // Check if it's a network error and we haven't exceeded retry limit
+      const isNetworkError =
+        error?.message?.toLowerCase().includes('network') ||
+        error?.message?.toLowerCase().includes('fetch') ||
+        error?.message?.toLowerCase().includes('timeout') ||
+        error?.code === 'NETWORK_ERROR' ||
+        !error?.message; // Empty error messages are often network issues
+
+      if (isNetworkError && retryCount < MAX_RETRIES) {
+        console.log(`🔄 Network error detected, retrying (${retryCount + 1}/${MAX_RETRIES})...`);
+        // Wait before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (retryCount + 1)));
+        return this.resetPassword(email, retryCount + 1);
+      }
+
       return { error };
     }
   }

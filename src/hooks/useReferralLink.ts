@@ -3,12 +3,14 @@ import * as Linking from 'expo-linking';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const REFERRAL_CODE_STORAGE_KEY = 'pending_referral_code';
+const REFERRAL_CODE_SHOWN_KEY = 'referral_code_shown';
 
 /**
  * Hook to capture and store referral codes from deep links
  */
 export function useReferralLink() {
   const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [shouldShowAlert, setShouldShowAlert] = useState(false);
 
   useEffect(() => {
     // Check for initial URL (when app opens from link)
@@ -18,7 +20,10 @@ export function useReferralLink() {
         const code = extractReferralCode(url);
         if (code) {
           await AsyncStorage.setItem(REFERRAL_CODE_STORAGE_KEY, code);
+          // Mark that we should show the alert since this is from a new deep link
+          await AsyncStorage.setItem(REFERRAL_CODE_SHOWN_KEY, 'false');
           setReferralCode(code);
+          setShouldShowAlert(true);
         }
       }
     };
@@ -28,14 +33,20 @@ export function useReferralLink() {
       const code = extractReferralCode(url);
       if (code) {
         AsyncStorage.setItem(REFERRAL_CODE_STORAGE_KEY, code);
+        // Mark that we should show the alert since this is from a new deep link
+        AsyncStorage.setItem(REFERRAL_CODE_SHOWN_KEY, 'false');
         setReferralCode(code);
+        setShouldShowAlert(true);
       }
     });
 
-    // Check for stored referral code
-    AsyncStorage.getItem(REFERRAL_CODE_STORAGE_KEY).then(stored => {
+    // Check for stored referral code (but don't trigger alert)
+    AsyncStorage.getItem(REFERRAL_CODE_STORAGE_KEY).then(async stored => {
       if (stored) {
         setReferralCode(stored);
+        // Check if we've already shown the alert for this code
+        const shown = await AsyncStorage.getItem(REFERRAL_CODE_SHOWN_KEY);
+        setShouldShowAlert(shown !== 'true');
       }
     });
 
@@ -53,12 +64,22 @@ export function useReferralLink() {
     const code = await AsyncStorage.getItem(REFERRAL_CODE_STORAGE_KEY);
     if (code) {
       await AsyncStorage.removeItem(REFERRAL_CODE_STORAGE_KEY);
+      await AsyncStorage.removeItem(REFERRAL_CODE_SHOWN_KEY);
       setReferralCode(null);
+      setShouldShowAlert(false);
     }
     return code;
   };
 
-  return { referralCode, getAndClearReferralCode };
+  /**
+   * Mark that the alert has been shown for the current referral code
+   */
+  const markAlertShown = async () => {
+    await AsyncStorage.setItem(REFERRAL_CODE_SHOWN_KEY, 'true');
+    setShouldShowAlert(false);
+  };
+
+  return { referralCode, shouldShowAlert, getAndClearReferralCode, markAlertShown };
 }
 
 /**
