@@ -212,6 +212,7 @@ export default function ProfileScreen() {
   // Account Settings
   const accountSettings: SettingItem[] = [
     { id: 'account', label: 'Account Details', icon: 'person', type: 'navigate' },
+    { id: 'deleteAccount', label: 'Delete Account', icon: 'trash', type: 'navigate' },
   ];
 
   // Support & Legal
@@ -337,6 +338,9 @@ export default function ProfileScreen() {
           [{ text: 'OK' }]
         );
         break;
+      case 'deleteAccount':
+        handleDeleteAccount();
+        break;
       case 'help':
         Alert.alert(
           'Help & Support',
@@ -373,10 +377,87 @@ export default function ProfileScreen() {
       'Are you sure you want to sign out?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Sign Out', 
+        {
+          text: 'Sign Out',
           style: 'destructive',
           onPress: () => signOut()
+        }
+      ]
+    );
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to permanently delete your account? This action cannot be undone and will:\n\n• Delete all your game history\n• Remove all earned rewards\n• Erase all personal data\n• Cancel your account permanently',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete Account',
+          style: 'destructive',
+          onPress: () => confirmDeleteAccount()
+        }
+      ]
+    );
+  };
+
+  const confirmDeleteAccount = () => {
+    Alert.alert(
+      'Final Confirmation',
+      'This is your last chance. Are you absolutely sure you want to delete your account?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Yes, Delete Forever',
+          style: 'destructive',
+          onPress: async () => {
+            if (!user?.id) return;
+
+            try {
+              // Get the current session token
+              const { data: session } = await supabase.auth.getSession();
+              if (!session?.session?.access_token) {
+                throw new Error('No active session');
+              }
+
+              // Call edge function to delete everything (database data + auth user)
+              const response = await fetch(
+                `${supabase.supabaseUrl}/functions/v1/delete-user`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${session.session.access_token}`,
+                    'Content-Type': 'application/json',
+                  },
+                }
+              );
+
+              if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Edge function delete failed:', errorText);
+                throw new Error(`Failed to delete account: ${errorText}`);
+              }
+
+              const result = await response.json();
+              console.log('Account deletion result:', result);
+
+              // Sign out (this will happen automatically since user is deleted, but we do it explicitly)
+              await signOut();
+
+              Alert.alert(
+                'Account Deleted',
+                'Your account has been permanently deleted.',
+                [{ text: 'OK' }]
+              );
+            } catch (error) {
+              console.error('Error deleting account:', error);
+              Alert.alert(
+                'Error',
+                'There was a problem deleting your account. Please contact support at support@opendoorsgame.com',
+                [{ text: 'OK' }]
+              );
+            }
+          }
         }
       ]
     );
@@ -1044,13 +1125,13 @@ export default function ProfileScreen() {
                   <Ionicons
                     name={setting.icon as any}
                     size={20}
-                    color={Colors.gray600}
+                    color={setting.id === 'deleteAccount' ? '#dc2626' : Colors.gray600}
                     style={{ marginRight: Spacing.md }}
                   />
                   <Text style={{
                     flex: 1,
                     fontSize: 16,
-                    color: Colors.gray900,
+                    color: setting.id === 'deleteAccount' ? '#dc2626' : Colors.gray900,
                     fontWeight: '500'
                   }}>
                     {setting.label}

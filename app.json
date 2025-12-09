@@ -10,13 +10,13 @@
     "newArchEnabled": true,
     "entryPoint": "./index.js",
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.opendoors.app",
       "buildNumber": "2",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSLocationWhenInUseUsageDescription": "Open Doors needs your location to show you nearby prizes and games.",
-        "NSLocationAlwaysUsageDescription": "Open Doors needs your location to show you nearby prizes and games."
+        "NSLocationWhenInUseUsageDescription": "OpenDoors uses your location to show you available prizes and games at nearby businesses in your area.",
+        "NSLocationAlwaysUsageDescription": "OpenDoors uses your location to show you available prizes and games at nearby businesses in your area."
       },
       "entitlements": {
         "aps-environment": "development"

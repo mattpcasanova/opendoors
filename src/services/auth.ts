@@ -293,6 +293,32 @@ class AuthService {
     }
   }
 
+  // Delete current authenticated user's account
+  async deleteCurrentUser() {
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('No authenticated user');
+      }
+
+      // Call Supabase's delete user endpoint directly
+      const { error } = await supabase.auth.updateUser({
+        data: { deleted: true }
+      });
+
+      if (error) throw error;
+
+      // Sign out
+      await this.signOut();
+
+      return { error: null };
+    } catch (error: any) {
+      console.error('Delete user error:', error);
+      return { error };
+    }
+  }
+
   // Reset password with retry logic
   async resetPassword(email: string, retryCount = 0): Promise<{ error: any | null }> {
     const MAX_RETRIES = 3;
