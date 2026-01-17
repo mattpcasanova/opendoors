@@ -4,6 +4,7 @@ export interface UserReward {
   id: string; // unique row id
   user_id?: string;
   prize_id?: string;
+  prize_code_id?: string; // ID of the assigned gift certificate code (if using code pool)
   company: string;
   reward: string;
   claimed: boolean;
@@ -18,6 +19,7 @@ export interface UserReward {
   address?: string;
   locationName?: string;
   created_at?: string;
+  hasGiftCertificate?: boolean; // True if this reward uses a real gift certificate code
 }
 
 // Interface for the database prize
@@ -193,6 +195,7 @@ class RewardsService {
           id,
           user_id,
           prize_id,
+          prize_code_id,
           claimed_at,
           qr_code,
           reward_code,
@@ -240,10 +243,12 @@ class RewardsService {
           const prize = prizesMap.get(userReward.prize_id);
           if (!prize) return null;
           const { icon, bgColor } = this.getIconAndColor(prize.location_name || prize.name);
+          const hasGiftCertificate = !!userReward.prize_code_id;
           return {
             id: userReward.id,
             user_id: userReward.user_id,
             prize_id: userReward.prize_id,
+            prize_code_id: userReward.prize_code_id,
             company: (prize.location_name || prize.name).replace(/\s*\([^)]*\)/, ''),
             reward: prize.description || prize.name,
             claimed: !!userReward.claimed_at,
@@ -253,11 +258,19 @@ class RewardsService {
             qrCode: userReward.qr_code,
             rewardCode: userReward.reward_code,
             logo_url: userReward.logo_url || prize.logo_url,
-            instructions: this.generateInstructions(prize.location_name || prize.name, prize.description || prize.name, prize.prize_type, prize.redemption_method),
+            instructions: hasGiftCertificate
+              ? [
+                  'Show QR code to cashier',
+                  'Cashier scans to reveal redemption code',
+                  'Code is entered into register',
+                  'Valid for one-time use only'
+                ]
+              : this.generateInstructions(prize.location_name || prize.name, prize.description || prize.name, prize.prize_type, prize.redemption_method),
             value: prize.value,
             address: prize.address,
             locationName: prize.location_name || prize.name,
-            created_at: userReward.created_at
+            created_at: userReward.created_at,
+            hasGiftCertificate
           };
         })
         .filter((reward): reward is UserReward => reward !== null);
@@ -348,18 +361,62 @@ class RewardsService {
   // Add claimRewardById to mark only the specific reward as claimed
   async claimRewardById(rewardId: string): Promise<{ success: boolean; error: string | null }> {
     try {
-      const { data, error } = await supabase
+      // First get the reward to check if it has a prize_code_id
+      const { data: reward, error: fetchError } = await supabase
+        .from('user_rewards')
+        .select('id, prize_code_id')
+        .eq('id', rewardId)
+        .single();
+
+      if (fetchError) {
+        return { success: false, error: fetchError.message };
+      }
+
+      // Update user_rewards claimed_at
+      const { error: updateError } = await supabase
         .from('user_rewards')
         .update({ claimed_at: new Date().toISOString() })
-        .eq('id', rewardId)
-        .select()
-        .single();
-      if (error) {
-        return { success: false, error: error.message };
+        .eq('id', rewardId);
+
+      if (updateError) {
+        return { success: false, error: updateError.message };
       }
+
+      // If there's a prize_code_id, also update the prize_codes table
+      // (This is a fallback - normally the Edge Function handles this when QR is scanned)
+      if (reward?.prize_code_id) {
+        await supabase
+          .from('prize_codes')
+          .update({
+            status: 'claimed',
+            claimed_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', reward.prize_code_id);
+      }
+
       return { success: true, error: null };
     } catch (error) {
       return { success: false, error: 'Failed to claim reward' };
+    }
+  }
+
+  // Get the status of a prize code
+  async getPrizeCodeStatus(prizeCodeId: string): Promise<{ status: string | null; error: string | null }> {
+    try {
+      const { data, error } = await supabase
+        .from('prize_codes')
+        .select('status')
+        .eq('id', prizeCodeId)
+        .single();
+
+      if (error) {
+        return { status: null, error: error.message };
+      }
+
+      return { status: data?.status || null, error: null };
+    } catch (error) {
+      return { status: null, error: 'Failed to fetch prize code status' };
     }
   }
 }

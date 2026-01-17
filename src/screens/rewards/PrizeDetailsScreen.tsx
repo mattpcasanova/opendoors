@@ -177,6 +177,24 @@ export default function PrizeDetailsScreen() {
           shadowRadius: 8,
           elevation: 3,
         }}>
+          {/* Gift Certificate Badge */}
+          {reward.hasGiftCertificate && (
+            <View style={{
+              backgroundColor: '#DCFCE7',
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              borderRadius: 20,
+              marginBottom: 16,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}>
+              <Ionicons name="gift" size={14} color="#16A34A" style={{ marginRight: 6 }} />
+              <Text style={{ color: '#16A34A', fontSize: 12, fontWeight: '600' }}>
+                Gift Certificate
+              </Text>
+            </View>
+          )}
+
           <View style={{
             width: 192,
             height: 192,
@@ -188,24 +206,38 @@ export default function PrizeDetailsScreen() {
             padding: 16,
           }}>
             <QRCode
-              value={reward.rewardCode || reward.id}
+              value={reward.qrCode || reward.rewardCode || reward.id}
               size={160}
               backgroundColor="white"
               color="#111827"
             />
           </View>
-          <Text style={{ fontSize: 14, color: '#6B7280', marginBottom: 8 }}>
-            Reward Code
-          </Text>
-          <Text style={{
-            fontFamily: 'monospace',
-            fontSize: 16,
-            fontWeight: '600',
-            color: '#374151',
-            marginBottom: 8,
-          }}>
-            {reward.rewardCode || 'N/A'}
-          </Text>
+
+          {reward.hasGiftCertificate ? (
+            <>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: '#16A34A', marginBottom: 8 }}>
+                Have Cashier Scan This QR Code
+              </Text>
+              <Text style={{ fontSize: 12, color: '#6B7280', textAlign: 'center', paddingHorizontal: 16 }}>
+                When scanned, the redemption code will appear on the cashier's screen
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text style={{ fontSize: 14, color: '#6B7280', marginBottom: 8 }}>
+                Reward Code
+              </Text>
+              <Text style={{
+                fontFamily: 'monospace',
+                fontSize: 16,
+                fontWeight: '600',
+                color: '#374151',
+                marginBottom: 8,
+              }}>
+                {reward.rewardCode || 'N/A'}
+              </Text>
+            </>
+          )}
         </View>
 
         {/* Company Info */}
@@ -323,11 +355,13 @@ export default function PrizeDetailsScreen() {
                 marginBottom: 12,
                 lineHeight: 18
               }}>
-                Can't scan the QR code? Manually mark this reward as claimed below.
+                {reward.hasGiftCertificate
+                  ? 'The QR code will auto-claim when scanned. Use the button below only if scanning didn\'t work.'
+                  : 'Can\'t scan the QR code? Manually mark this reward as claimed below.'}
               </Text>
               <TouchableOpacity
                 style={{
-                  backgroundColor: '#009688',
+                  backgroundColor: reward.hasGiftCertificate ? '#6B7280' : '#009688',
                   paddingVertical: 14,
                   borderRadius: 12,
                   alignItems: 'center',
@@ -338,7 +372,7 @@ export default function PrizeDetailsScreen() {
                 activeOpacity={0.8}
               >
                 <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
-                  {isClaiming ? 'Claiming...' : 'Mark as Claimed'}
+                  {isClaiming ? 'Claiming...' : (reward.hasGiftCertificate ? 'Manual Claim (Fallback)' : 'Mark as Claimed')}
                 </Text>
               </TouchableOpacity>
             </>

@@ -355,6 +355,44 @@ export interface Database {
           updated_at?: string
         }
       }
+      prize_codes: {
+        Row: {
+          id: string
+          prize_id: string
+          code: string
+          status: 'available' | 'assigned' | 'claimed' | 'expired'
+          assigned_to: string | null
+          assigned_at: string | null
+          claimed_at: string | null
+          expires_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          prize_id: string
+          code: string
+          status?: 'available' | 'assigned' | 'claimed' | 'expired'
+          assigned_to?: string | null
+          assigned_at?: string | null
+          claimed_at?: string | null
+          expires_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          prize_id?: string
+          code?: string
+          status?: 'available' | 'assigned' | 'claimed' | 'expired'
+          assigned_to?: string | null
+          assigned_at?: string | null
+          claimed_at?: string | null
+          expires_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
       user_game_stats: {
         Row: {
           id: string;
@@ -450,7 +488,7 @@ export interface Database {
       [_ in never]: never;
     };
     Enums: {
-      [_ in never]: never;
+      prize_code_status: 'available' | 'assigned' | 'claimed' | 'expired';
     };
   }
 } 

@@ -184,13 +184,36 @@ class GamesService {
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 7);
 
+        // Try to assign a prize code from the pool (for gift certificate prizes)
+        let prizeCodeId: string | null = null;
+        const { data: codeData, error: codeError } = await supabase.rpc('assign_prize_code', {
+          p_prize_id: gameData.prize_id,
+          p_user_id: gameData.user_id
+        });
+
+        if (codeError) {
+          // Log but don't fail - prize may not have a code pool
+          console.log('ℹ️ No prize code pool for this prize (or error):', codeError.message);
+        } else if (codeData) {
+          prizeCodeId = codeData as string;
+          console.log('✅ Assigned prize code:', prizeCodeId);
+        }
+
+        // Insert reward with prize_code_id if we got one
         const { error: rewardError } = await supabase
           .from('user_rewards')
           .insert({
             user_id: gameData.user_id,
             prize_id: gameData.prize_id,
-            qr_code: `QR_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
-            reward_code: `REWARD_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+            prize_code_id: prizeCodeId,
+            // If we have a prize code, the QR will be generated as a URL to the redeem page
+            // Otherwise fall back to the old generated codes
+            qr_code: prizeCodeId
+              ? `https://boemdxppyuspuhvgfzmb.supabase.co/functions/v1/redeem/${prizeCodeId}`
+              : `QR_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+            reward_code: prizeCodeId
+              ? prizeCodeId  // Use the code ID as the reward code reference
+              : `REWARD_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
             expires_at: expiresAt.toISOString().split('T')[0],
             created_at: new Date().toISOString()
           });
