@@ -9,6 +9,7 @@ export interface Prize {
   image_url?: string;
   logo_url?: string;
   prize_type: string;
+  redemption_method?: 'code' | 'qr' | 'email' | 'pickup';
   category?: string;
   company_name?: string;
   address?: string;
@@ -18,6 +19,12 @@ export interface Prize {
   expires_at?: string;
   is_special?: boolean;
   created_at: string;
+  // Physical pickup fields
+  pickup_instructions?: string;
+  pickup_contact?: string;
+  // School visibility fields
+  is_school_restricted?: boolean;
+  allowed_email_domains?: string[];
 }
 
 export interface GameResult {
@@ -39,7 +46,7 @@ class GamesService {
     try {
       const { data, error } = await supabase
         .from('active_games')
-        .select('id, name, description, value, logo_url, image_url, prize_type, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, created_at');
+        .select('id, name, description, value, logo_url, image_url, prize_type, redemption_method, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, created_at, pickup_instructions, pickup_contact, is_school_restricted, allowed_email_domains');
 
       if (error) throw error;
       return { data, error: null };
@@ -55,7 +62,7 @@ class GamesService {
       // Get all games marked as special
       const { data: specialGames, error: specialError } = await supabase
         .from('active_games')
-        .select('id, name, description, value, logo_url, image_url, prize_type, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, created_at')
+        .select('id, name, description, value, logo_url, image_url, prize_type, redemption_method, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, created_at, pickup_instructions, pickup_contact, is_school_restricted, allowed_email_domains')
         .eq('is_special', true)
         .order('value', { ascending: false });
 
@@ -75,7 +82,7 @@ class GamesService {
       // First try to get games marked as special
       const { data: specialGames, error: specialError } = await supabase
         .from('active_games')
-        .select('id, name, description, value, logo_url, image_url, prize_type, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, created_at')
+        .select('id, name, description, value, logo_url, image_url, prize_type, redemption_method, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, created_at, pickup_instructions, pickup_contact, is_school_restricted, allowed_email_domains')
         .eq('is_special', true)
         .order('value', { ascending: false })
         .limit(1);
@@ -91,7 +98,7 @@ class GamesService {
       // Otherwise, fall back to highest value game
       const { data: highestValueGames, error: valueError } = await supabase
         .from('active_games')
-        .select('id, name, description, value, logo_url, image_url, prize_type, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, created_at')
+        .select('id, name, description, value, logo_url, image_url, prize_type, redemption_method, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, created_at, pickup_instructions, pickup_contact, is_school_restricted, allowed_email_domains')
         .order('value', { ascending: false })
         .limit(1);
 
@@ -112,7 +119,7 @@ class GamesService {
       // Get all active games that are NOT marked as special
       const { data: allGames, error: allGamesError } = await supabase
         .from('active_games')
-        .select('id, name, description, value, logo_url, image_url, prize_type, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, created_at')
+        .select('id, name, description, value, logo_url, image_url, prize_type, redemption_method, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, created_at, pickup_instructions, pickup_contact, is_school_restricted, allowed_email_domains')
         .eq('is_special', false)
         .order('created_at', { ascending: false });
 
@@ -122,7 +129,7 @@ class GamesService {
         // If no non-special games, get all games and exclude the featured one
         const { data: allAnyGames, error: anyGamesError } = await supabase
           .from('active_games')
-          .select('id, name, description, value, logo_url, image_url, prize_type, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, created_at')
+          .select('id, name, description, value, logo_url, image_url, prize_type, redemption_method, category, company_name, address, location_name, doors, stock_quantity, expires_at, is_special, created_at, pickup_instructions, pickup_contact, is_school_restricted, allowed_email_domains')
           .order('created_at', { ascending: false });
 
         if (anyGamesError) throw anyGamesError;
@@ -221,6 +228,19 @@ class GamesService {
         if (rewardError) {
           console.error('❌ Error inserting into user_rewards table:', rewardError);
           // Don't return error here - game was recorded successfully
+        }
+
+        // Decrement stock_quantity by 1 for this prize (if it has stock tracking)
+        // This happens regardless of whether the prize uses code pools
+        const { error: stockError } = await supabase.rpc('decrement_prize_stock', {
+          p_prize_id: gameData.prize_id
+        });
+
+        if (stockError) {
+          // Log but don't fail - stock tracking is supplementary
+          console.log('ℹ️ Could not decrement stock (may not have stock tracking):', stockError.message);
+        } else {
+          console.log('✅ Decremented stock for prize:', gameData.prize_id);
         }
       }
 

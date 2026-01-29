@@ -20,6 +20,11 @@ export interface UserReward {
   locationName?: string;
   created_at?: string;
   hasGiftCertificate?: boolean; // True if this reward uses a real gift certificate code
+  // Physical pickup fields
+  redemption_method?: 'code' | 'qr' | 'email' | 'pickup';
+  pickup_instructions?: string;
+  pickup_contact?: string;
+  collected_at?: string; // When user physically collected the reward
 }
 
 // Interface for the database prize
@@ -197,6 +202,7 @@ class RewardsService {
           prize_id,
           prize_code_id,
           claimed_at,
+          collected_at,
           qr_code,
           reward_code,
           logo_url,
@@ -227,7 +233,9 @@ class RewardsService {
           expires_at,
           prize_type,
           redemption_method,
-          logo_url
+          logo_url,
+          pickup_instructions,
+          pickup_contact
         `)
         .in('id', prizeIds);
 
@@ -244,6 +252,7 @@ class RewardsService {
           if (!prize) return null;
           const { icon, bgColor } = this.getIconAndColor(prize.location_name || prize.name);
           const hasGiftCertificate = !!userReward.prize_code_id;
+          const isPickupReward = prize.redemption_method === 'pickup';
           return {
             id: userReward.id,
             user_id: userReward.user_id,
@@ -270,7 +279,12 @@ class RewardsService {
             address: prize.address,
             locationName: prize.location_name || prize.name,
             created_at: userReward.created_at,
-            hasGiftCertificate
+            hasGiftCertificate,
+            // Physical pickup fields
+            redemption_method: prize.redemption_method,
+            pickup_instructions: isPickupReward ? prize.pickup_instructions : undefined,
+            pickup_contact: isPickupReward ? prize.pickup_contact : undefined,
+            collected_at: userReward.collected_at
           };
         })
         .filter((reward): reward is UserReward => reward !== null);
@@ -398,6 +412,24 @@ class RewardsService {
       return { success: true, error: null };
     } catch (error) {
       return { success: false, error: 'Failed to claim reward' };
+    }
+  }
+
+  // Mark reward as collected (for physical pickup rewards)
+  async collectRewardById(rewardId: string): Promise<{ success: boolean; error: string | null }> {
+    try {
+      const { error: updateError } = await supabase
+        .from('user_rewards')
+        .update({ collected_at: new Date().toISOString() })
+        .eq('id', rewardId);
+
+      if (updateError) {
+        return { success: false, error: updateError.message };
+      }
+
+      return { success: true, error: null };
+    } catch (error) {
+      return { success: false, error: 'Failed to mark as collected' };
     }
   }
 

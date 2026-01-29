@@ -378,7 +378,7 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
               </View>
             </View>
 
-            {/* Location and Door Count */}
+            {/* Location, Stock, and Door Count */}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
               <MapPin size={18} color="white" style={{ marginRight: 6 }} />
@@ -386,11 +386,30 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
                 {distance}
               </Text>
               </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <DoorOpen size={16} color="rgba(255,255,255,0.8)" style={{ marginRight: 4 }} />
-                <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, fontWeight: '500' }}>
-                  {doorCount} door{doorCount !== 1 ? 's' : ''}
-                </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                {/* Stock Counter */}
+                {prize.stock_quantity !== null && prize.stock_quantity !== undefined && (
+                  <View style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: prize.stock_quantity <= 5 ? 'rgba(251, 146, 60, 0.9)' : 'rgba(255,255,255,0.2)',
+                    paddingHorizontal: 8,
+                    paddingVertical: 4,
+                    borderRadius: 12,
+                  }}>
+                    <Package size={14} color="white" style={{ marginRight: 4 }} />
+                    <Text style={{ color: 'white', fontSize: 13, fontWeight: '600' }}>
+                      {prize.stock_quantity} left
+                    </Text>
+                  </View>
+                )}
+                {/* Door Count */}
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <DoorOpen size={16} color="rgba(255,255,255,0.8)" style={{ marginRight: 4 }} />
+                  <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, fontWeight: '500' }}>
+                    {doorCount} door{doorCount !== 1 ? 's' : ''}
+                  </Text>
+                </View>
               </View>
             </View>
 
@@ -532,7 +551,7 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
             </TouchableOpacity>
           </View>
 
-          {/* Location and Door Count */}
+          {/* Location, Stock, and Door Count */}
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
             <MapPin size={18} color={Colors.gray600} style={{ marginRight: 6 }} />
@@ -540,11 +559,34 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
               {distance}
             </Text>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <DoorOpen size={16} color={Colors.gray600} style={{ marginRight: 4 }} />
-              <Text style={{ color: Colors.gray600, fontSize: 14, fontWeight: '500' }}>
-                {doorCount} door{doorCount !== 1 ? 's' : ''}
-              </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              {/* Stock Counter */}
+              {prize.stock_quantity !== null && prize.stock_quantity !== undefined && (
+                <View style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: prize.stock_quantity <= 5 ? '#FB923C' : Colors.gray100,
+                  paddingHorizontal: 8,
+                  paddingVertical: 4,
+                  borderRadius: 12,
+                }}>
+                  <Package size={14} color={prize.stock_quantity <= 5 ? 'white' : Colors.gray600} style={{ marginRight: 4 }} />
+                  <Text style={{
+                    color: prize.stock_quantity <= 5 ? 'white' : Colors.gray600,
+                    fontSize: 13,
+                    fontWeight: '600'
+                  }}>
+                    {prize.stock_quantity} left
+                  </Text>
+                </View>
+              )}
+              {/* Door Count */}
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <DoorOpen size={16} color={Colors.gray600} style={{ marginRight: 4 }} />
+                <Text style={{ color: Colors.gray600, fontSize: 14, fontWeight: '500' }}>
+                  {doorCount} door{doorCount !== 1 ? 's' : ''}
+                </Text>
+              </View>
             </View>
           </View>
 

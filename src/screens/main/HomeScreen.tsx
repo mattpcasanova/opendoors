@@ -404,6 +404,7 @@ export default function HomeScreen() {
   const [distance, setDistance] = useState<string | null>(null); // null = not loaded yet
   const [sortBy, setSortBy] = useState<string | null>(null); // null = not loaded yet
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false); // Default to OFF
+  const [refreshGamesCounter, setRefreshGamesCounter] = useState(0); // Trigger to refetch games
 
   // Get user preference categories for emphasis
   const [userPreferenceCategories, setUserPreferenceCategories] = useState<string[]>([]);
@@ -688,6 +689,17 @@ export default function HomeScreen() {
     };
   }, []);
 
+  // Listen for games refresh events (e.g., after winning a game, stock changes)
+  useEffect(() => {
+    const refreshGamesListener = DeviceEventEmitter.addListener('REFRESH_GAMES', () => {
+      setRefreshGamesCounter(prev => prev + 1);
+    });
+
+    return () => {
+      refreshGamesListener.remove();
+    };
+  }, []);
+
   // NUCLEAR TEST: Cleanup useEffect DISABLED
   // useEffect(() => {
   //   console.log('🔄 HomeScreen cleanup useEffect triggered');
@@ -760,7 +772,7 @@ export default function HomeScreen() {
     };
 
     fetchGames();
-  }, []);
+  }, [refreshGamesCounter]);
 
   // Load user progress from database on mount
   useEffect(() => {
@@ -1108,9 +1120,10 @@ export default function HomeScreen() {
       // Notify history screen to refresh immediately (game was recorded)
       DeviceEventEmitter.emit('REFRESH_HISTORY');
 
-      // If won, notify rewards screen to refresh immediately
+      // If won, notify rewards screen and games list to refresh immediately
       if (won) {
         DeviceEventEmitter.emit('REFRESH_REWARDS');
+        DeviceEventEmitter.emit('REFRESH_GAMES');
       }
 
       // Show compact result modal

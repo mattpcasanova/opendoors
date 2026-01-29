@@ -1,6 +1,6 @@
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { Calendar, ChevronLeft } from 'lucide-react-native';
+import { Calendar, ChevronLeft, MapPin, User } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Alert, DeviceEventEmitter, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
@@ -22,8 +22,13 @@ export default function PrizeDetailsScreen() {
   const { user } = useAuth();
   const [isClaimed, setIsClaimed] = useState(reward.claimed === true);
   const [isClaiming, setIsClaiming] = useState(false);
+  const [isCollecting, setIsCollecting] = useState(false);
+  const [isCollected, setIsCollected] = useState(!!reward.collected_at);
   const [showSurveyModal, setShowSurveyModal] = useState(false);
   const [surveyReward, setSurveyReward] = useState<Reward | null>(null);
+
+  // Check if this is a physical pickup reward
+  const isPickupReward = reward.redemption_method === 'pickup';
 
   const handleMarkClaimed = async () => {
     if (!reward.id) return;
@@ -63,6 +68,41 @@ export default function PrizeDetailsScreen() {
               showToast('Failed to claim reward. Please try again.', 'error');
             } finally {
               setIsClaiming(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleCollectReward = async () => {
+    if (!reward.id) return;
+
+    Alert.alert(
+      'Confirm Collection',
+      'Have you physically received this reward?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'Yes, I Received It',
+          style: 'default',
+          onPress: async () => {
+            setIsCollecting(true);
+            try {
+              const { success, error } = await rewardsService.collectRewardById(reward.id);
+              if (success) {
+                setIsCollected(true);
+                showToast('Reward collected! Don\'t forget to complete the survey after you use it.', 'success');
+              } else {
+                showToast(error || 'Failed to mark as collected', 'error');
+              }
+            } catch (error) {
+              showToast('Failed to mark as collected. Please try again.', 'error');
+            } finally {
+              setIsCollecting(false);
             }
           }
         }
@@ -164,7 +204,7 @@ export default function PrizeDetailsScreen() {
       </View>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20 }}>
-        {/* QR Code and Reward Code Section */}
+        {/* QR Code / Pickup Instructions Section */}
         <View style={{
           backgroundColor: 'white',
           borderRadius: 16,
@@ -177,8 +217,23 @@ export default function PrizeDetailsScreen() {
           shadowRadius: 8,
           elevation: 3,
         }}>
-          {/* Gift Certificate Badge */}
-          {reward.hasGiftCertificate && (
+          {/* Badge - Different for pickup vs digital */}
+          {isPickupReward ? (
+            <View style={{
+              backgroundColor: '#FEF3C7',
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              borderRadius: 20,
+              marginBottom: 16,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}>
+              <MapPin size={14} color="#D97706" style={{ marginRight: 6 }} />
+              <Text style={{ color: '#D97706', fontSize: 12, fontWeight: '600' }}>
+                Physical Pickup
+              </Text>
+            </View>
+          ) : reward.hasGiftCertificate && (
             <View style={{
               backgroundColor: '#DCFCE7',
               paddingHorizontal: 12,
@@ -195,47 +250,122 @@ export default function PrizeDetailsScreen() {
             </View>
           )}
 
-          <View style={{
-            width: 192,
-            height: 192,
-            backgroundColor: '#F3F4F6',
-            borderRadius: 12,
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 16,
-            padding: 16,
-          }}>
-            <QRCode
-              value={reward.qrCode || reward.rewardCode || reward.id}
-              size={160}
-              backgroundColor="white"
-              color="#111827"
-            />
-          </View>
-
-          {reward.hasGiftCertificate ? (
+          {/* Pickup Instructions (for physical rewards) */}
+          {isPickupReward ? (
             <>
-              <Text style={{ fontSize: 14, fontWeight: '600', color: '#16A34A', marginBottom: 8 }}>
-                Have Cashier Scan This QR Code
-              </Text>
-              <Text style={{ fontSize: 12, color: '#6B7280', textAlign: 'center', paddingHorizontal: 16 }}>
-                When scanned, the redemption code will appear on the cashier's screen
-              </Text>
+              {/* Pickup Contact */}
+              {reward.pickup_contact && (
+                <View style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: '#F3F4F6',
+                  paddingHorizontal: 20,
+                  paddingVertical: 16,
+                  borderRadius: 12,
+                  marginBottom: 16,
+                  width: '100%',
+                }}>
+                  <View style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 24,
+                    backgroundColor: '#009688',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: 16,
+                  }}>
+                    <User size={24} color="white" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 12, color: '#6B7280', marginBottom: 2 }}>
+                      Pick up from
+                    </Text>
+                    <Text style={{ fontSize: 18, fontWeight: '700', color: '#111827' }}>
+                      {reward.pickup_contact}
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              {/* Pickup Instructions */}
+              <View style={{
+                backgroundColor: '#FEF3C7',
+                padding: 16,
+                borderRadius: 12,
+                width: '100%',
+              }}>
+                <Text style={{ fontSize: 14, fontWeight: '600', color: '#92400E', marginBottom: 8 }}>
+                  Instructions
+                </Text>
+                <Text style={{ fontSize: 14, color: '#78350F', lineHeight: 20 }}>
+                  {reward.pickup_instructions || 'Show this screen to collect your reward.'}
+                </Text>
+              </View>
+
+              {/* Collected Status */}
+              {isCollected && (
+                <View style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  marginTop: 16,
+                  backgroundColor: '#DCFCE7',
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  borderRadius: 8,
+                }}>
+                  <Ionicons name="checkmark-circle" size={18} color="#16A34A" style={{ marginRight: 6 }} />
+                  <Text style={{ color: '#16A34A', fontSize: 13, fontWeight: '600' }}>
+                    Reward collected
+                  </Text>
+                </View>
+              )}
             </>
           ) : (
             <>
-              <Text style={{ fontSize: 14, color: '#6B7280', marginBottom: 8 }}>
-                Reward Code
-              </Text>
-              <Text style={{
-                fontFamily: 'monospace',
-                fontSize: 16,
-                fontWeight: '600',
-                color: '#374151',
-                marginBottom: 8,
+              {/* QR Code (for digital rewards) */}
+              <View style={{
+                width: 192,
+                height: 192,
+                backgroundColor: '#F3F4F6',
+                borderRadius: 12,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 16,
+                padding: 16,
               }}>
-                {reward.rewardCode || 'N/A'}
-              </Text>
+                <QRCode
+                  value={reward.qrCode || reward.rewardCode || reward.id}
+                  size={160}
+                  backgroundColor="white"
+                  color="#111827"
+                />
+              </View>
+
+              {reward.hasGiftCertificate ? (
+                <>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: '#16A34A', marginBottom: 8 }}>
+                    Have Cashier Scan This QR Code
+                  </Text>
+                  <Text style={{ fontSize: 12, color: '#6B7280', textAlign: 'center', paddingHorizontal: 16 }}>
+                    When scanned, the redemption code will appear on the cashier's screen
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text style={{ fontSize: 14, color: '#6B7280', marginBottom: 8 }}>
+                    Reward Code
+                  </Text>
+                  <Text style={{
+                    fontFamily: 'monospace',
+                    fontSize: 16,
+                    fontWeight: '600',
+                    color: '#374151',
+                    marginBottom: 8,
+                  }}>
+                    {reward.rewardCode || 'N/A'}
+                  </Text>
+                </>
+              )}
             </>
           )}
         </View>
@@ -334,7 +464,7 @@ export default function PrizeDetailsScreen() {
           </View>
         )}
 
-        {/* Mark as Claimed Button */}
+        {/* Collect / Mark as Claimed Buttons */}
         <View style={{
           backgroundColor: 'white',
           borderRadius: 16,
@@ -348,6 +478,40 @@ export default function PrizeDetailsScreen() {
         }}>
           {!isClaimed ? (
             <>
+              {/* For pickup rewards: Show "Collected Reward" button first */}
+              {isPickupReward && !isCollected && (
+                <>
+                  <Text style={{
+                    fontSize: 13,
+                    color: '#6B7280',
+                    textAlign: 'center',
+                    marginBottom: 12,
+                    lineHeight: 18
+                  }}>
+                    Tap below after you've physically received your reward.
+                  </Text>
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: '#009688',
+                      paddingVertical: 14,
+                      borderRadius: 12,
+                      alignItems: 'center',
+                      opacity: isCollecting ? 0.6 : 1,
+                      marginBottom: 16,
+                    }}
+                    onPress={handleCollectReward}
+                    disabled={isCollecting}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
+                      {isCollecting ? 'Processing...' : 'Collected Reward'}
+                    </Text>
+                  </TouchableOpacity>
+                  <View style={{ height: 1, backgroundColor: '#E5E7EB', marginBottom: 16 }} />
+                </>
+              )}
+
+              {/* Mark as Claimed section */}
               <Text style={{
                 fontSize: 13,
                 color: '#6B7280',
@@ -355,13 +519,15 @@ export default function PrizeDetailsScreen() {
                 marginBottom: 12,
                 lineHeight: 18
               }}>
-                {reward.hasGiftCertificate
-                  ? 'The QR code will auto-claim when scanned. Use the button below only if scanning didn\'t work.'
-                  : 'Can\'t scan the QR code? Manually mark this reward as claimed below.'}
+                {isPickupReward
+                  ? 'After using your reward, complete the survey below to earn a bonus door!'
+                  : reward.hasGiftCertificate
+                    ? 'The QR code will auto-claim when scanned. Use the button below only if scanning didn\'t work.'
+                    : 'Can\'t scan the QR code? Manually mark this reward as claimed below.'}
               </Text>
               <TouchableOpacity
                 style={{
-                  backgroundColor: reward.hasGiftCertificate ? '#6B7280' : '#009688',
+                  backgroundColor: isPickupReward ? '#009688' : (reward.hasGiftCertificate ? '#6B7280' : '#009688'),
                   paddingVertical: 14,
                   borderRadius: 12,
                   alignItems: 'center',
@@ -372,7 +538,7 @@ export default function PrizeDetailsScreen() {
                 activeOpacity={0.8}
               >
                 <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
-                  {isClaiming ? 'Claiming...' : (reward.hasGiftCertificate ? 'Manual Claim (Fallback)' : 'Mark as Claimed')}
+                  {isClaiming ? 'Claiming...' : (isPickupReward ? 'Mark as Claimed' : (reward.hasGiftCertificate ? 'Manual Claim (Fallback)' : 'Mark as Claimed'))}
                 </Text>
               </TouchableOpacity>
             </>

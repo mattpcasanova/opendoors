@@ -21,6 +21,12 @@ export interface Reward {
   created_at?: string;
   prizeId?: string; // Database prize_id field
   prize_id?: string; // Alternative naming from API
+  // Pickup reward fields
+  redemption_method?: 'code' | 'qr' | 'email' | 'pickup';
+  pickup_instructions?: string;
+  pickup_contact?: string;
+  collected_at?: string; // When user physically picked up the reward
+  hasGiftCertificate?: boolean;
 }
 
 interface Props {

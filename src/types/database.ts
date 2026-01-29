@@ -60,6 +60,12 @@ export interface Database {
           expires_at: string | null
           created_at: string
           updated_at: string
+          // Physical pickup fields
+          pickup_instructions: string | null
+          pickup_contact: string | null
+          // School visibility fields
+          is_school_restricted: boolean
+          allowed_email_domains: string[] | null
         }
         Insert: {
           id?: string
@@ -76,6 +82,10 @@ export interface Database {
           expires_at?: string | null
           created_at?: string
           updated_at?: string
+          pickup_instructions?: string | null
+          pickup_contact?: string | null
+          is_school_restricted?: boolean
+          allowed_email_domains?: string[] | null
         }
         Update: {
           id?: string
@@ -92,6 +102,10 @@ export interface Database {
           expires_at?: string | null
           created_at?: string
           updated_at?: string
+          pickup_instructions?: string | null
+          pickup_contact?: string | null
+          is_school_restricted?: boolean
+          allowed_email_domains?: string[] | null
         }
       }
       user_profiles: {
