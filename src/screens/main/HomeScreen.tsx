@@ -849,14 +849,18 @@ export default function HomeScreen() {
 
   // Filter games based on search text, categories, and favorites
   useEffect(() => {
-    if (!regularGames || regularGames.length === 0) {
+    // When searching, include featured games in the search
+    const allGames = searchText.length > 0
+      ? [...(featuredGames || []), ...(regularGames || [])]
+      : [...(regularGames || [])];
+
+    if (allGames.length === 0) {
       setFilteredGames([]);
       return;
     }
-    
-    let filtered = [...regularGames];
-    const initialCount = filtered.length;
-    
+
+    let filtered = allGames;
+
     // Filter by search text
     if (searchText.length > 0) {
       const searchLower = searchText.toLowerCase();
@@ -884,7 +888,7 @@ export default function HomeScreen() {
     }
 
     setFilteredGames(filtered);
-  }, [searchText, regularGames, showOnlyFavorites, excludedCategories, favoritePrizeIds]);
+  }, [searchText, regularGames, featuredGames, showOnlyFavorites, excludedCategories, favoritePrizeIds]);
 
   // Save filter preferences when they change
   useEffect(() => {
