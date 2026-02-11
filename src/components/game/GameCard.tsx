@@ -27,13 +27,13 @@ const formatCategory = (category?: string): string => {
   if (!category) return 'Other';
 
   switch (category) {
-    case 'food_and_dining': return 'Food & Dining';
-    case 'coffee_and_drinks': return 'Coffee & Drinks';
+    case 'food_and_dining': return 'Food';
+    case 'coffee_and_drinks': return 'Drinks';
     case 'shopping': return 'Retail';
     case 'retail': return 'Retail';
     case 'entertainment': return 'Entertainment';
-    case 'fitness_and_health': return 'Fitness & Health';
-    case 'beauty_and_wellness': return 'Beauty & Wellness';
+    case 'fitness_and_health': return 'Fitness';
+    case 'beauty_and_wellness': return 'Beauty';
     default: return 'Other';
   }
 };
@@ -356,7 +356,7 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
                   {prize.location_name || prize.company_name || 'OpenDoors'}
                 </Text>
                 <View style={{
-                  backgroundColor: 'rgba(255,255,255,0.25)',
+                  backgroundColor: categoryColors.bg,
                   paddingHorizontal: 12,
                   paddingVertical: 6,
                   borderRadius: 14,
@@ -370,8 +370,8 @@ export default function GameCard({ prize, onPress, userLocation, variant = "defa
                   shadowRadius: 4,
                   elevation: 2,
                 }}>
-                  {React.createElement(getCategoryIcon(prize.category), { size: 14, color: 'white' })}
-                  <Text style={{ color: 'white', fontSize: 13, fontWeight: '700', letterSpacing: 0.3 }}>
+                  {React.createElement(getCategoryIcon(prize.category), { size: 14, color: categoryColors.icon })}
+                  <Text style={{ color: categoryColors.text, fontSize: 13, fontWeight: '700', letterSpacing: 0.3 }}>
                     {formattedCategory}
                   </Text>
                 </View>

@@ -193,6 +193,7 @@ class GamesService {
 
         // Try to assign a prize code from the pool (for gift certificate prizes)
         let prizeCodeId: string | null = null;
+        let prizeCodeValue: string | null = null;
         const { data: codeData, error: codeError } = await supabase.rpc('assign_prize_code', {
           p_prize_id: gameData.prize_id,
           p_user_id: gameData.user_id
@@ -201,9 +202,34 @@ class GamesService {
         if (codeError) {
           // Log but don't fail - prize may not have a code pool
           console.log('ℹ️ No prize code pool for this prize (or error):', codeError.message);
-        } else if (codeData) {
-          prizeCodeId = codeData as string;
-          console.log('✅ Assigned prize code:', prizeCodeId);
+        } else if (codeData && Array.isArray(codeData) && codeData.length > 0) {
+          // RPC now returns TABLE(code_id UUID, code_value TEXT)
+          prizeCodeId = codeData[0].code_id;
+          prizeCodeValue = codeData[0].code_value;
+          console.log('✅ Assigned prize code:', prizeCodeId, 'value:', prizeCodeValue);
+        }
+
+        // Determine the QR code URL
+        let qrCodeUrl: string;
+        if (prizeCodeId && prizeCodeValue) {
+          // Check if prize has a custom qr_url_template
+          const { data: prizeData } = await supabase
+            .from('prizes')
+            .select('qr_url_template')
+            .eq('id', gameData.prize_id)
+            .single();
+
+          if (prizeData?.qr_url_template) {
+            // Use the template, replacing {code} with actual code value
+            qrCodeUrl = prizeData.qr_url_template.replace('{code}', prizeCodeValue);
+            console.log('✅ Using custom QR URL template:', qrCodeUrl);
+          } else {
+            // Default to edge function redeem endpoint
+            qrCodeUrl = `https://boemdxppyuspuhvgfzmb.supabase.co/functions/v1/redeem/${prizeCodeId}`;
+          }
+        } else {
+          // No code pool, generate a placeholder
+          qrCodeUrl = `QR_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
         }
 
         // Insert reward with prize_code_id if we got one
@@ -213,11 +239,7 @@ class GamesService {
             user_id: gameData.user_id,
             prize_id: gameData.prize_id,
             prize_code_id: prizeCodeId,
-            // If we have a prize code, the QR will be generated as a URL to the redeem page
-            // Otherwise fall back to the old generated codes
-            qr_code: prizeCodeId
-              ? `https://boemdxppyuspuhvgfzmb.supabase.co/functions/v1/redeem/${prizeCodeId}`
-              : `QR_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+            qr_code: qrCodeUrl,
             reward_code: prizeCodeId
               ? prizeCodeId  // Use the code ID as the reward code reference
               : `REWARD_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
@@ -230,17 +252,19 @@ class GamesService {
           // Don't return error here - game was recorded successfully
         }
 
-        // Decrement stock_quantity by 1 for this prize (if it has stock tracking)
-        // This happens regardless of whether the prize uses code pools
-        const { error: stockError } = await supabase.rpc('decrement_prize_stock', {
-          p_prize_id: gameData.prize_id
-        });
+        // Decrement stock_quantity by 1 ONLY for prizes WITHOUT code pools
+        // Prizes with code pools have a trigger (sync_prize_stock) that auto-updates stock
+        if (!prizeCodeId) {
+          const { error: stockError } = await supabase.rpc('decrement_prize_stock', {
+            p_prize_id: gameData.prize_id
+          });
 
-        if (stockError) {
-          // Log but don't fail - stock tracking is supplementary
-          console.log('ℹ️ Could not decrement stock (may not have stock tracking):', stockError.message);
-        } else {
-          console.log('✅ Decremented stock for prize:', gameData.prize_id);
+          if (stockError) {
+            // Log but don't fail - stock tracking is supplementary
+            console.log('ℹ️ Could not decrement stock (may not have stock tracking):', stockError.message);
+          } else {
+            console.log('✅ Decremented stock for prize:', gameData.prize_id);
+          }
         }
       }
 
