@@ -2,7 +2,7 @@
   "expo": {
     "name": "OpenDoors",
     "slug": "opendoors",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "opendoors",
@@ -12,11 +12,11 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.opendoors.app",
-      "buildNumber": "2",
+      "buildNumber": "3",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSLocationWhenInUseUsageDescription": "OpenDoors uses your location to show you available prizes and games at nearby businesses in your area.",
-        "NSLocationAlwaysUsageDescription": "OpenDoors uses your location to show you available prizes and games at nearby businesses in your area."
+        "NSLocationWhenInUseUsageDescription": "OpenDoors uses your location to show prizes and games available near you. For example, we'll display local restaurant rewards and store promotions within your area.",
+        "NSLocationAlwaysUsageDescription": "OpenDoors uses your location to show prizes and games available near you. For example, we'll display local restaurant rewards and store promotions within your area."
       },
       "entitlements": {
         "aps-environment": "development"
@@ -50,7 +50,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow Open Doors to use your location to show you nearby prizes and games."
+          "locationAlwaysAndWhenInUsePermission": "OpenDoors uses your location to show prizes and games available near you. For example, we'll display local restaurant rewards and store promotions within your area."
         }
       ],
       [
