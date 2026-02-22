@@ -12,7 +12,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.opendoors.app",
-      "buildNumber": "4",
+      "buildNumber": "5",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSLocationWhenInUseUsageDescription": "OpenDoors uses your location to show prizes and games available near you. For example, we'll display local restaurant rewards and store promotions within your area."
@@ -49,7 +49,9 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "OpenDoors uses your location to show prizes and games available near you. For example, we'll display local restaurant rewards and store promotions within your area."
+          "locationWhenInUsePermission": "OpenDoors uses your location to show prizes and games available near you. For example, we'll display local restaurant rewards and store promotions within your area.",
+          "isAndroidBackgroundLocationEnabled": false,
+          "isAndroidForegroundServiceEnabled": false
         }
       ],
       [
