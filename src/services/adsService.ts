@@ -10,9 +10,7 @@ class AdsService {
   private isInitialized = false;
 
   private getIsProd(): boolean {
-    // Heuristic for prod builds; adjust as needed
-    const channel = (Constants as any)?.expoConfig?.extra?.releaseChannel || (Constants as any)?.manifest?.releaseChannel;
-    return !!channel && channel !== 'default';
+    return !__DEV__;
   }
 
   private getRewardedUnitId(): string {
