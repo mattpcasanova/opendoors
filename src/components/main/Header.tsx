@@ -564,7 +564,7 @@ export default function Header({
     return (
       <View style={{ backgroundColor: Colors.gray50 }}>
         <LinearGradient colors={[Colors.primary, Colors.primaryDark, Colors.success]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-          <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 }}>
+          <View style={{ paddingHorizontal: 20, paddingTop: 18, paddingBottom: 26 }}>
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
               {showBackButton && onBackPress && (
                 <TouchableOpacity
