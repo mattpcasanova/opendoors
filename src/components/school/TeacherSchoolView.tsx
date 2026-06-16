@@ -298,6 +298,67 @@ const TeacherSchoolView: React.FC = () => {
               </View>
             )}
 
+            {/* Reward items (templates) — the perks you can hand out */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <Text style={[sectionTitle, { marginBottom: 0 }]}>Reward Items</Text>
+              <TouchableOpacity
+                onPress={() => setShowCreate(true)}
+                activeOpacity={0.8}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+              >
+                <Ionicons name="add-circle" size={20} color={Colors.primary} />
+                <Text style={{ color: Colors.primary, fontWeight: '700' }}>New</Text>
+              </TouchableOpacity>
+            </View>
+            {templates.length === 0 ? (
+              <View style={cardEmpty}>
+                <Ionicons name="ribbon-outline" size={28} color={Colors.gray400} />
+                <Text style={{ color: Colors.gray600, marginTop: 8, textAlign: 'center' }}>
+                  Create rewards like "Homework Pass" to give to your students.
+                </Text>
+              </View>
+            ) : (
+              <View style={{ marginBottom: 24 }}>
+                {templates.map((t) => (
+                  <View
+                    key={t.id}
+                    style={{
+                      backgroundColor: Colors.white,
+                      borderRadius: 14,
+                      padding: 14,
+                      marginBottom: 10,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 12,
+                      ...shadow,
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 12,
+                        backgroundColor: Colors.primaryMuted,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Ionicons name="ribbon" size={20} color={Colors.primary} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 15, fontWeight: '600', color: Colors.gray900 }}>{t.title}</Text>
+                      {t.description ? (
+                        <Text style={{ fontSize: 13, color: Colors.gray500, marginTop: 2 }}>{t.description}</Text>
+                      ) : null}
+                    </View>
+                    <Text style={{ fontSize: 12, color: Colors.gray400 }}>
+                      {t.class_id ? classes.find((c) => c.id === t.class_id)?.name ?? 'Class' : 'All classes'}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
             {/* Roster */}
             <Text style={sectionTitle}>Students</Text>
             {roster.length === 0 ? (
@@ -346,65 +407,6 @@ const TeacherSchoolView: React.FC = () => {
                   </TouchableOpacity>
                 ))}
               </View>
-            )}
-
-            {/* Templates */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <Text style={[sectionTitle, { marginBottom: 0 }]}>My Rewards</Text>
-              <TouchableOpacity
-                onPress={() => setShowCreate(true)}
-                activeOpacity={0.8}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
-              >
-                <Ionicons name="add-circle" size={20} color={Colors.primary} />
-                <Text style={{ color: Colors.primary, fontWeight: '700' }}>New</Text>
-              </TouchableOpacity>
-            </View>
-            {templates.length === 0 ? (
-              <View style={cardEmpty}>
-                <Ionicons name="ribbon-outline" size={28} color={Colors.gray400} />
-                <Text style={{ color: Colors.gray600, marginTop: 8, textAlign: 'center' }}>
-                  Create rewards like "Homework Pass" to give to your students.
-                </Text>
-              </View>
-            ) : (
-              templates.map((t) => (
-                <View
-                  key={t.id}
-                  style={{
-                    backgroundColor: Colors.white,
-                    borderRadius: 14,
-                    padding: 14,
-                    marginBottom: 10,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 12,
-                    ...shadow,
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 12,
-                      backgroundColor: Colors.primaryMuted,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Ionicons name="ribbon" size={20} color={Colors.primary} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 15, fontWeight: '600', color: Colors.gray900 }}>{t.title}</Text>
-                    {t.description ? (
-                      <Text style={{ fontSize: 13, color: Colors.gray500, marginTop: 2 }}>{t.description}</Text>
-                    ) : null}
-                  </View>
-                  <Text style={{ fontSize: 12, color: Colors.gray400 }}>
-                    {t.class_id ? classes.find((c) => c.id === t.class_id)?.name ?? 'Class' : 'All classes'}
-                  </Text>
-                </View>
-              ))
             )}
 
             {/* Doors Sent history */}
