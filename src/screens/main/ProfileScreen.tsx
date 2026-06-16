@@ -92,6 +92,8 @@ export default function ProfileScreen() {
 
   // Add state for user stats
   const [userStats, setUserStats] = useState<{ gamesPlayed: number; rewardsEarned: number } | null>(null);
+  // Teachers send rewards rather than earn them
+  const [rewardsSent, setRewardsSent] = useState(0);
 
   const fetchUserStats = async () => {
     if (!user) return;
@@ -106,14 +108,22 @@ export default function ProfileScreen() {
     // Fetch user profile for first and last name
     supabase
       .from('user_profiles')
-      .select('first_name, last_name, user_type')
+      .select('first_name, last_name, user_type, doors_distributed')
       .eq('id', user.id)
       .single()
-      .then(({ data, error }) => {
+      .then(async ({ data, error }) => {
         if (data) {
           setFirstName(data.first_name || '');
           setLastName(data.last_name || '');
           setUserType(data.user_type || 'user');
+          if (data.user_type === 'teacher') {
+            // "Rewards sent" = classroom rewards granted + doors distributed
+            const { count } = await supabase
+              .from('granted_rewards')
+              .select('*', { count: 'exact', head: true })
+              .eq('teacher_id', user.id);
+            setRewardsSent((data.doors_distributed || 0) + (count || 0));
+          }
         }
         setLoading(false);
       });
@@ -892,7 +902,7 @@ export default function ProfileScreen() {
                 marginHorizontal: Spacing.md,
               }} />
 
-              {/* Rewards Earned */}
+              {/* Rewards Earned (or Sent, for teachers) */}
               <View style={{ flex: 1, alignItems: 'center' }}>
                 <View style={{
                   width: 48,
@@ -905,7 +915,11 @@ export default function ProfileScreen() {
                   justifyContent: 'center',
                   marginBottom: Spacing.sm,
                 }}>
-                  <Ionicons name="trophy" size={24} color={Colors.primary} />
+                  <Ionicons
+                    name={userType === 'teacher' ? 'paper-plane' : 'trophy'}
+                    size={24}
+                    color={Colors.primary}
+                  />
                 </View>
                 <Text style={{
                   fontSize: 24,
@@ -913,7 +927,7 @@ export default function ProfileScreen() {
                   color: Colors.gray900,
                   marginBottom: 2,
                 }}>
-                  {userStats?.rewardsEarned ?? 0}
+                  {userType === 'teacher' ? rewardsSent : (userStats?.rewardsEarned ?? 0)}
                 </Text>
                 <Text style={{
                   fontSize: 12,
@@ -921,7 +935,7 @@ export default function ProfileScreen() {
                   textAlign: 'center',
                   fontWeight: '500',
                 }}>
-                  Rewards Earned
+                  {userType === 'teacher' ? 'Rewards Sent' : 'Rewards Earned'}
                 </Text>
               </View>
             </View>
