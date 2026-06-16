@@ -14,8 +14,12 @@ export type MainTabParamList = {
   Home: undefined;
   Rewards: undefined;
   History: undefined;
+  School: undefined;
   Profile: undefined;
 };
+
+// Alias kept for existing imports (MainTabNavigator, ProfileScreen).
+export type MainStackParamList = MainTabParamList;
 
 export type RootStackParamList = {
   AuthStack: undefined;

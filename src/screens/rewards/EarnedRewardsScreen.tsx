@@ -1,40 +1,57 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { GraduationCap } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
-    DeviceEventEmitter,
-    Alert,
-    SafeAreaView,
     ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
     View
 } from 'react-native';
-import EarnRewardModal from '../../components/modals/EarnRewardModal';
-import WatchAdModal from '../../components/modals/WatchAdModal';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LoadingSpinner } from '../../components/ui';
+import { Colors } from '../../constants';
 import { useAuth } from '../../hooks/useAuth';
 import { EarnedReward, earnedRewardsService } from '../../services/earnedRewardsService';
-import { adsService } from '../../services/adsService';
-import { Colors, Shadows } from '../../constants';
+
+interface RewardVisual {
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+  bg: string;
+}
+
+const getRewardVisual = (type: string): RewardVisual => {
+  switch (type) {
+    case 'teacher':
+      return { icon: 'school', color: Colors.primary, bg: Colors.primaryMuted };
+    case 'distributor':
+      return { icon: 'gift', color: Colors.primary, bg: Colors.primaryMuted };
+    case 'achievement':
+      return { icon: 'trophy', color: Colors.secondaryDark, bg: 'rgba(255, 152, 0, 0.12)' };
+    case 'lesson':
+      return { icon: 'book', color: Colors.info, bg: 'rgba(59, 130, 246, 0.12)' };
+    case 'survey':
+      return { icon: 'clipboard', color: Colors.successDark, bg: 'rgba(16, 185, 129, 0.12)' };
+    case 'referral':
+      return { icon: 'people', color: Colors.info, bg: 'rgba(59, 130, 246, 0.12)' };
+    default:
+      return { icon: 'gift', color: Colors.gray500, bg: Colors.gray100 };
+  }
+};
 
 const EarnedRewardsScreen: React.FC = () => {
   const navigation = useNavigation();
   const { user } = useAuth();
   const [earnedRewards, setEarnedRewards] = useState<EarnedReward[]>([]);
-  const [showEarnModal, setShowEarnModal] = useState(false);
-  const [showWatchAdModal, setShowWatchAdModal] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [isLoadingAd, setIsLoadingAd] = useState(false);
   const [displayedRewardsCount, setDisplayedRewardsCount] = useState(10);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  // Load earned rewards from database
   const loadEarnedRewards = async () => {
     if (!user?.id) return;
-    
+
     setLoading(true);
     try {
       const { data, error } = await earnedRewardsService.getUserEarnedRewards(user.id);
@@ -50,7 +67,6 @@ const EarnedRewardsScreen: React.FC = () => {
     }
   };
 
-  // Load rewards when component mounts
   useEffect(() => {
     loadEarnedRewards();
   }, [user?.id]);
@@ -59,7 +75,6 @@ const EarnedRewardsScreen: React.FC = () => {
     if (loadingMore || displayedRewardsCount >= earnedRewards.length) return;
 
     setLoadingMore(true);
-    // Simulate a slight delay for smooth UX
     setTimeout(() => {
       setDisplayedRewardsCount(prev => Math.min(prev + 10, earnedRewards.length));
       setLoadingMore(false);
@@ -68,147 +83,81 @@ const EarnedRewardsScreen: React.FC = () => {
 
   const handleScroll = (event: any) => {
     const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
-    const paddingToBottom = 200; // Increased threshold to trigger earlier
-
-    // Check if user scrolled near the bottom
+    const paddingToBottom = 200;
     if (layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom) {
       loadMoreRewards();
     }
   };
 
-  const handleEarnReward = () => {
-    setShowEarnModal(true);
-  };
+  const availableCount = earnedRewards.filter(r => !r.claimed).length;
+  const playedCount = earnedRewards.filter(r => r.claimed).length;
 
-  const handleWatchAd = async () => {
-    // Prevent multiple simultaneous ad loads
-    if (isLoadingAd) {
-      console.log('[ads] Already loading an ad, ignoring click');
-      return;
-    }
-
-    setShowEarnModal(false);
-    setIsLoadingAd(true);
-
-    try {
-      await adsService.init();
-      const result = await adsService.showRewardedAd();
-
-      if (result.userEarnedReward && user?.id) {
-        const { error } = await earnedRewardsService.addAdWatchReward(user.id);
-        if (error) {
-          console.error('Error adding ad reward:', error);
-          Alert.alert('Error', 'Failed to add reward. Please try again.');
-          setIsLoadingAd(false);
-          return;
-        }
-
-        setDisplayedRewardsCount(10); // Reset to show first 10
-        await loadEarnedRewards();
-        DeviceEventEmitter.emit('REFRESH_EARNED_DOORS');
-        setIsLoadingAd(false);
-        return;
-      }
-
-      setIsLoadingAd(false);
-      Alert.alert('No reward granted', 'The ad did not grant a reward this time. Please try again.');
-    } catch (e) {
-      console.warn('[ads] Falling back, ad failed:', e);
-      setIsLoadingAd(false);
-      Alert.alert('Ad unavailable', 'The ad failed to load. Please try again shortly.');
-    }
-  };
-
-  const handleReferFriend = async () => {
-    setShowEarnModal(false);
-    // Refer friend functionality is handled in the modal
-    // Reload rewards to show the new one that was added by the modal
-    setDisplayedRewardsCount(10); // Reset to show first 10
-    await loadEarnedRewards();
-
-    // Notify HomeScreen to refresh its earned doors count
-    DeviceEventEmitter.emit('REFRESH_EARNED_DOORS');
-  };
-
-  const handleAdComplete = async () => {
-    setShowWatchAdModal(false);
-
-    // Reload rewards to show the new one that was added by the modal
-    setDisplayedRewardsCount(10); // Reset to show first 10
-    await loadEarnedRewards();
-
-    // Notify HomeScreen to refresh its earned doors count
-    DeviceEventEmitter.emit('REFRESH_EARNED_DOORS');
-  };
-
-  const getRewardIcon = (type: string) => {
-    switch (type) {
-      case 'lesson':
-        return 'book';
-      case 'ad':
-        return 'tv';
-      case 'referral':
-        return 'people';
-      case 'achievement':
-        return 'trophy';
-      default:
-        return 'gift';
-    }
-  };
-
-  const getRewardColor = (type: string) => {
-    switch (type) {
-      case 'lesson':
-        return '#3B82F6'; // Blue
-      case 'ad':
-        return '#10B981'; // Green
-      case 'referral':
-        return '#8B5CF6'; // Purple
-      case 'achievement':
-        return '#F59E0B'; // Orange
-      default:
-        return '#6B7280'; // Gray
-    }
-  };
-
-  const RewardCard: React.FC<{ reward: EarnedReward }> = ({ reward }) => (
-    <View style={styles.rewardCard}>
-      <View style={styles.rewardHeader}>
-        <View style={styles.iconContainer}>
-          <Ionicons 
-            name={getRewardIcon(reward.source_type) as any} 
-            size={32} 
-            color="#10B981" 
-          />
-        </View>
-        <View style={styles.rewardInfo}>
-          <Text style={styles.rewardTitle}>From: {reward.source_name}</Text>
-          <Text style={styles.rewardReason}>{reward.description}</Text>
-        </View>
-        <View style={styles.dateContainer}>
-          <Text style={styles.rewardDate}>
-            {new Date(reward.created_at).toLocaleDateString()}
-          </Text>
-          {reward.claimed && (
-            <Text style={styles.claimedText}>Claimed</Text>
-          )}
+  const RewardCard: React.FC<{ reward: EarnedReward }> = ({ reward }) => {
+    const visual = getRewardVisual(reward.source_type);
+    const isTeacher = reward.source_type === 'teacher';
+    return (
+      <View style={[styles.rewardCard, { borderLeftColor: visual.color }]}>
+        <View style={styles.rewardHeader}>
+          <View style={[styles.iconContainer, { backgroundColor: visual.bg, borderColor: visual.color + '33' }]}>
+            <Ionicons name={visual.icon} size={28} color={visual.color} />
+          </View>
+          <View style={styles.rewardInfo}>
+            <Text style={styles.rewardTitle}>
+              {isTeacher ? `From ${reward.source_name}` : reward.source_name}
+            </Text>
+            <Text style={styles.rewardReason}>{reward.description}</Text>
+          </View>
+          <View style={styles.dateContainer}>
+            <Text style={styles.rewardDate}>
+              {new Date(reward.created_at).toLocaleDateString()}
+            </Text>
+            {reward.claimed && <Text style={styles.claimedText}>Played</Text>}
+          </View>
         </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Earned Rewards</Text>
-        <View style={styles.placeholder} />
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Gradient hero header */}
+      <LinearGradient
+        colors={[Colors.primary, Colors.primaryDark, Colors.success]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.hero}
+      >
+        <View style={styles.heroTopRow}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color={Colors.white} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Earned Doors</Text>
+          <View style={styles.placeholder} />
+        </View>
+
+        <View style={styles.heroBody}>
+          <View style={styles.heroIcon}>
+            <GraduationCap size={26} color={Colors.white} />
+          </View>
+          <View>
+            <Text style={styles.heroCount}>{availableCount}</Text>
+            <Text style={styles.heroSubtitle}>
+              {availableCount === 1 ? 'door ready to play' : 'doors ready to play'} · from your teachers
+            </Text>
+          </View>
+        </View>
+      </LinearGradient>
+
+      {/* Summary chips */}
+      <View style={styles.chipRow}>
+        <View style={styles.chip}>
+          <Text style={styles.chipNumber}>{availableCount}</Text>
+          <Text style={styles.chipLabel}>Available</Text>
+        </View>
+        <View style={styles.chip}>
+          <Text style={styles.chipNumber}>{playedCount}</Text>
+          <Text style={styles.chipLabel}>Played</Text>
+        </View>
       </View>
 
       <ScrollView
@@ -217,38 +166,20 @@ const EarnedRewardsScreen: React.FC = () => {
         onScroll={handleScroll}
         scrollEventThrottle={400}
       >
-        {/* Earn a Reward Button */}
-        <TouchableOpacity 
-          style={styles.earnButton}
-          onPress={handleEarnReward}
-          activeOpacity={0.8}
-        >
-          <LinearGradient
-            colors={["#14B8A6", "#10B981"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.earnButtonGradient}
-          >
-            <Ionicons name="add-circle" size={24} color="white" />
-            <Text style={styles.earnButtonText}>Earn a Reward</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-
-        {/* Rewards List */}
         <View style={styles.rewardsSection}>
-          <Text style={styles.sectionTitle}>Your Rewards</Text>
-          
+          <Text style={styles.sectionTitle}>Your Doors</Text>
+
           {loading ? (
             <View style={styles.emptyState}>
-              <Ionicons name="refresh" size={48} color="#9CA3AF" />
-              <Text style={styles.emptyTitle}>Loading rewards...</Text>
+              <LoadingSpinner size="small" color={Colors.primary} />
+              <Text style={styles.emptyTitle}>Loading…</Text>
             </View>
           ) : earnedRewards.length === 0 ? (
             <View style={styles.emptyState}>
-              <Ionicons name="gift-outline" size={48} color="#9CA3AF" />
-              <Text style={styles.emptyTitle}>No rewards yet</Text>
+              <Ionicons name="school-outline" size={48} color={Colors.gray400} />
+              <Text style={styles.emptyTitle}>No doors yet</Text>
               <Text style={styles.emptyDescription}>
-                Complete lessons, watch ads, or refer friends to earn extra doors!
+                When your teacher sends you doors, they'll show up here. Check back after class!
               </Text>
             </View>
           ) : (
@@ -257,7 +188,6 @@ const EarnedRewardsScreen: React.FC = () => {
                 <RewardCard key={reward.id} reward={reward} />
               ))}
 
-              {/* Loading More Indicator */}
               {loadingMore && (
                 <View style={{ padding: 20, alignItems: 'center' }}>
                   <LoadingSpinner size="small" color={Colors.primary} />
@@ -267,80 +197,19 @@ const EarnedRewardsScreen: React.FC = () => {
                 </View>
               )}
 
-              {/* Show count and total */}
               {displayedRewardsCount < earnedRewards.length && !loadingMore && (
-                <Text style={{ color: Colors.gray600, textAlign: 'center', padding: 16, fontSize: 14 }}>
-                  Showing {displayedRewardsCount} of {earnedRewards.length} rewards
+                <Text style={styles.countText}>
+                  Showing {displayedRewardsCount} of {earnedRewards.length}
                 </Text>
               )}
 
               {displayedRewardsCount >= earnedRewards.length && earnedRewards.length > 10 && (
-                <Text style={{ color: Colors.gray600, textAlign: 'center', padding: 16, fontSize: 14 }}>
-                  All {earnedRewards.length} rewards loaded
-                </Text>
+                <Text style={styles.countText}>All {earnedRewards.length} loaded</Text>
               )}
             </>
           )}
         </View>
       </ScrollView>
-
-      {/* Modals */}
-      <EarnRewardModal
-        visible={showEarnModal}
-        onClose={() => setShowEarnModal(false)}
-        onWatchAd={handleWatchAd}
-        onReferFriend={handleReferFriend}
-      />
-
-      <WatchAdModal
-        visible={showWatchAdModal}
-        onClose={() => setShowWatchAdModal(false)}
-        onAdComplete={handleAdComplete}
-      />
-
-      {/* Ad Loading Overlay */}
-      {isLoadingAd && (
-        <View style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.85)',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 9999,
-        }}>
-          <View style={{
-            backgroundColor: '#FFFFFF',
-            paddingVertical: 40,
-            paddingHorizontal: 32,
-            borderRadius: 24,
-            alignItems: 'center',
-            minWidth: 200,
-            ...Shadows.lg,
-          }}>
-            <LoadingSpinner size="large" color={Colors.primary} />
-            <Text style={{
-              marginTop: 20,
-              fontSize: 18,
-              fontWeight: '700',
-              color: Colors.gray900,
-            }}>
-              Loading Ad
-            </Text>
-            <Text style={{
-              marginTop: 8,
-              fontSize: 14,
-              color: Colors.gray600,
-              textAlign: 'center',
-              lineHeight: 20,
-            }}>
-              Please wait while we prepare{'\n'}your reward
-            </Text>
-          </View>
-        </View>
-      )}
     </SafeAreaView>
   );
 };
@@ -348,71 +217,103 @@ const EarnedRewardsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: Colors.gray50,
   },
-  header: {
+  hero: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 28,
+  },
+  heroTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    marginBottom: 16,
   },
   backButton: {
     padding: 8,
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
+    fontWeight: '700',
+    color: Colors.white,
   },
   placeholder: {
     width: 40,
   },
-  content: {
-    flex: 1,
-    padding: 20,
-  },
-  earnButton: {
-    marginBottom: 24,
-    borderRadius: 12,
-    shadowColor: '#14B8A6',
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
-  },
-  earnButtonGradient: {
+  heroBody: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 12,
+    gap: 16,
+    paddingHorizontal: 4,
   },
-  earnButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
+  heroIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroCount: {
+    fontSize: 40,
+    fontWeight: '800',
+    color: Colors.white,
+    lineHeight: 44,
+  },
+  heroSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.85)',
+  },
+  chipRow: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 20,
+    marginTop: -16,
+  },
+  chip: {
+    flex: 1,
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    paddingVertical: 14,
+    alignItems: 'center',
+    shadowColor: Colors.black,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  chipNumber: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: Colors.primary,
+  },
+  chipLabel: {
+    fontSize: 12,
+    color: Colors.gray600,
+    marginTop: 2,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    marginTop: 20,
   },
   rewardsSection: {
     marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1F2937',
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.gray900,
     marginBottom: 16,
   },
   rewardCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
+    backgroundColor: Colors.white,
+    borderRadius: 14,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
+    borderLeftWidth: 4,
+    shadowColor: Colors.black,
     shadowOpacity: 0.05,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
@@ -423,19 +324,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
+    width: 52,
+    height: 52,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f0fdf4',
     borderWidth: 2,
-    borderColor: 'rgba(16, 185, 129, 0.2)',
-    shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
     marginRight: 12,
     flexShrink: 0,
   },
@@ -446,29 +340,29 @@ const styles = StyleSheet.create({
   },
   rewardTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
+    fontWeight: '700',
+    color: Colors.gray900,
     marginBottom: 2,
     flexWrap: 'wrap',
   },
   rewardReason: {
     fontSize: 14,
-    color: '#374151',
+    color: Colors.gray700,
     flexWrap: 'wrap',
   },
   dateContainer: {
     alignItems: 'flex-end',
-    minWidth: 70,
+    minWidth: 64,
     flexShrink: 0,
   },
   rewardDate: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: Colors.gray400,
     textAlign: 'right',
   },
   claimedText: {
     fontSize: 11,
-    color: '#10B981',
+    color: Colors.primary,
     fontWeight: '600',
     marginTop: 2,
     textAlign: 'right',
@@ -480,15 +374,22 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#6B7280',
+    color: Colors.gray600,
     marginTop: 16,
     marginBottom: 8,
   },
   emptyDescription: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: Colors.gray400,
     textAlign: 'center',
     lineHeight: 20,
+    paddingHorizontal: 24,
+  },
+  countText: {
+    color: Colors.gray600,
+    textAlign: 'center',
+    padding: 16,
+    fontSize: 14,
   },
 });
 

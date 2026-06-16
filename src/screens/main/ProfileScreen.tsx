@@ -88,6 +88,7 @@ export default function ProfileScreen() {
   // Add state for first and last name
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [userType, setUserType] = useState<string>('user');
 
   // Add state for user stats
   const [userStats, setUserStats] = useState<{ gamesPlayed: number; rewardsEarned: number } | null>(null);
@@ -105,13 +106,14 @@ export default function ProfileScreen() {
     // Fetch user profile for first and last name
     supabase
       .from('user_profiles')
-      .select('first_name, last_name')
+      .select('first_name, last_name, user_type')
       .eq('id', user.id)
       .single()
       .then(({ data, error }) => {
         if (data) {
           setFirstName(data.first_name || '');
           setLastName(data.last_name || '');
+          setUserType(data.user_type || 'user');
         }
         setLoading(false);
       });
@@ -811,14 +813,32 @@ export default function ProfileScreen() {
 
               {/* Name & Email */}
               <View style={{ flex: 1 }}>
-                <Text style={{
-                  fontSize: 18,
-                  fontWeight: '600',
-                  color: Colors.gray900,
-                  marginBottom: 4
-                }}>
-                  {firstName} {lastName}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginBottom: 4 }}>
+                  <Text style={{
+                    fontSize: 18,
+                    fontWeight: '600',
+                    color: Colors.gray900,
+                    marginRight: 8,
+                  }}>
+                    {firstName} {lastName}
+                  </Text>
+                  <View style={{
+                    backgroundColor: Colors.primaryMuted,
+                    paddingHorizontal: 10,
+                    paddingVertical: 3,
+                    borderRadius: 999,
+                  }}>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: Colors.primary }}>
+                      {userType === 'teacher'
+                        ? 'Teacher'
+                        : userType === 'distributor'
+                        ? 'Distributor'
+                        : userType === 'admin'
+                        ? 'Admin'
+                        : 'Student'}
+                    </Text>
+                  </View>
+                </View>
                 <Text style={{ fontSize: 14, color: Colors.gray600 }}>
                   {user?.email || 'user@example.com'}
                 </Text>

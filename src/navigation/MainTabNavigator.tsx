@@ -9,6 +9,7 @@ import HistoryScreen from '../screens/main/HistoryScreen';
 import HomeScreen from '../screens/main/HomeScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
 import RewardsScreen from '../screens/main/RewardsScreen';
+import SchoolScreen from '../screens/school/SchoolScreen';
 
 const MainTab = createBottomTabNavigator<MainStackParamList>();
 
@@ -37,6 +38,10 @@ export default function MainTabNavigator() {
             case 'History':
               iconName = 'time';
               displayName = 'History';
+              break;
+            case 'School':
+              iconName = 'school';
+              displayName = 'School';
               break;
             case 'Profile':
               iconName = 'person';
@@ -76,6 +81,7 @@ export default function MainTabNavigator() {
       })}
     >
       <MainTab.Screen name="Home" component={HomeScreen} />
+      <MainTab.Screen name="School" component={SchoolScreen} />
       <MainTab.Screen name="Rewards" component={RewardsScreen} />
       <MainTab.Screen name="History" component={HistoryScreen} />
       <MainTab.Screen name="Profile" component={ProfileScreen} />

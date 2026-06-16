@@ -11,19 +11,15 @@ import {
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import PastGameCard from '../../components/PastGameCard';
 import BottomNavBar from '../../components/main/BottomNavBar';
 import Header from '../../components/main/Header';
 import { LoadingSpinner, SkeletonPastGameCard, EmptyState } from '../../components/ui';
-import DistributorHistoryView from '../../components/organization/DistributorHistoryView';
 import { useAuth } from '../../hooks/useAuth';
 import { GamePlay, historyService, UserStats } from '../../services/historyService';
-import { getUserProfileWithRetry, testSupabaseConnection } from '../../utils/supabaseHelpers';
+import { testSupabaseConnection } from '../../utils/supabaseHelpers';
 import { Colors, Spacing, BorderRadius, Shadows } from '../../constants';
-
-type HistoryTab = 'games' | 'distributions';
 
 export default function HistoryScreen() {
   const { user } = useAuth();
@@ -32,39 +28,9 @@ export default function HistoryScreen() {
   const [error, setError] = useState<string | null>(null);
   const [gamePlays, setGamePlays] = useState<GamePlay[]>([]);
   const [stats, setStats] = useState<UserStats | null>(null);
-  const [userType, setUserType] = useState<'user' | 'distributor' | 'admin'>('user');
-  const [organizationId, setOrganizationId] = useState<string | null>(null);
-  const [doorsAvailable, setDoorsAvailable] = useState(0);
-  const [doorsDistributed, setDoorsDistributed] = useState(0);
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
-  const [activeTab, setActiveTab] = useState<HistoryTab>('distributions');
   const [displayedGamesCount, setDisplayedGamesCount] = useState(10);
   const [loadingMore, setLoadingMore] = useState(false);
-
-  // Load saved tab preference
-  useEffect(() => {
-    const loadTabPreference = async () => {
-      try {
-        const savedTab = await AsyncStorage.getItem('history_active_tab');
-        if (savedTab === 'games' || savedTab === 'distributions') {
-          setActiveTab(savedTab);
-        }
-      } catch (error) {
-        console.error('Error loading tab preference:', error);
-      }
-    };
-    loadTabPreference();
-  }, []);
-
-  // Save tab preference when it changes
-  const handleTabChange = async (tab: HistoryTab) => {
-    setActiveTab(tab);
-    try {
-      await AsyncStorage.setItem('history_active_tab', tab);
-    } catch (error) {
-      console.error('Error saving tab preference:', error);
-    }
-  };
 
   const loadMoreGames = () => {
     if (loadingMore || displayedGamesCount >= gamePlays.length) return;
@@ -146,41 +112,7 @@ export default function HistoryScreen() {
         }
       }
 
-      // Fetch user profile to get user type and organization with retry logic
-      console.log('👤 Fetching profile for user:', user!.id);
-      
-      const { data: profile, error: profileError } = await getUserProfileWithRetry(user!.id);
-
-      console.log('👤 Profile query result:', { profile, error: profileError });
-
-      if (profileError) {
-        console.error('❌ Error fetching user profile:', profileError);
-        // Set defaults even on error to prevent crashes
-        setUserType('user');
-        setOrganizationId(null);
-        setDoorsAvailable(0);
-        setDoorsDistributed(0);
-      } else if (profile) {
-        console.log('✅ User profile loaded successfully:', {
-          user_type: profile.user_type,
-          organization_id: profile.organization_id,
-          doors_available: profile.doors_available,
-          doors_distributed: profile.doors_distributed
-        });
-        setUserType(profile.user_type || 'user');
-        setOrganizationId(profile.organization_id);
-        setDoorsAvailable(profile.doors_available || 0);
-        setDoorsDistributed(profile.doors_distributed || 0);
-      } else {
-        // No profile found, use defaults
-        console.log('⚠️ No profile data returned, using defaults');
-        setUserType('user');
-        setOrganizationId(null);
-        setDoorsAvailable(0);
-        setDoorsDistributed(0);
-      }
-
-      // Fetch both game plays and stats in parallel (for regular users)
+      // Fetch both game plays and stats in parallel
       const [gamePlaysResult, statsResult] = await Promise.all([
         historyService.getUserGamePlays(user!.id),
         historyService.getUserStats(user!.id)
@@ -261,41 +193,6 @@ export default function HistoryScreen() {
       }}>
         Games Played
       </Text>
-    </View>
-  );
-
-  const renderToggleBar = () => (
-    <View style={styles.toggleContainer}>
-      <TouchableOpacity
-        style={[
-          styles.toggleButton,
-          activeTab === 'distributions' && styles.toggleButtonActive
-        ]}
-        onPress={() => handleTabChange('distributions')}
-        activeOpacity={0.7}
-      >
-        <Text style={[
-          styles.toggleButtonText,
-          activeTab === 'distributions' && styles.toggleButtonTextActive
-        ]}>
-          Distributions
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[
-          styles.toggleButton,
-          activeTab === 'games' && styles.toggleButtonActive
-        ]}
-        onPress={() => handleTabChange('games')}
-        activeOpacity={0.7}
-      >
-        <Text style={[
-          styles.toggleButtonText,
-          activeTab === 'games' && styles.toggleButtonTextActive
-        ]}>
-          Games
-        </Text>
-      </TouchableOpacity>
     </View>
   );
 
@@ -461,49 +358,7 @@ export default function HistoryScreen() {
     );
   }
 
-  // Render appropriate view based on user type
-  console.log('📊 Rendering History Screen:', { userType, organizationId, loading });
-
-  if (userType === 'distributor' && organizationId) {
-    console.log('✅ Showing Distributor Dashboard');
-    return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50 }}>
-        <Header variant="page" title="History" subtitle={activeTab === 'distributions' ? 'Manage door distributions' : 'Your game history'} />
-        {renderToggleBar()}
-        {activeTab === 'distributions' ? (
-          <DistributorHistoryView
-            organizationId={organizationId}
-            doorsAvailable={doorsAvailable}
-            doorsDistributed={doorsDistributed}
-            onRefresh={fetchHistory}
-          />
-        ) : (
-          <ScrollView
-            style={{ flex: 1 }}
-            contentContainerStyle={{ paddingBottom: 100 }}
-            onScroll={handleGameHistoryScroll}
-            scrollEventThrottle={16}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={() => fetchHistory(true)}
-                tintColor={Colors.primary}
-                colors={[Colors.primary]}
-              />
-            }
-          >
-            {renderStats()}
-            {renderGameHistory()}
-          </ScrollView>
-        )}
-        <BottomNavBar />
-      </SafeAreaView>
-    );
-  }
-
-
-  // Default: Regular user view
-  console.log('✅ Showing Regular User History');
+  // Game history view (all users)
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50 }}>
       <Header variant="page" title="History" subtitle="Your game history" />

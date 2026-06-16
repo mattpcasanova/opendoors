@@ -1,7 +1,7 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BlurView } from 'expo-blur';
-import { Clock, Gift, Home, User } from 'lucide-react-native';
+import { Clock, GraduationCap, Gift, Home, User } from 'lucide-react-native';
 import React from 'react';
 import { Platform, Text, TouchableOpacity, View } from 'react-native';
 import { Colors } from '../../constants';
@@ -13,6 +13,11 @@ const NAV_ITEMS = [
     id: 'Home',
     label: 'Home',
     icon: Home,
+  },
+  {
+    id: 'School',
+    label: 'School',
+    icon: GraduationCap,
   },
   {
     id: 'Rewards',
@@ -44,6 +49,7 @@ export default function BottomNavBar({}: Props) {
   const getActiveTab = () => {
     if (currentRoute.toLowerCase().includes('reward')) return 'Rewards';
     if (currentRoute.toLowerCase().includes('history')) return 'History';
+    if (currentRoute.toLowerCase().includes('school')) return 'School';
     if (currentRoute.toLowerCase().includes('profile')) return 'Profile';
     return 'Home';
   };
@@ -57,6 +63,8 @@ export default function BottomNavBar({}: Props) {
       navigation.navigate('Rewards');
     } else if (page === 'History') {
       navigation.navigate('History');
+    } else if (page === 'School') {
+      navigation.navigate('School');
     } else if (page === 'Profile') {
       navigation.navigate('Profile');
     }

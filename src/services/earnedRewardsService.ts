@@ -4,7 +4,7 @@ export interface EarnedReward {
   id: string;
   user_id: string;
   doors_earned: number;
-  source_type: 'ad_watch' | 'referral' | 'distributor' | 'achievement' | 'lesson' | 'survey';
+  source_type: 'ad_watch' | 'referral' | 'distributor' | 'achievement' | 'lesson' | 'survey' | 'teacher';
   source_name: string;
   description: string;
   claimed: boolean;
@@ -242,6 +242,21 @@ class EarnedRewardsService {
       doors_earned: doorsEarned,
       source_type: 'distributor',
       source_name: distributorName,
+      description: description,
+    });
+  }
+
+  // Add teacher-sent door reward (game plays sent by a teacher)
+  async addTeacherReward(
+    userId: string,
+    teacherName: string,
+    description: string,
+    doorsEarned: number = 1
+  ): Promise<{ data: EarnedReward | null; error: string | null }> {
+    return this.addEarnedReward(userId, {
+      doors_earned: doorsEarned,
+      source_type: 'teacher',
+      source_name: teacherName,
       description: description,
     });
   }
