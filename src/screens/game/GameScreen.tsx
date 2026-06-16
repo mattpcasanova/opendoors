@@ -54,6 +54,9 @@ export default function GameScreen({
         case 5:
           const size5 = Math.min(90, (maxWidth - gap * 2) / 3); // Size based on first row (3 doors)
           return { rows: [3, 2], doorSize: size5 };
+        case 7:
+          const size7 = Math.min(80, (maxWidth - gap * 3) / 4); // Size based on first row (4 doors)
+          return { rows: [4, 3], doorSize: size7 };
         case 10:
           const size10 = Math.min(60, (maxWidth - gap * 4) / 5);
           return { rows: [5, 5], doorSize: size10 };
