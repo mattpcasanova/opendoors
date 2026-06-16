@@ -919,7 +919,7 @@ export default function HomeScreen() {
         )}
 
         {/* Search Bar - Now positioned after Earned Rewards */}
-        <View style={{ marginBottom: Spacing.xl, marginTop: Spacing.md }}>
+        <View style={{ marginBottom: Spacing.lg, marginTop: 0 }}>
           <View
             style={{
               backgroundColor: Colors.white,
