@@ -1,6 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { GraduationCap } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,6 +14,7 @@ import {
 } from '../../services/schoolService';
 import { supabase } from '../../services/supabase/client';
 import BottomNavBar from '../main/BottomNavBar';
+import Header from '../main/Header';
 import { LoadingSpinner } from '../ui';
 import CreateTemplateModal from './CreateTemplateModal';
 import GrantRewardModal from './GrantRewardModal';
@@ -160,34 +159,12 @@ const TeacherSchoolView: React.FC = () => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50 }} edges={['top']}>
-      {/* Header */}
-      <LinearGradient
-        colors={[Colors.primary, Colors.primaryDark, Colors.success]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24 }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <View
-            style={{
-              width: 52,
-              height: 52,
-              borderRadius: 26,
-              backgroundColor: 'rgba(255,255,255,0.2)',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <GraduationCap size={28} color={Colors.white} />
-          </View>
-          <View>
-            <Text style={{ color: Colors.white, fontSize: 26, fontWeight: '800' }}>My Classroom</Text>
-            <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 14 }}>
-              Reward your students
-            </Text>
-          </View>
-        </View>
-      </LinearGradient>
+      <Header
+        variant="section"
+        iconName="school"
+        title="My Classroom"
+        subtitle="Reward your students"
+      />
 
       <ScrollView
         style={{ flex: 1 }}

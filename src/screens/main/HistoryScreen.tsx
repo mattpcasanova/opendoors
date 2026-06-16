@@ -244,7 +244,7 @@ export default function HistoryScreen() {
   if (loading) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50 }}>
-        <Header variant="page" title="History" subtitle="Your game history" />
+        <Header variant="section" iconName="time" title="History" subtitle="Your game history" />
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 100 }}>
           {/* Stats skeleton */}
           <View style={{
@@ -361,7 +361,7 @@ export default function HistoryScreen() {
   // Game history view (all users)
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50 }}>
-      <Header variant="page" title="History" subtitle="Your game history" />
+      <Header variant="section" iconName="time" title="History" subtitle="Your game history" />
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: 100 }}

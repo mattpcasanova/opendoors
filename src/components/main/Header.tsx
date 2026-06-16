@@ -10,7 +10,7 @@ import { Colors } from "../../constants"
 const { width: screenWidth } = Dimensions.get("window")
 
 interface HeaderProps {
-  variant: "home" | "rewards" | "history" | "profile" | "simple" | "page"
+  variant: "home" | "rewards" | "history" | "profile" | "simple" | "page" | "section"
   title?: string
   subtitle?: string
   userName?: string
@@ -24,6 +24,7 @@ interface HeaderProps {
     gamesPlayed?: number
   }
   showLogo?: boolean
+  iconName?: keyof typeof Ionicons.glyphMap
 }
 
 export default function Header({
@@ -36,6 +37,7 @@ export default function Header({
   rightComponent,
   stats,
   showLogo = false,
+  iconName = "sparkles",
 }: HeaderProps) {
   const getGreeting = () => {
     const hour = new Date().getHours()
@@ -553,6 +555,63 @@ export default function Header({
           </View>
         </View>
       </LinearGradient>
+    )
+  }
+
+  // SECTION HEADER - Reusable gradient header (icon + title + subtitle).
+  // Matches the History/Profile header language for cross-page consistency.
+  if (variant === "section") {
+    return (
+      <View style={{ backgroundColor: Colors.gray50 }}>
+        <LinearGradient colors={[Colors.primary, Colors.primaryDark, Colors.success]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingBottom: 20 }}>
+          <View style={{ paddingHorizontal: 20, paddingTop: 15, paddingBottom: 20 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              {showBackButton && onBackPress && (
+                <TouchableOpacity
+                  onPress={onBackPress}
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: "rgba(255, 255, 255, 0.2)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: 12,
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="arrow-back" size={24} color={Colors.white} />
+                </TouchableOpacity>
+              )}
+
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+                  <View
+                    style={{
+                      width: 52,
+                      height: 52,
+                      backgroundColor: "rgba(255, 255, 255, 0.2)",
+                      borderRadius: 26,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Ionicons name={iconName} size={28} color={Colors.white} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: Colors.white, fontSize: 26, fontWeight: "800" }}>{title}</Text>
+                    {subtitle && (
+                      <Text style={{ color: Colors.primaryLightest, fontSize: 14, marginTop: 2 }}>{subtitle}</Text>
+                    )}
+                  </View>
+                </View>
+              </View>
+
+              {rightComponent && <View style={{ marginLeft: 12 }}>{rightComponent}</View>}
+            </View>
+          </View>
+        </LinearGradient>
+      </View>
     )
   }
 

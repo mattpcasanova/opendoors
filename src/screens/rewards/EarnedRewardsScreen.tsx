@@ -1,16 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { GraduationCap } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
     ScrollView,
     StyleSheet,
     Text,
-    TouchableOpacity,
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Header from '../../components/main/Header';
 import { LoadingSpinner } from '../../components/ui';
 import { Colors } from '../../constants';
 import { useAuth } from '../../hooks/useAuth';
@@ -120,33 +118,14 @@ const EarnedRewardsScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Gradient hero header */}
-      <LinearGradient
-        colors={[Colors.primary, Colors.primaryDark, Colors.success]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.hero}
-      >
-        <View style={styles.heroTopRow}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color={Colors.white} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Earned Doors</Text>
-          <View style={styles.placeholder} />
-        </View>
-
-        <View style={styles.heroBody}>
-          <View style={styles.heroIcon}>
-            <GraduationCap size={26} color={Colors.white} />
-          </View>
-          <View>
-            <Text style={styles.heroCount}>{availableCount}</Text>
-            <Text style={styles.heroSubtitle}>
-              {availableCount === 1 ? 'door ready to play' : 'doors ready to play'} · from your teachers
-            </Text>
-          </View>
-        </View>
-      </LinearGradient>
+      <Header
+        variant="section"
+        iconName="school"
+        title="Earned Doors"
+        subtitle={`${availableCount} ${availableCount === 1 ? 'door' : 'doors'} ready to play · from your teachers`}
+        showBackButton
+        onBackPress={() => navigation.goBack()}
+      />
 
       {/* Summary chips */}
       <View style={styles.chipRow}>

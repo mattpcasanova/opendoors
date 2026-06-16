@@ -685,7 +685,8 @@ export default function ProfileScreen() {
       <View style={{ flex: 1 }}>
         <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50 }}>
           <Header
-            variant="page"
+            variant="section"
+            iconName="person"
             title="Profile"
             subtitle="Manage your account and preferences"
           />
@@ -779,7 +780,8 @@ export default function ProfileScreen() {
     <View style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50 }}>
         <Header
-          variant="page"
+          variant="section"
+          iconName="person"
           title="Profile"
           subtitle="Manage your account and preferences"
         />

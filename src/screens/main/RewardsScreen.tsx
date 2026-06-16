@@ -74,7 +74,8 @@ function RewardDetailScreen({ reward, onBack, onMarkClaimed }: RewardDetailProps
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50 }}>
       {/* Header */}
       <Header
-        variant="page"
+        variant="section"
+        iconName="gift"
         title={reward.company}
         subtitle={reward.reward}
         showBackButton
@@ -501,7 +502,7 @@ export default function RewardsScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50 }}>
-      <Header variant="page" title="My Rewards" />
+      <Header variant="section" iconName="gift" title="My Rewards" subtitle="Your earned rewards" />
 
       <ScrollView
         style={{ flex: 1 }}
