@@ -1,38 +1,39 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../constants';
 import { useAuth } from '../../hooks/useAuth';
 import {
   ClassWithTeacher,
-  GrantedReward,
   schoolService,
+  TeacherSummary,
 } from '../../services/schoolService';
 import { supabase } from '../../services/supabase/client';
-import GameScreen from '../../screens/game/GameScreen';
 import BottomNavBar from '../main/BottomNavBar';
 import Header from '../main/Header';
 import { LoadingSpinner } from '../ui';
-import GrantedRewardCard from './GrantedRewardCard';
+import TeacherDetailView from './TeacherDetailView';
+
+const teacherName = (t: TeacherSummary) =>
+  `${t.first_name || ''} ${t.last_name || ''}`.trim() || t.email;
 
 const StudentSchoolView: React.FC = () => {
   const { user } = useAuth();
   const [classes, setClasses] = useState<ClassWithTeacher[]>([]);
-  const [rewards, setRewards] = useState<GrantedReward[]>([]);
+  const [teachers, setTeachers] = useState<TeacherSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [busyId, setBusyId] = useState<string | null>(null);
-  const [playingReward, setPlayingReward] = useState<GrantedReward | null>(null);
+  const [selectedTeacher, setSelectedTeacher] = useState<TeacherSummary | null>(null);
 
   const load = useCallback(async () => {
     if (!user?.id) return;
-    const [classesRes, rewardsRes] = await Promise.all([
+    const [classesRes, teachersRes] = await Promise.all([
       schoolService.getMyClassesAsStudent(user.id),
-      schoolService.getMyGrantedRewards(user.id),
+      schoolService.getMyTeachers(),
     ]);
     if (classesRes.data) setClasses(classesRes.data);
-    if (rewardsRes.data) setRewards(rewardsRes.data);
+    if (teachersRes.data) setTeachers(teachersRes.data);
     setLoading(false);
   }, [user?.id]);
 
@@ -40,23 +41,14 @@ const StudentSchoolView: React.FC = () => {
     load();
   }, [load]);
 
-  // Live-update when a teacher grants/confirms a reward
+  // Refresh teacher door counts when doors arrive or rewards change
   useEffect(() => {
     if (!user?.id) return;
     const channel = supabase
       .channel(`school_student_${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'granted_rewards',
-          filter: `student_id=eq.${user.id}`,
-        },
-        () => load()
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'granted_rewards', filter: `student_id=eq.${user.id}` }, () => load())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'earned_rewards', filter: `user_id=eq.${user.id}` }, () => load())
       .subscribe();
-
     return () => {
       supabase.removeChannel(channel);
     };
@@ -68,65 +60,14 @@ const StudentSchoolView: React.FC = () => {
     setRefreshing(false);
   };
 
-  const handleUse = (reward: GrantedReward) => {
-    Alert.alert(
-      'Use this reward?',
-      `"${reward.title}" will be sent to your teacher to confirm.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Send Request',
-          onPress: async () => {
-            setBusyId(reward.id);
-            // Optimistic flip
-            setRewards((prev) =>
-              prev.map((r) =>
-                r.id === reward.id ? { ...r, status: 'redeem_requested' } : r
-              )
-            );
-            const { error } = await schoolService.requestRedemption(reward.id);
-            setBusyId(null);
-            if (error) {
-              Alert.alert('Error', 'Could not send your request. Please try again.');
-              load();
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const handlePlay = (reward: GrantedReward) => {
-    setPlayingReward(reward);
-  };
-
-  const handleGameComplete = async (won: boolean) => {
-    const reward = playingReward;
-    setPlayingReward(null);
-    if (!reward) return;
-    const { error } = await schoolService.recordRewardGame(reward.id, won);
-    if (error) {
-      Alert.alert('Error', 'Could not save your result. Please try again.');
-    } else {
-      Alert.alert(
-        won ? 'You won! 🎉' : 'Not this time',
-        won
-          ? `You won "${reward.title}"! Your teacher will confirm it in class.`
-          : `"${reward.title}" didn't come through — that try is used up.`
-      );
-    }
-    load();
-  };
-
-  if (playingReward) {
+  if (selectedTeacher) {
     return (
-      <GameScreen
-        prizeName={playingReward.title}
-        prizeDescription={playingReward.description || 'Win this reward from your teacher!'}
-        locationName="Classroom Reward"
-        doorCount={playingReward.doors}
-        onGameComplete={(won) => handleGameComplete(won)}
-        onBack={() => setPlayingReward(null)}
+      <TeacherDetailView
+        teacher={selectedTeacher}
+        onBack={() => {
+          setSelectedTeacher(null);
+          load();
+        }}
       />
     );
   }
@@ -139,20 +80,13 @@ const StudentSchoolView: React.FC = () => {
     );
   }
 
-  const activeRewards = rewards.filter(
-    (r) => r.status === 'granted' || r.status === 'redeem_requested'
-  );
-  const pastRewards = rewards.filter(
-    (r) => r.status === 'redeemed' || r.status === 'denied' || r.status === 'revoked' || r.status === 'lost'
-  );
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50 }} edges={['top']}>
       <Header
         variant="section"
         iconName="school"
         title="My School"
-        subtitle="Classes & rewards from your teachers"
+        subtitle="Your teachers & their rewards"
       />
 
       <ScrollView
@@ -161,32 +95,22 @@ const StudentSchoolView: React.FC = () => {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
       >
-        {/* My Classes */}
-        <Text style={{ fontSize: 18, fontWeight: '700', color: Colors.gray900, marginBottom: 12 }}>
-          My Classes
-        </Text>
-        {classes.length === 0 ? (
-          <View
-            style={{
-              backgroundColor: Colors.white,
-              borderRadius: 16,
-              padding: 20,
-              alignItems: 'center',
-              marginBottom: 24,
-              borderWidth: 1,
-              borderColor: Colors.gray200,
-            }}
-          >
-            <Ionicons name="school-outline" size={32} color={Colors.gray400} />
+        {/* My Teachers */}
+        <Text style={titleStyle}>My Teachers</Text>
+        {teachers.length === 0 ? (
+          <View style={emptyCard}>
+            <Ionicons name="people-outline" size={32} color={Colors.gray400} />
             <Text style={{ color: Colors.gray600, marginTop: 8, textAlign: 'center' }}>
               You're not in any classes yet. Your teacher will add you.
             </Text>
           </View>
         ) : (
           <View style={{ marginBottom: 24 }}>
-            {classes.map((c) => (
-              <View
-                key={c.id}
+            {teachers.map((t) => (
+              <TouchableOpacity
+                key={t.teacher_id}
+                onPress={() => setSelectedTeacher(t)}
+                activeOpacity={0.7}
                 style={{
                   backgroundColor: Colors.white,
                   borderRadius: 16,
@@ -195,98 +119,91 @@ const StudentSchoolView: React.FC = () => {
                   flexDirection: 'row',
                   alignItems: 'center',
                   gap: 12,
-                  shadowColor: Colors.black,
-                  shadowOpacity: 0.05,
-                  shadowRadius: 6,
-                  shadowOffset: { width: 0, height: 2 },
-                  elevation: 2,
+                  ...shadow,
                 }}
               >
-                <View
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 12,
-                    backgroundColor: Colors.primaryMuted,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Ionicons name="book" size={22} color={Colors.primary} />
+                <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: Colors.primaryMuted, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ color: Colors.primary, fontWeight: '700', fontSize: 16 }}>
+                    {(t.first_name?.[0] || t.email[0] || '?').toUpperCase()}
+                  </Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.gray900 }}>
-                    {c.name}
-                  </Text>
-                  <Text style={{ fontSize: 13, color: Colors.gray500, marginTop: 2 }}>
-                    {c.teacher_name}
-                  </Text>
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.gray900 }}>{teacherName(t)}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                    <Ionicons name="ticket-outline" size={14} color={t.door_count > 0 ? Colors.primary : Colors.gray400} />
+                    <Text style={{ fontSize: 13, color: t.door_count > 0 ? Colors.primary : Colors.gray500, fontWeight: t.door_count > 0 ? '600' : '400' }}>
+                      {t.door_count} {t.door_count === 1 ? 'door' : 'doors'} to spend
+                    </Text>
+                  </View>
                 </View>
-              </View>
+                <Ionicons name="chevron-forward" size={20} color={Colors.gray400} />
+              </TouchableOpacity>
             ))}
           </View>
         )}
 
-        {/* My Perks */}
-        <Text style={{ fontSize: 18, fontWeight: '700', color: Colors.gray900, marginBottom: 12 }}>
-          My Rewards
-        </Text>
-        {activeRewards.length === 0 && pastRewards.length === 0 ? (
-          <View
-            style={{
-              backgroundColor: Colors.white,
-              borderRadius: 16,
-              padding: 24,
-              alignItems: 'center',
-              borderWidth: 1,
-              borderColor: Colors.gray200,
-            }}
-          >
-            <Ionicons name="ribbon-outline" size={36} color={Colors.gray400} />
-            <Text style={{ color: Colors.gray700, fontWeight: '600', marginTop: 10 }}>
-              No rewards yet
-            </Text>
-            <Text style={{ color: Colors.gray500, marginTop: 4, textAlign: 'center', fontSize: 13 }}>
-              Your teacher can give you perks like a homework pass or a quiz bonus.
-            </Text>
+        {/* My Classes */}
+        <Text style={titleStyle}>My Classes</Text>
+        {classes.length === 0 ? (
+          <View style={emptyCard}>
+            <Ionicons name="school-outline" size={28} color={Colors.gray400} />
+            <Text style={{ color: Colors.gray600, marginTop: 8, textAlign: 'center' }}>No classes yet.</Text>
           </View>
         ) : (
-          <>
-            {activeRewards.map((r) => (
-              <GrantedRewardCard
-                key={r.id}
-                reward={r}
-                onUse={() => handleUse(r)}
-                onPlay={() => handlePlay(r)}
-                busy={busyId === r.id}
-              />
-            ))}
-
-            {pastRewards.length > 0 && (
-              <>
-                <Text
-                  style={{
-                    fontSize: 14,
-                    fontWeight: '600',
-                    color: Colors.gray500,
-                    marginTop: 12,
-                    marginBottom: 8,
-                  }}
-                >
-                  History
-                </Text>
-                {pastRewards.map((r) => (
-                  <GrantedRewardCard key={r.id} reward={r} />
-                ))}
-              </>
-            )}
-          </>
+          classes.map((c) => (
+            <View
+              key={c.id}
+              style={{
+                backgroundColor: Colors.white,
+                borderRadius: 16,
+                padding: 16,
+                marginBottom: 12,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 12,
+                ...shadow,
+              }}
+            >
+              <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: Colors.primaryMuted, alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name="book" size={22} color={Colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.gray900 }}>{c.name}</Text>
+                <Text style={{ fontSize: 13, color: Colors.gray500, marginTop: 2 }}>{c.teacher_name}</Text>
+              </View>
+            </View>
+          ))
         )}
       </ScrollView>
 
       <BottomNavBar />
     </SafeAreaView>
   );
+};
+
+const titleStyle = {
+  fontSize: 18,
+  fontWeight: '700' as const,
+  color: Colors.gray900,
+  marginBottom: 12,
+};
+
+const shadow = {
+  shadowColor: Colors.black,
+  shadowOpacity: 0.05,
+  shadowRadius: 6,
+  shadowOffset: { width: 0, height: 2 },
+  elevation: 2,
+};
+
+const emptyCard = {
+  backgroundColor: Colors.white,
+  borderRadius: 16,
+  padding: 20,
+  alignItems: 'center' as const,
+  marginBottom: 24,
+  borderWidth: 1,
+  borderColor: Colors.gray200,
 };
 
 export default StudentSchoolView;

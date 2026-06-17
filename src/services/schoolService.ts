@@ -68,6 +68,14 @@ export interface GrantedRewardWithStudent extends GrantedReward {
   student_name: string;
 }
 
+export interface TeacherSummary {
+  teacher_id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string;
+  door_count: number;
+}
+
 const fullName = (
   first: string | null | undefined,
   last: string | null | undefined,
@@ -171,6 +179,67 @@ class SchoolService {
       return { data: data as GrantedReward | null, error: error?.message ?? null };
     } catch (error: any) {
       console.error('Error recording reward game:', error);
+      return { data: null, error: error.message };
+    }
+  }
+
+  /** Student's teachers, each with how many of that teacher's doors they hold. */
+  async getMyTeachers(): Promise<{ data: TeacherSummary[] | null; error: string | null }> {
+    try {
+      const { data, error } = await supabase.rpc('get_my_teachers');
+      return { data: data as TeacherSummary[] | null, error: error?.message ?? null };
+    } catch (error: any) {
+      console.error('Error fetching teachers:', error);
+      return { data: null, error: error.message };
+    }
+  }
+
+  /** A teacher's item menu (visible to the enrolled student via RLS). */
+  async getTeacherItems(
+    teacherId: string
+  ): Promise<{ data: RewardTemplate[] | null; error: string | null }> {
+    try {
+      const { data, error } = await supabase
+        .from('reward_templates')
+        .select('*')
+        .eq('teacher_id', teacherId)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+      return { data: data as RewardTemplate[] | null, error: error?.message ?? null };
+    } catch (error: any) {
+      console.error('Error fetching teacher items:', error);
+      return { data: null, error: error.message };
+    }
+  }
+
+  /** The student's reward history with one teacher (RLS limits to own rows). */
+  async getMyRewardsFromTeacher(
+    teacherId: string
+  ): Promise<{ data: GrantedReward[] | null; error: string | null }> {
+    try {
+      const { data, error } = await supabase
+        .from('granted_rewards')
+        .select('*')
+        .eq('teacher_id', teacherId)
+        .order('created_at', { ascending: false });
+      return { data: data as GrantedReward[] | null, error: error?.message ?? null };
+    } catch (error: any) {
+      console.error('Error fetching rewards from teacher:', error);
+      return { data: null, error: error.message };
+    }
+  }
+
+  /** Spend one of a teacher's doors on their item (RPC enforces the scoping). */
+  async spendDoorOnItem(
+    templateId: string
+  ): Promise<{ data: GrantedReward | null; error: string | null }> {
+    try {
+      const { data, error } = await supabase.rpc('spend_door_on_item', {
+        p_template_id: templateId,
+      });
+      return { data: data as GrantedReward | null, error: error?.message ?? null };
+    } catch (error: any) {
+      console.error('Error spending door on item:', error);
       return { data: null, error: error.message };
     }
   }

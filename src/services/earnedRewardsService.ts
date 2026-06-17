@@ -19,6 +19,7 @@ export interface CreateEarnedRewardData {
   source_type: EarnedReward['source_type'];
   source_name: string;
   description?: string;
+  source_teacher_id?: string;
 }
 
 class EarnedRewardsService {
@@ -68,6 +69,7 @@ class EarnedRewardsService {
         p_source_name: rewardData.source_name,
         p_description: rewardData.description || null,
         p_doors_earned: rewardData.doors_earned || 1,
+        p_source_teacher_id: rewardData.source_teacher_id || null,
       });
 
       if (error) {
@@ -251,13 +253,15 @@ class EarnedRewardsService {
     userId: string,
     teacherName: string,
     description: string,
-    doorsEarned: number = 1
+    doorsEarned: number = 1,
+    teacherId?: string
   ): Promise<{ data: EarnedReward | null; error: string | null }> {
     return this.addEarnedReward(userId, {
       doors_earned: doorsEarned,
       source_type: 'teacher',
       source_name: teacherName,
       description: description,
+      source_teacher_id: teacherId,
     });
   }
 

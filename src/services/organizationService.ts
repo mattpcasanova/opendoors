@@ -272,7 +272,8 @@ class OrganizationService {
               recipientId,
               distributorName,
               reason,
-              1
+              1,
+              distributorId
             )
           : await earnedRewardsService.addDistributorReward(
               recipientId,
