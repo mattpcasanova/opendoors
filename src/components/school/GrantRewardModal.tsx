@@ -30,12 +30,14 @@ const GrantRewardModal: React.FC<Props> = ({ visible, classId, student, template
   const [selected, setSelected] = useState<string | null>(null);
   const [customTitle, setCustomTitle] = useState('');
   const [customDesc, setCustomDesc] = useState('');
+  const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
 
   const reset = () => {
     setSelected(null);
     setCustomTitle('');
     setCustomDesc('');
+    setNote('');
   };
 
   const handleClose = () => {
@@ -61,6 +63,7 @@ const GrantRewardModal: React.FC<Props> = ({ visible, classId, student, template
       templateId: selected === CUSTOM ? undefined : selected,
       title: selected === CUSTOM ? customTitle.trim() : undefined,
       description: selected === CUSTOM ? customDesc.trim() || undefined : undefined,
+      note: note.trim() || undefined,
     });
     setSaving(false);
 
@@ -139,6 +142,15 @@ const GrantRewardModal: React.FC<Props> = ({ visible, classId, student, template
                 />
               </View>
             )}
+
+            <TextInput
+              style={[styles.input, { marginTop: 8 }]}
+              placeholder="Add a note (optional) — e.g. Great work today!"
+              placeholderTextColor={Colors.gray400}
+              value={note}
+              onChangeText={setNote}
+              maxLength={140}
+            />
           </ScrollView>
 
           <TouchableOpacity

@@ -6,6 +6,7 @@ import { Colors } from '../../constants';
 import { useAuth } from '../../hooks/useAuth';
 import GameScreen from '../../screens/game/GameScreen';
 import {
+  DoorMessage,
   GrantedReward,
   RewardTemplate,
   schoolService,
@@ -29,19 +30,22 @@ const TeacherDetailView: React.FC<Props> = ({ teacher, onBack }) => {
   const [doors, setDoors] = useState(teacher.door_count);
   const [items, setItems] = useState<RewardTemplate[]>([]);
   const [rewards, setRewards] = useState<GrantedReward[]>([]);
+  const [messages, setMessages] = useState<DoorMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [playingReward, setPlayingReward] = useState<GrantedReward | null>(null);
 
   const load = useCallback(async () => {
-    const [itemsRes, rewardsRes, teachersRes] = await Promise.all([
+    const [itemsRes, rewardsRes, teachersRes, messagesRes] = await Promise.all([
       schoolService.getTeacherItems(teacher.teacher_id),
       schoolService.getMyRewardsFromTeacher(teacher.teacher_id),
       schoolService.getMyTeachers(),
+      schoolService.getDoorMessagesFromTeacher(teacher.teacher_id),
     ]);
     if (itemsRes.data) setItems(itemsRes.data);
     if (rewardsRes.data) setRewards(rewardsRes.data);
+    if (messagesRes.data) setMessages(messagesRes.data);
     if (teachersRes.data) {
       const me = teachersRes.data.find((t) => t.teacher_id === teacher.teacher_id);
       if (me) setDoors(me.door_count);
@@ -194,6 +198,43 @@ const TeacherDetailView: React.FC<Props> = ({ teacher, onBack }) => {
             </Text>
           </View>
         </View>
+
+        {/* Shout-outs attached to doors */}
+        {messages.filter((m) => m.reason).length > 0 && (
+          <>
+            <Text style={titleStyle}>Notes from {teacherName(teacher)}</Text>
+            <View style={{ marginBottom: 24 }}>
+              {messages
+                .filter((m) => m.reason)
+                .slice(0, 5)
+                .map((m) => (
+                  <View
+                    key={m.id}
+                    style={{
+                      backgroundColor: Colors.white,
+                      borderRadius: 14,
+                      padding: 14,
+                      marginBottom: 10,
+                      flexDirection: 'row',
+                      gap: 10,
+                      ...shadow,
+                    }}
+                  >
+                    <Ionicons name="chatbubble-ellipses" size={18} color={Colors.primary} style={{ marginTop: 2 }} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 14, color: Colors.gray800, fontStyle: 'italic' }}>
+                        "{m.reason}"
+                      </Text>
+                      <Text style={{ fontSize: 12, color: Colors.gray400, marginTop: 4 }}>
+                        +{m.doors_sent} {m.doors_sent === 1 ? 'door' : 'doors'} ·{' '}
+                        {new Date(m.created_at).toLocaleDateString()}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+            </View>
+          </>
+        )}
 
         {/* Item menu */}
         <Text style={titleStyle}>Rewards you can get</Text>

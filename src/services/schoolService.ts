@@ -77,6 +77,13 @@ export interface TeacherSummary {
   door_count: number;
 }
 
+export interface DoorMessage {
+  id: string;
+  doors_sent: number;
+  reason: string | null;
+  created_at: string;
+}
+
 const fullName = (
   first: string | null | undefined,
   last: string | null | undefined,
@@ -245,6 +252,24 @@ class SchoolService {
     }
   }
 
+  /** Recent door shout-outs the student received from a teacher (RLS limits to own). */
+  async getDoorMessagesFromTeacher(
+    teacherId: string
+  ): Promise<{ data: DoorMessage[] | null; error: string | null }> {
+    try {
+      const { data, error } = await supabase
+        .from('door_distributions')
+        .select('id, doors_sent, reason, created_at')
+        .eq('distributor_id', teacherId)
+        .order('created_at', { ascending: false })
+        .limit(15);
+      return { data: data as DoorMessage[] | null, error: error?.message ?? null };
+    } catch (error: any) {
+      console.error('Error fetching door messages:', error);
+      return { data: null, error: error.message };
+    }
+  }
+
   /** Student joins a class with its code. */
   async joinClassByCode(
     code: string
@@ -383,6 +408,7 @@ class SchoolService {
     title?: string;
     description?: string;
     icon?: string;
+    note?: string;
   }): Promise<{ data: GrantedReward | null; error: string | null }> {
     try {
       const { data, error } = await supabase.rpc('grant_classroom_reward', {
@@ -392,6 +418,7 @@ class SchoolService {
         p_title: args.title ?? null,
         p_description: args.description ?? null,
         p_icon: args.icon ?? null,
+        p_note: args.note ?? null,
       });
       return { data: data as GrantedReward | null, error: error?.message ?? null };
     } catch (error: any) {
@@ -408,6 +435,7 @@ class SchoolService {
     title?: string;
     description?: string;
     icon?: string;
+    note?: string;
   }): Promise<{ granted: number; error: string | null }> {
     let granted = 0;
     for (const studentId of args.studentIds) {
@@ -418,6 +446,7 @@ class SchoolService {
         title: args.title,
         description: args.description,
         icon: args.icon,
+        note: args.note,
       });
       if (error) {
         return { granted, error };

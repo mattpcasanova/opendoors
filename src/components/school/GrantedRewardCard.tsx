@@ -85,6 +85,14 @@ const GrantedRewardCard: React.FC<Props> = ({ reward, studentName, onUse, onPlay
               {reward.description}
             </Text>
           ) : null}
+          {reward.note ? (
+            <View style={{ flexDirection: 'row', gap: 6, marginTop: 6, backgroundColor: Colors.primaryMuted, borderRadius: 8, paddingVertical: 6, paddingHorizontal: 8 }}>
+              <Ionicons name="chatbubble-ellipses" size={14} color={Colors.primary} style={{ marginTop: 1 }} />
+              <Text style={{ flex: 1, fontSize: 13, color: Colors.primaryDark, fontStyle: 'italic' }}>
+                {reward.note}
+              </Text>
+            </View>
+          ) : null}
           {isGame && !isTerminal && reward.status !== 'redeemed' ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
               <Ionicons name="game-controller" size={13} color={Colors.primary} />
