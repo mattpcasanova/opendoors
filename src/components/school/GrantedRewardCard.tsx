@@ -17,21 +17,25 @@ export const STATUS_CONFIG: Record<GrantedRewardStatus, StatusConfig> = {
   redeemed: { label: 'Redeemed', color: Colors.successDark, bg: 'rgba(16, 185, 129, 0.12)', icon: 'checkmark-circle' },
   denied: { label: 'Denied', color: Colors.gray500, bg: Colors.gray100, icon: 'close-circle' },
   revoked: { label: 'Revoked', color: Colors.gray500, bg: Colors.gray100, icon: 'remove-circle' },
+  lost: { label: 'Not won', color: Colors.gray500, bg: Colors.gray100, icon: 'close-circle' },
 };
 
 interface Props {
   reward: GrantedReward;
   /** Show a student name line (teacher-facing lists). */
   studentName?: string;
-  /** Student-facing "Use" action; shown only when status is 'granted'. */
+  /** Student-facing "Use" action for direct rewards; shown only when status is 'granted'. */
   onUse?: () => void;
+  /** Student-facing "Play" action for game rewards; shown only when status is 'granted'. */
+  onPlay?: () => void;
   /** Disable the action while a request is in flight. */
   busy?: boolean;
 }
 
-const GrantedRewardCard: React.FC<Props> = ({ reward, studentName, onUse, busy }) => {
+const GrantedRewardCard: React.FC<Props> = ({ reward, studentName, onUse, onPlay, busy }) => {
   const status = STATUS_CONFIG[reward.status];
-  const isTerminal = reward.status === 'denied' || reward.status === 'revoked';
+  const isTerminal = reward.status === 'denied' || reward.status === 'revoked' || reward.status === 'lost';
+  const isGame = reward.reward_type === 'game';
 
   return (
     <View
@@ -81,6 +85,14 @@ const GrantedRewardCard: React.FC<Props> = ({ reward, studentName, onUse, busy }
               {reward.description}
             </Text>
           ) : null}
+          {isGame && !isTerminal && reward.status !== 'redeemed' ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+              <Ionicons name="game-controller" size={13} color={Colors.primary} />
+              <Text style={{ fontSize: 12, fontWeight: '600', color: Colors.primary }}>
+                Play to win · 1 in {reward.doors}
+              </Text>
+            </View>
+          ) : null}
           {studentName ? (
             <Text style={{ fontSize: 13, color: Colors.gray500, marginTop: 4 }}>
               For: {studentName}
@@ -109,8 +121,30 @@ const GrantedRewardCard: React.FC<Props> = ({ reward, studentName, onUse, busy }
         </View>
       </View>
 
-      {/* Student "Use" action */}
-      {reward.status === 'granted' && onUse ? (
+      {/* Student action */}
+      {reward.status === 'granted' && isGame && onPlay ? (
+        <TouchableOpacity
+          onPress={onPlay}
+          disabled={busy}
+          activeOpacity={0.85}
+          style={{
+            marginTop: 14,
+            backgroundColor: Colors.primary,
+            borderRadius: 12,
+            paddingVertical: 12,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            opacity: busy ? 0.6 : 1,
+          }}
+        >
+          <Ionicons name="game-controller" size={18} color={Colors.white} />
+          <Text style={{ color: Colors.white, fontWeight: '700', fontSize: 15 }}>
+            Play for this reward
+          </Text>
+        </TouchableOpacity>
+      ) : reward.status === 'granted' && onUse ? (
         <TouchableOpacity
           onPress={onUse}
           disabled={busy}

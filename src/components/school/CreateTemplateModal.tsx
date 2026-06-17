@@ -13,7 +13,7 @@ import {
   View,
 } from 'react-native';
 import { Colors } from '../../constants';
-import { ClassRow, schoolService } from '../../services/schoolService';
+import { ClassRow, RewardType, schoolService } from '../../services/schoolService';
 
 interface Props {
   visible: boolean;
@@ -23,16 +23,26 @@ interface Props {
   onCreated: () => void;
 }
 
+const DOOR_OPTIONS = [
+  { doors: 3, odds: '1 in 3' },
+  { doors: 5, odds: '1 in 5' },
+  { doors: 7, odds: '1 in 7' },
+];
+
 const CreateTemplateModal: React.FC<Props> = ({ visible, teacherId, classes, onClose, onCreated }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [classId, setClassId] = useState<string | null>(null); // null = all classes
+  const [rewardType, setRewardType] = useState<RewardType>('direct');
+  const [doors, setDoors] = useState(3);
   const [saving, setSaving] = useState(false);
 
   const reset = () => {
     setTitle('');
     setDescription('');
     setClassId(null);
+    setRewardType('direct');
+    setDoors(3);
   };
 
   const handleClose = () => {
@@ -51,6 +61,8 @@ const CreateTemplateModal: React.FC<Props> = ({ visible, teacherId, classes, onC
       class_id: classId,
       title: title.trim(),
       description: description.trim() || undefined,
+      reward_type: rewardType,
+      doors: rewardType === 'game' ? doors : 3,
     });
     setSaving(false);
     if (error) {
@@ -107,6 +119,56 @@ const CreateTemplateModal: React.FC<Props> = ({ visible, teacherId, classes, onC
               maxLength={140}
             />
 
+            <Text style={styles.label}>How students get it</Text>
+            <View style={{ gap: 8, marginBottom: 8 }}>
+              <TypeOption
+                title="Give directly"
+                subtitle="Student taps to use it, you confirm in class"
+                active={rewardType === 'direct'}
+                onPress={() => setRewardType('direct')}
+              />
+              <TypeOption
+                title="Play to win"
+                subtitle="Student plays a door game for a chance to win it"
+                active={rewardType === 'game'}
+                onPress={() => setRewardType('game')}
+              />
+            </View>
+
+            {rewardType === 'game' && (
+              <>
+                <Text style={styles.label}>Difficulty (more doors = harder = better prize)</Text>
+                <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+                  {DOOR_OPTIONS.map((opt) => {
+                    const active = doors === opt.doors;
+                    return (
+                      <TouchableOpacity
+                        key={opt.doors}
+                        onPress={() => setDoors(opt.doors)}
+                        activeOpacity={0.8}
+                        style={{
+                          flex: 1,
+                          paddingVertical: 12,
+                          borderRadius: 12,
+                          alignItems: 'center',
+                          backgroundColor: active ? Colors.primary : Colors.gray100,
+                          borderWidth: 1,
+                          borderColor: active ? Colors.primary : Colors.gray200,
+                        }}
+                      >
+                        <Text style={{ fontSize: 18, fontWeight: '800', color: active ? Colors.white : Colors.gray800 }}>
+                          {opt.doors}
+                        </Text>
+                        <Text style={{ fontSize: 11, color: active ? 'rgba(255,255,255,0.85)' : Colors.gray500, marginTop: 2 }}>
+                          {opt.odds}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </>
+            )}
+
             <Text style={styles.label}>Applies to</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
               <Chip label="All my classes" active={classId === null} onPress={() => setClassId(null)} />
@@ -145,6 +207,33 @@ const CreateTemplateModal: React.FC<Props> = ({ visible, teacherId, classes, onC
     </Modal>
   );
 };
+
+const TypeOption: React.FC<{ title: string; subtitle: string; active: boolean; onPress: () => void }> = ({ title, subtitle, active, onPress }) => (
+  <TouchableOpacity
+    onPress={onPress}
+    activeOpacity={0.8}
+    style={{
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      padding: 14,
+      borderRadius: 14,
+      borderWidth: 2,
+      borderColor: active ? Colors.primary : Colors.gray200,
+      backgroundColor: active ? Colors.primaryMuted : Colors.white,
+    }}
+  >
+    <Ionicons
+      name={active ? 'radio-button-on' : 'radio-button-off'}
+      size={22}
+      color={active ? Colors.primary : Colors.gray400}
+    />
+    <View style={{ flex: 1 }}>
+      <Text style={{ fontSize: 15, fontWeight: '600', color: Colors.gray900 }}>{title}</Text>
+      <Text style={{ fontSize: 12, color: Colors.gray500, marginTop: 2 }}>{subtitle}</Text>
+    </View>
+  </TouchableOpacity>
+);
 
 const Chip: React.FC<{ label: string; active: boolean; onPress: () => void }> = ({ label, active, onPress }) => (
   <TouchableOpacity

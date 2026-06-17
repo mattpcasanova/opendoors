@@ -6,7 +6,8 @@ export type GrantedRewardStatus =
   | 'redeem_requested'
   | 'redeemed'
   | 'revoked'
-  | 'denied';
+  | 'denied'
+  | 'lost';
 
 export interface ClassRow {
   id: string;
@@ -30,6 +31,8 @@ export interface RosterMember {
   enrolled_at: string;
 }
 
+export type RewardType = 'direct' | 'game';
+
 export interface RewardTemplate {
   id: string;
   teacher_id: string;
@@ -37,6 +40,8 @@ export interface RewardTemplate {
   title: string;
   description: string | null;
   icon: string | null;
+  reward_type: RewardType;
+  doors: number;
   is_active: boolean;
   created_at: string;
 }
@@ -50,6 +55,8 @@ export interface GrantedReward {
   title: string;
   description: string | null;
   icon: string | null;
+  reward_type: RewardType;
+  doors: number;
   status: GrantedRewardStatus;
   requested_at: string | null;
   redeemed_at: string | null;
@@ -136,7 +143,7 @@ class SchoolService {
     }
   }
 
-  /** Student requests redemption of a granted perk (granted -> redeem_requested). */
+  /** Student requests redemption of a direct granted perk (granted -> redeem_requested). */
   async requestRedemption(
     grantedId: string
   ): Promise<{ data: GrantedReward | null; error: string | null }> {
@@ -147,6 +154,23 @@ class SchoolService {
       return { data: data as GrantedReward | null, error: error?.message ?? null };
     } catch (error: any) {
       console.error('Error requesting redemption:', error);
+      return { data: null, error: error.message };
+    }
+  }
+
+  /** Student records a play-to-win game result. win -> redeem_requested, lose -> lost. */
+  async recordRewardGame(
+    grantedId: string,
+    won: boolean
+  ): Promise<{ data: GrantedReward | null; error: string | null }> {
+    try {
+      const { data, error } = await supabase.rpc('record_reward_game', {
+        p_granted_id: grantedId,
+        p_won: won,
+      });
+      return { data: data as GrantedReward | null, error: error?.message ?? null };
+    } catch (error: any) {
+      console.error('Error recording reward game:', error);
       return { data: null, error: error.message };
     }
   }
@@ -215,6 +239,8 @@ class SchoolService {
     title: string;
     description?: string;
     icon?: string;
+    reward_type?: RewardType;
+    doors?: number;
   }): Promise<{ data: RewardTemplate | null; error: string | null }> {
     try {
       const { data, error } = await supabase
@@ -225,6 +251,8 @@ class SchoolService {
           title: t.title,
           description: t.description ?? null,
           icon: t.icon ?? null,
+          reward_type: t.reward_type ?? 'direct',
+          doors: t.doors ?? 3,
         })
         .select()
         .single();

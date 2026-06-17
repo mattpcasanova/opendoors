@@ -327,6 +327,16 @@ const TeacherSchoolView: React.FC = () => {
                       {t.description ? (
                         <Text style={{ fontSize: 13, color: Colors.gray500, marginTop: 2 }}>{t.description}</Text>
                       ) : null}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                        <Ionicons
+                          name={t.reward_type === 'game' ? 'game-controller' : 'gift'}
+                          size={13}
+                          color={Colors.primary}
+                        />
+                        <Text style={{ fontSize: 12, fontWeight: '600', color: Colors.primary }}>
+                          {t.reward_type === 'game' ? `Play to win · ${t.doors} doors` : 'Direct gift'}
+                        </Text>
+                      </View>
                     </View>
                     <Text style={{ fontSize: 12, color: Colors.gray400 }}>
                       {t.class_id ? classes.find((c) => c.id === t.class_id)?.name ?? 'Class' : 'All classes'}

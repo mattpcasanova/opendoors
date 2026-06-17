@@ -10,6 +10,7 @@ import {
   schoolService,
 } from '../../services/schoolService';
 import { supabase } from '../../services/supabase/client';
+import GameScreen from '../../screens/game/GameScreen';
 import BottomNavBar from '../main/BottomNavBar';
 import Header from '../main/Header';
 import { LoadingSpinner } from '../ui';
@@ -22,6 +23,7 @@ const StudentSchoolView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [playingReward, setPlayingReward] = useState<GrantedReward | null>(null);
 
   const load = useCallback(async () => {
     if (!user?.id) return;
@@ -94,6 +96,41 @@ const StudentSchoolView: React.FC = () => {
     );
   };
 
+  const handlePlay = (reward: GrantedReward) => {
+    setPlayingReward(reward);
+  };
+
+  const handleGameComplete = async (won: boolean) => {
+    const reward = playingReward;
+    setPlayingReward(null);
+    if (!reward) return;
+    const { error } = await schoolService.recordRewardGame(reward.id, won);
+    if (error) {
+      Alert.alert('Error', 'Could not save your result. Please try again.');
+    } else {
+      Alert.alert(
+        won ? 'You won! 🎉' : 'Not this time',
+        won
+          ? `You won "${reward.title}"! Your teacher will confirm it in class.`
+          : `"${reward.title}" didn't come through — that try is used up.`
+      );
+    }
+    load();
+  };
+
+  if (playingReward) {
+    return (
+      <GameScreen
+        prizeName={playingReward.title}
+        prizeDescription={playingReward.description || 'Win this reward from your teacher!'}
+        locationName="Classroom Reward"
+        doorCount={playingReward.doors}
+        onGameComplete={(won) => handleGameComplete(won)}
+        onBack={() => setPlayingReward(null)}
+      />
+    );
+  }
+
   if (loading) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50, justifyContent: 'center', alignItems: 'center' }}>
@@ -106,7 +143,7 @@ const StudentSchoolView: React.FC = () => {
     (r) => r.status === 'granted' || r.status === 'redeem_requested'
   );
   const pastRewards = rewards.filter(
-    (r) => r.status === 'redeemed' || r.status === 'denied' || r.status === 'revoked'
+    (r) => r.status === 'redeemed' || r.status === 'denied' || r.status === 'revoked' || r.status === 'lost'
   );
 
   return (
@@ -220,6 +257,7 @@ const StudentSchoolView: React.FC = () => {
                 key={r.id}
                 reward={r}
                 onUse={() => handleUse(r)}
+                onPlay={() => handlePlay(r)}
                 busy={busyId === r.id}
               />
             ))}
