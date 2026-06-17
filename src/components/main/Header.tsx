@@ -10,7 +10,7 @@ import { Colors } from "../../constants"
 const { width: screenWidth } = Dimensions.get("window")
 
 interface HeaderProps {
-  variant: "home" | "rewards" | "history" | "profile" | "simple" | "page"
+  variant: "home" | "rewards" | "history" | "profile" | "simple" | "page" | "section"
   title?: string
   subtitle?: string
   userName?: string
@@ -24,6 +24,7 @@ interface HeaderProps {
     gamesPlayed?: number
   }
   showLogo?: boolean
+  iconName?: keyof typeof Ionicons.glyphMap
 }
 
 export default function Header({
@@ -36,6 +37,7 @@ export default function Header({
   rightComponent,
   stats,
   showLogo = false,
+  iconName = "sparkles",
 }: HeaderProps) {
   const getGreeting = () => {
     const hour = new Date().getHours()
@@ -183,8 +185,8 @@ export default function Header({
         <View
           style={{
             paddingHorizontal: 28,
-            paddingTop: 28,
-            paddingBottom: 40,
+            paddingTop: 20,
+            paddingBottom: 26,
             position: "relative",
             zIndex: 1,
           }}
@@ -212,9 +214,9 @@ export default function Header({
               <Text
                 style={{
                   color: Colors.white,
-                  fontSize: 32,
+                  fontSize: 28,
                   fontWeight: "800",
-                  marginBottom: 12,
+                  marginBottom: 10,
                   letterSpacing: -0.5,
                 }}
               >
@@ -223,8 +225,8 @@ export default function Header({
               <View
                 style={{
                   backgroundColor: "rgba(255, 255, 255, 0.25)",
-                  paddingHorizontal: 20,
-                  paddingVertical: 12,
+                  paddingHorizontal: 18,
+                  paddingVertical: 10,
                   borderRadius: 25,
                   alignSelf: "flex-start",
                   flexDirection: "row",
@@ -232,15 +234,15 @@ export default function Header({
                   gap: 8,
                 }}
               >
-                <Ionicons name="game-controller" size={20} color={Colors.white} />
+                <Ionicons name="school" size={18} color={Colors.white} />
                 <Text
                   style={{
                     color: Colors.white,
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: "600",
                   }}
                 >
-                  Ready to play?
+                  Win rewards from your teacher
                 </Text>
               </View>
             </View>
@@ -249,9 +251,9 @@ export default function Header({
             {showLogo && (
               <View
                 style={{
-                  width: 120,
-                  height: 120,
-                  borderRadius: 60,
+                  width: 96,
+                  height: 96,
+                  borderRadius: 48,
                   overflow: "hidden",
                   shadowColor: Colors.primary,
                   shadowOffset: { width: 0, height: 12 },
@@ -266,7 +268,7 @@ export default function Header({
                   style={{
                     width: "100%",
                     height: "100%",
-                    borderRadius: 60,
+                    borderRadius: 48,
                     alignItems: "center",
                     justifyContent: "center",
                     backgroundColor: "rgba(255, 255, 255, 0.2)",
@@ -283,14 +285,14 @@ export default function Header({
                       right: 0,
                       bottom: 0,
                       backgroundColor: "rgba(255, 255, 255, 0.25)",
-                      borderRadius: 60,
+                      borderRadius: 48,
                     }}
                     pointerEvents="none"
                   />
 
                   <Image
                     source={require("../../../assets/images/OpenDoorsLogo.png")}
-                    style={{ width: 90, height: 90, resizeMode: "contain", zIndex: 1 }}
+                    style={{ width: 72, height: 72, resizeMode: "contain", zIndex: 1 }}
                   />
                 </BlurView>
               </View>
@@ -305,10 +307,10 @@ export default function Header({
             bottom: -3,
             left: 0,
             right: 0,
-            height: 35,
+            height: 24,
             backgroundColor: Colors.gray50,
-            borderTopLeftRadius: 35,
-            borderTopRightRadius: 35,
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
           }}
         />
       </View>
@@ -553,6 +555,63 @@ export default function Header({
           </View>
         </View>
       </LinearGradient>
+    )
+  }
+
+  // SECTION HEADER - Reusable gradient header (icon + title + subtitle).
+  // Matches the History/Profile header language for cross-page consistency.
+  if (variant === "section") {
+    return (
+      <View style={{ backgroundColor: Colors.gray50 }}>
+        <LinearGradient colors={[Colors.primary, Colors.primaryDark, Colors.success]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+          <View style={{ paddingHorizontal: 20, paddingTop: 18, paddingBottom: 26 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              {showBackButton && onBackPress && (
+                <TouchableOpacity
+                  onPress={onBackPress}
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: "rgba(255, 255, 255, 0.2)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: 12,
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="arrow-back" size={24} color={Colors.white} />
+                </TouchableOpacity>
+              )}
+
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+                  <View
+                    style={{
+                      width: 52,
+                      height: 52,
+                      backgroundColor: "rgba(255, 255, 255, 0.2)",
+                      borderRadius: 26,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Ionicons name={iconName} size={28} color={Colors.white} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: Colors.white, fontSize: 26, fontWeight: "800" }}>{title}</Text>
+                    {subtitle && (
+                      <Text style={{ color: Colors.primaryLightest, fontSize: 14, marginTop: 2 }}>{subtitle}</Text>
+                    )}
+                  </View>
+                </View>
+              </View>
+
+              {rightComponent && <View style={{ marginLeft: 12 }}>{rightComponent}</View>}
+            </View>
+          </View>
+        </LinearGradient>
+      </View>
     )
   }
 

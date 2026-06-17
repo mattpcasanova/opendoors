@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Gift, Zap, Search, X } from 'lucide-react-native';
+import { GraduationCap, Search, X } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -14,27 +14,21 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import BonusPlayNotification from '../../components/BonusPlayNotification';
 import DoorNotificationComponent from '../../components/DoorNotification';
-import EarnedRewardNotification from '../../components/EarnedRewardNotification';
 import GameCard from '../../components/game/GameCard';
 import BottomNavBar from '../../components/main/BottomNavBar';
 import { FilterBar } from '../../components/main/FilterBar';
 import Header from "../../components/main/Header";
 import { LoadingSpinner, SkeletonGameCard, EmptyState } from '../../components/ui';
-import EarnRewardModal from '../../components/modals/EarnRewardModal';
-import WatchAdModal from '../../components/modals/WatchAdModal';
 import { useAuth } from '../../hooks/useAuth';
 import { useLocation } from '../../hooks/useLocation';
 import { Colors, Spacing, BorderRadius, Shadows } from '../../constants';
-import { adsService } from '../../services/adsService';
 import { analyticsService } from '../../services/analyticsService';
 import { EarnedReward, earnedRewardsService } from '../../services/earnedRewardsService';
 import { gamesService, Prize } from '../../services/gameLogic/games';
 import { notificationService } from '../../services/notificationService';
 import { referralService } from '../../services/referralService';
 import { supabase } from '../../services/supabase/client';
-import { UserProgress, userProgressService } from '../../services/userProgressService';
 import type { MainTabParamList } from '../../types/navigation';
 import GameScreen from '../game/GameScreen';
 
@@ -64,110 +58,12 @@ const NavItem: React.FC<NavItemProps> = ({ icon, label, active = false, onPress 
   </TouchableOpacity>
 );
 
-interface DailyGameButtonProps {
-  hasPlayedToday: boolean;
-  onPress: () => void;
-}
-
-const DailyGameButton: React.FC<DailyGameButtonProps> = ({ hasPlayedToday, onPress }) => {
-  if (hasPlayedToday) {
-    return (
-      <View style={{ alignItems: 'center', marginBottom: 24 }}>
-        <View
-          style={{
-            width: '100%',
-            maxWidth: 480,
-            alignSelf: 'center',
-            backgroundColor: '#9CA3AF',
-            borderRadius: 28,
-            padding: 24,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            position: 'relative',
-            overflow: 'hidden',
-            shadowColor: '#000',
-            shadowOpacity: 0.08,
-            shadowRadius: 8,
-            shadowOffset: { width: 0, height: 2 },
-          }}
-        >
-          {/* Subtle background pattern */}
-          <View style={{ position: 'absolute', inset: 0, opacity: 0.10 }} pointerEvents="none">
-            <View style={{ position: 'absolute', top: 16, right: 32, width: 8, height: 8, backgroundColor: 'white', borderRadius: 4 }} />
-            <View style={{ position: 'absolute', bottom: 24, left: 48, width: 4, height: 4, backgroundColor: 'white', borderRadius: 2 }} />
-            <View style={{ position: 'absolute', top: '50%', right: 64, width: 6, height: 6, backgroundColor: 'white', borderRadius: 3 }} />
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, zIndex: 1 }}>
-            <View style={{ width: 40, height: 40, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 20, alignItems: 'center', justifyContent: 'center' }}>
-              <Ionicons name="checkmark-circle" size={28} color={Colors.white} />
-            </View>
-            <View style={{ marginLeft: 8 }}>
-              <Text style={{ color: Colors.white, fontSize: 20, fontWeight: 'bold' }}>Played Today</Text>
-              <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14 }}>Come back tomorrow for more!</Text>
-            </View>
-          </View>
-        </View>
-      </View>
-    );
-  }
-
-  return (
-    <View style={{ alignItems: 'center', marginBottom: 24 }}>
-      <View
-        style={{
-          width: '100%',
-          maxWidth: 480,
-          alignSelf: 'center',
-        }}
-      >
-        <LinearGradient
-          colors={[Colors.primary, Colors.primaryDark]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={{
-            borderRadius: 24,
-            padding: 24,
-            position: 'relative',
-            overflow: 'hidden',
-            width: '100%',
-            maxWidth: 480,
-            alignSelf: 'center',
-            shadowColor: Colors.black,
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.08,
-            shadowRadius: 8,
-            elevation: 3,
-          }}
-        >
-          <View style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(45,212,191,0.12)' }} />
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View style={{ width: 48, height: 48, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 24, alignItems: 'center', justifyContent: 'center' }}>
-                <Ionicons name="gift" size={28} color={Colors.white} style={{ opacity: 0.9 }} />
-              </View>
-              <View>
-                <Text style={{ color: Colors.white, fontSize: 20, fontWeight: 'bold' }}>Play Your Free Daily Game!</Text>
-                <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14 }}>Win amazing prizes every day</Text>
-              </View>
-            </View>
-          </View>
-          {/* Floating particles effect (simple static dots for now) */}
-          <View style={{ position: 'absolute', top: 8, right: 32, width: 8, height: 8, backgroundColor: 'rgba(255,255,255,0.4)', borderRadius: 4 }} />
-          <View style={{ position: 'absolute', bottom: 12, left: 32, width: 6, height: 6, backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 3 }} />
-          <View style={{ position: 'absolute', top: '50%', right: 48, width: 10, height: 10, backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: 5 }} />
-        </LinearGradient>
-      </View>
-    </View>
-  );
-};
-
 interface EarnedRewardsSectionProps {
   earnedDoors?: number;
 }
 
-const EarnedRewardsSection: React.FC<EarnedRewardsSectionProps> = ({ 
-  earnedDoors = 0 
+const EarnedRewardsSection: React.FC<EarnedRewardsSectionProps> = ({
+  earnedDoors = 0
 }) => {
   const navigation = useNavigation<MainStackNavigationProp>();
 
@@ -175,85 +71,9 @@ const EarnedRewardsSection: React.FC<EarnedRewardsSectionProps> = ({
     navigation.navigate('EarnedRewards' as any);
   };
 
-  return (
-    <TouchableOpacity
-      style={{
-        marginBottom: 24,
-        backgroundColor: Colors.white,
-        borderRadius: 16,
-        padding: 20,
-        shadowColor: Colors.black,
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        shadowOffset: { width: 0, height: 2 },
-        elevation: 2,
-      }}
-      onPress={handlePress}
-      activeOpacity={0.7}
-    >
-      <View style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      }}>
-        <View style={{ flex: 1 }}>
-          <Text style={{
-            fontSize: 18,
-            fontWeight: '600',
-            color: Colors.gray900,
-            marginBottom: 4
-          }}>
-            Earned Rewards
-          </Text>
-          <Text style={{
-            fontSize: 14,
-            color: Colors.gray600
-          }}>
-            Extra doors available
-          </Text>
-        </View>
-
-        <View style={{
-          width: 40,
-          height: 40,
-          borderRadius: 20,
-          borderWidth: 2,
-          borderColor: Colors.primary,
-          backgroundColor: 'transparent',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-          <Text style={{
-            fontSize: 16,
-            fontWeight: '700',
-            color: Colors.primary,
-          }}>
-            {earnedDoors}
-          </Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-};
-
-interface ProgressSectionProps {
-  gamesUntilBonus: number;
-  bonusPlaysAvailable: number;
-}
-
-const ProgressSection: React.FC<ProgressSectionProps> = ({ 
-  gamesUntilBonus, 
-  bonusPlaysAvailable 
-}) => {
-  const totalGames = 5;
-  const completedGames = totalGames - gamesUntilBonus;
-  const progressPercentage = (completedGames / totalGames) * 100;
-  const hasBonusPlay = bonusPlaysAvailable > 0;
-
-  // Show static indicator if bonus play is available
-  if (hasBonusPlay) {
+  if (earnedDoors > 0) {
     return (
-      <View style={{ alignItems: 'center', marginBottom: 32 }}>
+      <TouchableOpacity onPress={handlePress} activeOpacity={0.85} style={{ marginBottom: 24 }}>
         <LinearGradient
           colors={[Colors.primary, Colors.primaryDark]}
           start={{ x: 0, y: 0 }}
@@ -267,102 +87,84 @@ const ProgressSection: React.FC<ProgressSectionProps> = ({
             maxWidth: 480,
             alignSelf: 'center',
             shadowColor: Colors.black,
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.08,
-            shadowRadius: 8,
-            elevation: 3,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.15,
+            shadowRadius: 12,
+            elevation: 5,
           }}
         >
           <View style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(45,212,191,0.12)' }} />
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View style={{ width: 48, height: 48, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 24, alignItems: 'center', justifyContent: 'center' }}>
-                <Ionicons name="gift" size={28} color={Colors.white} style={{ opacity: 0.9 }} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, flex: 1 }}>
+              <View style={{
+                width: 64,
+                height: 64,
+                backgroundColor: 'rgba(255,255,255,0.25)',
+                borderRadius: 32,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <Text style={{ fontSize: 28, fontWeight: '800', color: Colors.white }}>{earnedDoors}</Text>
               </View>
-              <View>
-                <Text style={{ color: Colors.white, fontSize: 20, fontWeight: 'bold' }}>Bonus Available!</Text>
-                <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14 }}>Play any game for free</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: Colors.white, fontSize: 22, fontWeight: 'bold', marginBottom: 2 }}>
+                  {earnedDoors === 1 ? '1 Door from your teacher!' : `${earnedDoors} Doors from your teacher!`}
+                </Text>
+                <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 14 }}>
+                  Tap to play and win
+                </Text>
               </View>
             </View>
+            <Ionicons name="chevron-forward" size={26} color={Colors.white} style={{ opacity: 0.75 }} />
           </View>
-          {/* Floating particles effect (simple static dots for now) */}
-          <View style={{ position: 'absolute', top: 8, right: 32, width: 8, height: 8, backgroundColor: 'rgba(255,255,255,0.4)', borderRadius: 4 }} />
-          <View style={{ position: 'absolute', bottom: 12, left: 32, width: 6, height: 6, backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 3 }} />
-          <View style={{ position: 'absolute', top: '50%', right: 48, width: 10, height: 10, backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: 5 }} />
+          {/* Graduation cap watermark */}
+          <View style={{ position: 'absolute', top: -10, right: -8, opacity: 0.18 }} pointerEvents="none">
+            <GraduationCap size={96} color={Colors.white} />
+          </View>
         </LinearGradient>
-      </View>
+      </TouchableOpacity>
     );
   }
 
   return (
-    <View style={{ alignItems: 'center', marginBottom: 32 }}>
-      <View style={{ backgroundColor: Colors.white, borderRadius: 24, padding: 24, shadowColor: Colors.black, shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, borderWidth: 1, borderColor: Colors.gray200, width: '100%', maxWidth: 480, alignSelf: 'center' }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <View>
-            <Text style={{ color: Colors.gray900, fontSize: 18, fontWeight: '600' }}>Progress to Bonus</Text>
-            <Text style={{ color: Colors.gray600, fontSize: 14 }}>
-              {gamesUntilBonus} more game{gamesUntilBonus !== 1 ? 's' : ''} to unlock
-            </Text>
-          </View>
-          <View style={{
-            width: 48,
-            height: 48,
-            borderRadius: 24,
-            borderWidth: 2,
-            borderColor: Colors.primary,
-            backgroundColor: 'transparent',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <Gift size={28} color={Colors.primary} />
-          </View>
+    <TouchableOpacity
+      style={{
+        marginBottom: 24,
+        backgroundColor: Colors.white,
+        borderRadius: 20,
+        padding: 20,
+        shadowColor: Colors.black,
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: 2,
+        borderWidth: 1,
+        borderColor: Colors.gray200,
+      }}
+      onPress={handlePress}
+      activeOpacity={0.7}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 18, fontWeight: '600', color: Colors.gray900, marginBottom: 4 }}>
+            Earned Doors
+          </Text>
+          <Text style={{ fontSize: 14, color: Colors.gray500 }}>
+            No doors yet — check back after class
+          </Text>
         </View>
-        {/* Progress Bar */}
-        <View style={{ marginBottom: 12 }}>
-          <View style={{ height: 12, backgroundColor: Colors.gray200, borderRadius: 6, overflow: 'hidden' }}>
-            <LinearGradient
-              colors={[Colors.primary, Colors.success]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={{ width: `${progressPercentage}%`, height: 12, borderRadius: 6, position: 'absolute', left: 0, top: 0 }}
-            >
-              <View style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.2)' }} />
-            </LinearGradient>
-          </View>
-        </View>
-        {/* Progress Dots */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-          {Array.from({ length: totalGames }, (_, i) => (
-            <View
-              key={i}
-              style={{
-                width: 12,
-                height: 12,
-                borderRadius: 6,
-                backgroundColor:
-                  i < completedGames
-                    ? Colors.primary
-                    : i === completedGames
-                    ? Colors.primaryLight
-                    : Colors.gray300,
-                transform: [
-                  { scale: i < completedGames ? 1.15 : 1 },
-                ],
-                borderWidth: i === completedGames ? 2 : 0,
-                borderColor: i === completedGames ? Colors.primaryLightest : 'transparent',
-              }}
-            />
-          ))}
-        </View>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 }}>
-          <Text style={{ fontSize: 12, color: Colors.gray600 }}>Start</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-            <Zap size={14} color={Colors.warning} />
-            <Text style={{ fontSize: 12, color: Colors.gray600, marginLeft: 2 }}>Bonus</Text>
-          </View>
+        <View style={{
+          width: 48,
+          height: 48,
+          borderRadius: 24,
+          backgroundColor: Colors.primaryMuted,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <GraduationCap size={24} color={Colors.primary} />
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -380,23 +182,13 @@ export default function HomeScreen() {
   const [gamesWithDistances, setGamesWithDistances] = useState<Array<{ prize: Prize; distance: number }>>([]);
 
   // Game state tracking
-  const [gamesUntilBonus, setGamesUntilBonus] = useState(5);
-  const [hasPlayedAnyGameToday, setHasPlayedAnyGameToday] = useState(false);
   const [showGameScreen, setShowGameScreen] = useState(false);
   const [currentGame, setCurrentGame] = useState<Prize | null>(null);
-  const [lastPlayDate, setLastPlayDate] = useState<string | null>(null);
-  const [bonusPlaysAvailable, setBonusPlaysAvailable] = useState(0);
   const [earnedDoors, setEarnedDoors] = useState(0);
   const [earnedRewards, setEarnedRewards] = useState<EarnedReward[]>([]);
-  const [showEarnRewardModal, setShowEarnRewardModal] = useState(false);
-  const [showWatchAdModal, setShowWatchAdModal] = useState(false);
-  const [isLoadingAd, setIsLoadingAd] = useState(false);
   const { user, session } = useAuth();
   const [showDoorNotifications, setShowDoorNotifications] = useState(false);
   const [doorNotificationData, setDoorNotificationData] = useState<{ distributorName: string; doorsSent: number; reason?: string; notificationId: string } | null>(null);
-  const [showBonusNotification, setShowBonusNotification] = useState(false);
-  const [showEarnedRewardNotification, setShowEarnedRewardNotification] = useState(false);
-  const [earnedRewardData, setEarnedRewardData] = useState<{ sourceName: string; doorsEarned: number } | null>(null);
 
   // Filter/sort state
   const [showFilters, setShowFilters] = useState(false);
@@ -536,14 +328,7 @@ export default function HomeScreen() {
 
       const result = await notificationService.getUnreadNotifications(user.id);
       if (result.data && result.data.length > 0) {
-        // Filter out bonus notifications - they have their own popup component
-        const filteredNotifications = result.data.filter(n =>
-          !(n.distributor_name === 'OpenDoors' && n.reason === 'Bonus play available! Play any game for free.')
-        );
-
-        if (filteredNotifications.length > 0) {
-          showDoorNotification(filteredNotifications[0]);
-        }
+        showDoorNotification(result.data[0]);
       }
     };
     init();
@@ -565,13 +350,7 @@ export default function HomeScreen() {
 
         const result = await notificationService.getUnreadNotifications(user.id);
         if (result.data && result.data.length > 0) {
-          const filteredNotifications = result.data.filter(n =>
-            !(n.distributor_name === 'OpenDoors' && n.reason === 'Bonus play available! Play any game for free.')
-          );
-
-          if (filteredNotifications.length > 0) {
-            showDoorNotification(filteredNotifications[0]);
-          }
+          showDoorNotification(result.data[0]);
         }
       })
       .on('postgres_changes', {
@@ -642,7 +421,6 @@ export default function HomeScreen() {
     return counts;
   }, [filteredGames]);
 
-  const currentGameIsBonus = useRef(false);
   const isShowingDoorNotificationRef = useRef(false);
 
   // Load earned rewards and update count
@@ -773,61 +551,6 @@ export default function HomeScreen() {
 
     fetchGames();
   }, [refreshGamesCounter]);
-
-  // Load user progress from database on mount
-  useEffect(() => {
-    const loadUserProgress = async () => {
-      if (!user) return;
-      
-      try {
-        const { data, error } = await userProgressService.loadUserProgress(user.id);
-        
-        if (error) {
-          console.error('❌ Error loading user progress:', error);
-          return;
-        }
-
-        if (data) {
-          setGamesUntilBonus(data.gamesUntilBonus);
-          setHasPlayedAnyGameToday(data.hasPlayedToday);
-          setLastPlayDate(data.lastPlayDate);
-          setBonusPlaysAvailable(data.bonusPlaysAvailable);
-        }
-      } catch (error) {
-        console.error('❌ Error loading user progress:', error);
-      }
-    };
-
-    loadUserProgress();
-  }, [user]);
-
-  // Save user progress when it changes
-  useEffect(() => {
-    const saveUserProgress = async () => {
-      if (!user) return;
-      
-      try {
-        const progress: UserProgress = {
-          gamesUntilBonus,
-          hasPlayedToday: hasPlayedAnyGameToday,
-          lastPlayDate,
-          bonusPlaysAvailable
-        };
-        
-        const { error } = await userProgressService.saveUserProgress(user.id, progress);
-        if (error) {
-          console.error('❌ Error saving user progress:', error);
-        }
-      } catch (error) {
-        console.error('❌ Error saving user progress:', error);
-      }
-    };
-
-    // Only save if we have a user and the state has been initialized
-    if (user && lastPlayDate !== null) {
-      saveUserProgress();
-    }
-  }, [user, gamesUntilBonus, hasPlayedAnyGameToday, lastPlayDate, bonusPlaysAvailable]);
 
   // Get favorites list for filtering
   const [favoritePrizeIds, setFavoritePrizeIds] = useState<string[]>([]);
@@ -995,34 +718,16 @@ export default function HomeScreen() {
   }, [location, filteredGames, distance, sortBy]);
 
   const playGame = (prize: Prize) => {
-    // Check if user has already played today
-    if (hasPlayedAnyGameToday && bonusPlaysAvailable === 0 && earnedDoors === 0) {
-      // Show popup to watch ad or refer friend
-      setShowEarnRewardModal(true);
+    if (earnedDoors === 0) {
+      Alert.alert(
+        'No doors yet',
+        'Ask your teacher to send you doors, or check back after class.',
+        [{ text: 'OK' }]
+      );
       return;
     }
-    
+
     setCurrentGame(prize);
-    setShowGameScreen(true);
-  };
-
-  const playDailyGame = () => {
-    // In production, this should prevent playing when hasPlayedAnyGameToday is true
-    // For testing, we can allow it but the button should still show grey
-    if (hasPlayedAnyGameToday) {
-      // In production, you would return here:
-      // return;
-    }
-
-    // Use first featured game from database (marked with is_special = true)
-    if (!featuredGames || featuredGames.length === 0) {
-      console.error('❌ No featured games available');
-      Alert.alert('No Game Available', 'There is no special game available at this time. Please try again later.');
-      return;
-    }
-
-    // Use the first featured game (they're already sorted by value descending)
-    setCurrentGame(featuredGames[0]);
     setShowGameScreen(true);
   };
 
@@ -1037,33 +742,14 @@ export default function HomeScreen() {
     if (!user || !currentGame) return;
     
     try {
-      // Determine which type of door was used based on priority system
-      let doorType = 'daily';
-      let usedEarnedRewardId: string | null = null;
-
-      // Priority 1: Daily Play (if available)
-      if (!hasPlayedAnyGameToday) {
-        doorType = 'daily';
-      }
-      // Priority 2: Bonus Door (if daily not available but bonus is)
-      else if (bonusPlaysAvailable > 0) {
-        doorType = 'bonus';
-      }
-      // Priority 3: Earned Door (if neither daily nor bonus available)
-      else if (earnedDoors > 0) {
-        doorType = 'earned';
-        // Get the next unclaimed reward
-        const { data: nextReward, error: rewardError } = await earnedRewardsService.getNextUnclaimedReward(user.id);
-        if (rewardError || !nextReward) {
-          console.error('❌ Error getting next earned reward:', rewardError);
-          Alert.alert('Error', 'No earned doors available. Please earn more doors first.');
-          return;
-        }
-        usedEarnedRewardId = nextReward.id;
-      } else {
-        Alert.alert('No Doors Available', 'You have no doors available to play. Please wait for your daily reset or earn more doors.');
+      // Always use an earned door
+      const { data: nextReward, error: rewardError } = await earnedRewardsService.getNextUnclaimedReward(user.id);
+      if (rewardError || !nextReward) {
+        console.error('❌ Error getting next earned reward:', rewardError);
+        Alert.alert('No Doors Available', 'You have no doors available. Ask your teacher to send you more doors.');
         return;
       }
+      const usedEarnedRewardId = nextReward.id;
 
       // Record the game result
       const { error: gameError } = await gamesService.recordGame({
@@ -1142,49 +828,12 @@ export default function HomeScreen() {
         }]
       );
       
-      // Update user progress in database based on door type used
-      if (user) {
-        const usedBonus = doorType === 'bonus';
-        const { error: progressError } = await userProgressService.updateProgressAfterGame(user.id, won, usedBonus);
-
-        if (progressError) {
-          console.error('❌ Error updating progress:', progressError);
-          Alert.alert(
-            'Connection Error',
-            'Unable to save your game progress. Please check your internet connection and try again.',
-            [{ text: 'OK' }]
-          );
-        } else {
-          // Reload progress from database to update UI
-          const { data: updatedProgress } = await userProgressService.loadUserProgress(user.id);
-          if (updatedProgress) {
-            const hadBonusBefore = bonusPlaysAvailable > 0;
-            setGamesUntilBonus(updatedProgress.gamesUntilBonus);
-            setLastPlayDate(updatedProgress.lastPlayDate);
-            setBonusPlaysAvailable(updatedProgress.bonusPlaysAvailable);
-            setHasPlayedAnyGameToday(updatedProgress.hasPlayedToday);
-
-            // If bonus just became available, show popup and send notifications
-            if (!hadBonusBefore && updatedProgress.bonusPlaysAvailable > 0) {
-              // Show bonus popup immediately
-              setShowBonusNotification(true);
-
-              // Send notifications (in-app and push)
-              const { autoNotificationService } = await import('../../services/autoNotificationService');
-              await autoNotificationService.checkBonusAvailableNotification(user.id);
-            }
-          }
-        }
-      }
-
-      // If used earned door, mark it as claimed
-      if (usedEarnedRewardId) {
-        const { success, error: claimError } = await earnedRewardsService.claimEarnedReward(usedEarnedRewardId);
-        if (claimError || success === false) {
-          console.error('❌ Error marking earned reward as claimed:', claimError);
-        } else {
-          await loadEarnedRewards();
-        }
+      // Mark the earned door as claimed
+      const { success, error: claimError } = await earnedRewardsService.claimEarnedReward(usedEarnedRewardId);
+      if (claimError || success === false) {
+        console.error('❌ Error marking earned reward as claimed:', claimError);
+      } else {
+        await loadEarnedRewards();
       }
 
     } catch (error) {
@@ -1195,66 +844,6 @@ export default function HomeScreen() {
 
   const handleBackFromGame = () => {
     setShowGameScreen(false);
-  };
-
-  const handleWatchAd = async () => {
-    // Prevent multiple simultaneous ad loads
-    if (isLoadingAd) {
-      console.log('[ads] Already loading an ad, ignoring click');
-      return;
-    }
-
-    setShowEarnRewardModal(false);
-    setIsLoadingAd(true);
-
-    try {
-      await adsService.init();
-      const result = await adsService.showRewardedAd();
-
-      if (result.userEarnedReward && user?.id) {
-        const { data: reward, error } = await earnedRewardsService.addAdWatchReward(user.id);
-        if (error) {
-          console.error('Error adding ad reward:', error);
-          Alert.alert('Error', 'Failed to add reward. Please try again.');
-          setIsLoadingAd(false);
-          return;
-        }
-
-        // Show earned reward popup
-        if (reward) {
-          setEarnedRewardData({
-            sourceName: reward.source_name || 'Watch Ad',
-            doorsEarned: reward.doors_earned || 1
-          });
-          setShowEarnedRewardNotification(true);
-        }
-
-        await loadEarnedRewards();
-        setIsLoadingAd(false);
-        return;
-      }
-      // If ad didn't grant reward, fall back to mock modal
-      setIsLoadingAd(false);
-      setShowWatchAdModal(true);
-    } catch (e) {
-      console.warn('Falling back to mock ad modal:', e);
-      // Fall back to mock ad modal for development/testing
-      setIsLoadingAd(false);
-      setShowWatchAdModal(true);
-    }
-  };
-
-  const handleAdComplete = async () => {
-    setShowWatchAdModal(false);
-    // Reload earned rewards to update count
-    await loadEarnedRewards();
-  };
-
-  const handleReferFriend = async () => {
-    setShowEarnRewardModal(false);
-    // The referral logic is handled in EarnRewardModal
-    // Reload earned rewards to update count after referral
-    await loadEarnedRewards();
   };
 
   // If showing game screen, render that instead
@@ -1278,6 +867,8 @@ export default function HomeScreen() {
       navigation.navigate('Rewards');
     } else if (page === 'History') {
       navigation.navigate('History');
+    } else if (page === 'School') {
+      navigation.navigate('School');
     } else if (page === 'Profile') {
       navigation.navigate('Profile');
     }
@@ -1322,25 +913,13 @@ export default function HomeScreen() {
         {/* Only show these sections when NOT searching */}
         {!searchText && (
           <>
-            {/* Daily Free Game Button - Updated */}
-            <DailyGameButton 
-              hasPlayedToday={hasPlayedAnyGameToday}
-              onPress={playDailyGame}
-            />
-
-            {/* Progress Section */}
-            <ProgressSection 
-              gamesUntilBonus={gamesUntilBonus}
-              bonusPlaysAvailable={bonusPlaysAvailable}
-            />
-
             {/* Earned Rewards Section */}
             <EarnedRewardsSection earnedDoors={earnedDoors} />
           </>
         )}
 
         {/* Search Bar - Now positioned after Earned Rewards */}
-        <View style={{ marginBottom: Spacing.xl, marginTop: Spacing.md }}>
+        <View style={{ marginBottom: Spacing.lg, marginTop: 0 }}>
           <View
             style={{
               backgroundColor: Colors.white,
@@ -1554,36 +1133,6 @@ export default function HomeScreen() {
       <BottomNavBar />
 
       {/* Modals */}
-      <EarnRewardModal
-        visible={showEarnRewardModal}
-        onClose={() => setShowEarnRewardModal(false)}
-        onWatchAd={handleWatchAd}
-        onReferFriend={handleReferFriend}
-      />
-
-      <WatchAdModal
-        visible={showWatchAdModal}
-        onClose={() => setShowWatchAdModal(false)}
-        onAdComplete={handleAdComplete}
-      />
-
-      <BonusPlayNotification
-        isVisible={showBonusNotification}
-        onClose={() => setShowBonusNotification(false)}
-      />
-
-      {earnedRewardData && (
-        <EarnedRewardNotification
-          isVisible={showEarnedRewardNotification}
-          onClose={() => {
-            setShowEarnedRewardNotification(false);
-            setEarnedRewardData(null);
-          }}
-          sourceName={earnedRewardData.sourceName}
-          doorsEarned={earnedRewardData.doorsEarned}
-        />
-      )}
-
       {showDoorNotifications &&
        doorNotificationData &&
        doorNotificationData.distributorName &&
@@ -1611,50 +1160,6 @@ export default function HomeScreen() {
           reason={doorNotificationData.reason}
           notificationId={doorNotificationData.notificationId}
         />
-      )}
-
-      {/* Ad Loading Overlay */}
-      {isLoadingAd && (
-        <View style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.85)',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 9999,
-        }}>
-          <View style={{
-            backgroundColor: Colors.white,
-            paddingVertical: 40,
-            paddingHorizontal: 32,
-            borderRadius: 24,
-            alignItems: 'center',
-            minWidth: 200,
-            ...Shadows.lg,
-          }}>
-            <LoadingSpinner size="large" color={Colors.primary} />
-            <Text style={{
-              marginTop: 20,
-              fontSize: 18,
-              fontWeight: '700',
-              color: Colors.gray900,
-            }}>
-              Loading Ad
-            </Text>
-            <Text style={{
-              marginTop: 8,
-              fontSize: 14,
-              color: Colors.gray600,
-              textAlign: 'center',
-              lineHeight: 20,
-            }}>
-              Please wait while we prepare{'\n'}your reward
-            </Text>
-          </View>
-        </View>
       )}
     </SafeAreaView>
   );

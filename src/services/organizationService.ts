@@ -39,7 +39,7 @@ export interface OrganizationMember {
   email: string;
   first_name: string | null;
   last_name: string | null;
-  user_type: 'user' | 'distributor' | 'admin';
+  user_type: 'user' | 'distributor' | 'admin' | 'teacher';
   doors_available: number;
   doors_distributed: number;
 }
@@ -161,7 +161,7 @@ class OrganizationService {
       // Check if distributor has enough doors
       const { data: distributor, error: distributorError } = await supabase
         .from('user_profiles')
-        .select('doors_available, doors_distributed')
+        .select('doors_available, doors_distributed, user_type')
         .eq('id', distributorId)
         .single();
 
@@ -262,19 +262,40 @@ class OrganizationService {
       // Note: Push notifications are not sent here as they require backend infrastructure
       // The recipient will see the earned rewards modal via realtime subscription in HomeScreen
 
-      // Add earned rewards for the recipient via RPC per door
+      // Add earned rewards for the recipient via RPC per door.
+      // Teachers and distributors share this pipeline; label the source by role
+      // so the rewards UI can style teacher-sent doors distinctly.
+      const isTeacher = distributor.user_type === 'teacher';
       for (let i = 0; i < doorsToSend; i++) {
-        const res = await earnedRewardsService.addDistributorReward(
-          recipientId,
-          distributorName,
-          reason,
-          1
-        );
+        const res = isTeacher
+          ? await earnedRewardsService.addTeacherReward(
+              recipientId,
+              distributorName,
+              reason,
+              1,
+              distributorId
+            )
+          : await earnedRewardsService.addDistributorReward(
+              recipientId,
+              distributorName,
+              reason,
+              1
+            );
         if (res.error) {
           console.error('Error creating earned reward via RPC:', res.error);
           return { success: false, error: 'Failed to create earned rewards' };
         }
       }
+
+      // Best-effort remote push to the recipient
+      pushNotificationService
+        .sendPushToUser(
+          recipientId,
+          `${distributorName} sent you ${doorsToSend} door${doorsToSend > 1 ? 's' : ''}! 🎉`,
+          reason || 'Open OpenDoors to play and win.',
+          { type: 'doors_received' }
+        )
+        .catch(() => {});
 
       return { success: true, data: distribution };
     } catch (error: any) {
