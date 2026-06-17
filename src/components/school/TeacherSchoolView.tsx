@@ -8,16 +8,24 @@ import { useAuth } from '../../hooks/useAuth';
 import { DoorDistribution, organizationService } from '../../services/organizationService';
 import { pushNotificationService } from '../../services/pushNotificationService';
 import {
+  ClassEngagement,
+  ClassGoal,
   ClassRow,
   GrantedRewardWithStudent,
   RewardTemplate,
   RosterMember,
   schoolService,
 } from '../../services/schoolService';
+
+const STALE_DAYS = 14;
+const daysAgo = (iso: string | null) =>
+  iso ? Math.floor((Date.now() - new Date(iso).getTime()) / 86400000) : null;
 import { supabase } from '../../services/supabase/client';
 import BottomNavBar from '../main/BottomNavBar';
 import Header from '../main/Header';
 import { LoadingSpinner } from '../ui';
+import ClassGoalBar from './ClassGoalBar';
+import ClassGoalModal from './ClassGoalModal';
 import CreateTemplateModal from './CreateTemplateModal';
 import GrantRewardModal from './GrantRewardModal';
 import SendDoorsModal from './SendDoorsModal';
@@ -30,6 +38,9 @@ const TeacherSchoolView: React.FC = () => {
   const [classes, setClasses] = useState<ClassRow[]>([]);
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [roster, setRoster] = useState<RosterMember[]>([]);
+  const [engagement, setEngagement] = useState<Record<string, ClassEngagement>>({});
+  const [classGoal, setClassGoal] = useState<ClassGoal | null>(null);
+  const [showGoalModal, setShowGoalModal] = useState(false);
   const [templates, setTemplates] = useState<RewardTemplate[]>([]);
   const [pending, setPending] = useState<GrantedRewardWithStudent[]>([]);
   const [sentHistory, setSentHistory] = useState<DoorDistribution[]>([]);
@@ -39,6 +50,8 @@ const TeacherSchoolView: React.FC = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [grantStudent, setGrantStudent] = useState<{ id: string; name: string } | null>(null);
   const [doorsStudent, setDoorsStudent] = useState<{ id: string; name: string } | null>(null);
+  const [doorsBulk, setDoorsBulk] = useState<{ studentIds: string[]; label: string } | null>(null);
+  const [grantBulk, setGrantBulk] = useState<{ studentIds: string[]; label: string } | null>(null);
 
   const loadPending = useCallback(async () => {
     if (!user?.id) return;
@@ -53,8 +66,18 @@ const TeacherSchoolView: React.FC = () => {
   }, [user?.id]);
 
   const loadRoster = useCallback(async (classId: string) => {
-    const { data } = await schoolService.getClassRoster(classId);
-    setRoster(data || []);
+    const [rosterRes, engRes, goalRes] = await Promise.all([
+      schoolService.getClassRoster(classId),
+      schoolService.getClassEngagement(classId),
+      schoolService.getClassGoal(classId),
+    ]);
+    setRoster(rosterRes.data || []);
+    setClassGoal(goalRes.data);
+    const map: Record<string, ClassEngagement> = {};
+    (engRes.data || []).forEach((e) => {
+      map[e.student_id] = e;
+    });
+    setEngagement(map);
   }, []);
 
   const loadSentHistory = useCallback(async () => {
@@ -151,6 +174,17 @@ const TeacherSchoolView: React.FC = () => {
       Alert.alert('Error', 'Could not update. Please try again.');
       loadPending();
     }
+  };
+
+  const openClassBulk = (kind: 'doors' | 'reward') => {
+    if (roster.length === 0) {
+      Alert.alert('No students', 'This class has no students enrolled yet.');
+      return;
+    }
+    const cls = classes.find((c) => c.id === selectedClassId);
+    const target = { studentIds: roster.map((m) => m.student_id), label: `${cls?.name ?? 'class'} (whole class)` };
+    if (kind === 'doors') setDoorsBulk(target);
+    else setGrantBulk(target);
   };
 
   const handleRegenerateCode = () => {
@@ -281,6 +315,38 @@ const TeacherSchoolView: React.FC = () => {
                 </Text>
               </View>
             ) : null}
+
+            {/* Whole-class actions */}
+            {roster.length > 0 && (
+              <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
+                <TouchableOpacity onPress={() => openClassBulk('doors')} activeOpacity={0.85} style={classActionBtn}>
+                  <Ionicons name="ticket" size={18} color={Colors.primary} />
+                  <Text style={classActionLabel}>Doors to class</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => openClassBulk('reward')} activeOpacity={0.85} style={classActionBtn}>
+                  <Ionicons name="gift" size={18} color={Colors.primary} />
+                  <Text style={classActionLabel}>Reward to class</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Class goal */}
+            <View style={{ backgroundColor: Colors.white, borderRadius: 16, padding: 16, marginBottom: 20, ...shadow }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <Text style={{ fontSize: 13, color: Colors.gray500 }}>Class goal</Text>
+                <TouchableOpacity onPress={() => setShowGoalModal(true)} activeOpacity={0.8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Ionicons name={classGoal ? 'create-outline' : 'add-circle'} size={18} color={Colors.primary} />
+                  <Text style={{ color: Colors.primary, fontWeight: '700' }}>{classGoal ? 'Edit' : 'Set goal'}</Text>
+                </TouchableOpacity>
+              </View>
+              {classGoal ? (
+                <ClassGoalBar goal={classGoal} />
+              ) : (
+                <Text style={{ color: Colors.gray500, fontSize: 13 }}>
+                  Set a shared goal like "Movie day at 200 doors" to rally the whole class.
+                </Text>
+              )}
+            </View>
 
             {/* Pending requests */}
             {pending.length > 0 && (
@@ -427,42 +493,86 @@ const TeacherSchoolView: React.FC = () => {
               </View>
             ) : (
               <View style={{ marginBottom: 24 }}>
-                {roster.map((m) => (
-                  <TouchableOpacity
-                    key={m.student_id}
-                    onPress={() => handleStudentTap(m)}
-                    activeOpacity={0.7}
-                    style={{
-                      backgroundColor: Colors.white,
-                      borderRadius: 14,
-                      padding: 14,
-                      marginBottom: 10,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 12,
-                      ...shadow,
-                    }}
-                  >
+                {(() => {
+                  const staleCount = roster.filter((m) => {
+                    const d = daysAgo(engagement[m.student_id]?.last_door_at ?? null);
+                    return d === null || d >= STALE_DAYS;
+                  }).length;
+                  return staleCount > 0 ? (
                     <View
                       style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 20,
-                        backgroundColor: Colors.primaryMuted,
+                        flexDirection: 'row',
                         alignItems: 'center',
-                        justifyContent: 'center',
+                        gap: 8,
+                        backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                        borderRadius: 12,
+                        padding: 12,
+                        marginBottom: 12,
                       }}
                     >
-                      <Text style={{ color: Colors.primary, fontWeight: '700' }}>
-                        {(m.first_name?.[0] || m.email[0] || '?').toUpperCase()}
+                      <Ionicons name="alert-circle" size={18} color={Colors.warningDark} />
+                      <Text style={{ flex: 1, fontSize: 13, color: Colors.warningDark, fontWeight: '600' }}>
+                        {staleCount} student{staleCount === 1 ? " hasn't" : "s haven't"} been rewarded recently.
                       </Text>
                     </View>
-                    <Text style={{ flex: 1, fontSize: 15, fontWeight: '600', color: Colors.gray900 }}>
-                      {rosterName(m)}
-                    </Text>
-                    <Ionicons name="gift-outline" size={20} color={Colors.primary} />
-                  </TouchableOpacity>
-                ))}
+                  ) : null;
+                })()}
+                {roster.map((m) => {
+                  const eng = engagement[m.student_id];
+                  const d = daysAgo(eng?.last_door_at ?? null);
+                  const stale = d === null || d >= STALE_DAYS;
+                  return (
+                    <TouchableOpacity
+                      key={m.student_id}
+                      onPress={() => handleStudentTap(m)}
+                      activeOpacity={0.7}
+                      style={{
+                        backgroundColor: Colors.white,
+                        borderRadius: 14,
+                        padding: 14,
+                        marginBottom: 10,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 12,
+                        borderLeftWidth: stale ? 3 : 0,
+                        borderLeftColor: Colors.warning,
+                        ...shadow,
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 20,
+                          backgroundColor: Colors.primaryMuted,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Text style={{ color: Colors.primary, fontWeight: '700' }}>
+                          {(m.first_name?.[0] || m.email[0] || '?').toUpperCase()}
+                        </Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 15, fontWeight: '600', color: Colors.gray900 }}>
+                          {rosterName(m)}
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            color: stale ? Colors.warningDark : Colors.gray500,
+                            marginTop: 2,
+                          }}
+                        >
+                          {eng?.last_door_at
+                            ? `Rewarded ${d}d ago · ${eng.doors_received} total`
+                            : 'Never rewarded'}
+                        </Text>
+                      </View>
+                      <Ionicons name="gift-outline" size={20} color={Colors.primary} />
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             )}
 
@@ -543,28 +653,53 @@ const TeacherSchoolView: React.FC = () => {
 
       {selectedClassId && (
         <GrantRewardModal
-          visible={!!grantStudent}
+          visible={!!grantStudent || !!grantBulk}
           classId={selectedClassId}
           student={grantStudent}
+          bulk={grantBulk}
           templates={templatesForSelected}
-          onClose={() => setGrantStudent(null)}
-          onGranted={() => {
+          onClose={() => {
             setGrantStudent(null);
-            Alert.alert('Reward sent!', 'Your student will see it in the app.');
+            setGrantBulk(null);
+          }}
+          onGranted={() => {
+            const wasBulk = !!grantBulk;
+            setGrantStudent(null);
+            setGrantBulk(null);
+            Alert.alert('Reward sent!', wasBulk ? 'Your whole class will see it.' : 'Your student will see it in the app.');
+          }}
+        />
+      )}
+
+      {selectedClassId && (
+        <ClassGoalModal
+          visible={showGoalModal}
+          classId={selectedClassId}
+          current={classGoal}
+          onClose={() => setShowGoalModal(false)}
+          onSaved={() => {
+            setShowGoalModal(false);
+            if (selectedClassId) loadRoster(selectedClassId);
           }}
         />
       )}
 
       {user?.id && (
         <SendDoorsModal
-          visible={!!doorsStudent}
+          visible={!!doorsStudent || !!doorsBulk}
           teacherId={user.id}
           student={doorsStudent}
-          onClose={() => setDoorsStudent(null)}
-          onSent={() => {
+          bulk={doorsBulk}
+          onClose={() => {
             setDoorsStudent(null);
+            setDoorsBulk(null);
+          }}
+          onSent={() => {
+            const wasBulk = !!doorsBulk;
+            setDoorsStudent(null);
+            setDoorsBulk(null);
             loadSentHistory();
-            Alert.alert('Doors sent!', 'Your student can now play.');
+            Alert.alert('Doors sent!', wasBulk ? 'Your whole class can now play.' : 'Your student can now play.');
           }}
         />
       )}
@@ -594,6 +729,25 @@ const codeBtn = {
   backgroundColor: Colors.primaryMuted,
   alignItems: 'center' as const,
   justifyContent: 'center' as const,
+};
+
+const classActionBtn = {
+  flex: 1,
+  flexDirection: 'row' as const,
+  alignItems: 'center' as const,
+  justifyContent: 'center' as const,
+  gap: 6,
+  backgroundColor: Colors.white,
+  borderWidth: 1,
+  borderColor: Colors.primary,
+  borderRadius: 12,
+  paddingVertical: 12,
+};
+
+const classActionLabel = {
+  color: Colors.primary,
+  fontWeight: '700' as const,
+  fontSize: 14,
 };
 
 const cardEmpty = {

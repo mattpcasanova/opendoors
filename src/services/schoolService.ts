@@ -84,6 +84,18 @@ export interface DoorMessage {
   created_at: string;
 }
 
+export interface ClassEngagement {
+  student_id: string;
+  doors_received: number;
+  last_door_at: string | null;
+}
+
+export interface ClassGoal {
+  title: string;
+  target_doors: number;
+  progress: number;
+}
+
 const fullName = (
   first: string | null | undefined,
   last: string | null | undefined,
@@ -331,6 +343,52 @@ class SchoolService {
     } catch (error: any) {
       console.error('Error fetching class roster:', error);
       return { data: null, error: error.message };
+    }
+  }
+
+  /** Per-student reward engagement (doors received from this teacher + last date). */
+  async getClassEngagement(
+    classId: string
+  ): Promise<{ data: ClassEngagement[] | null; error: string | null }> {
+    try {
+      const { data, error } = await supabase.rpc('get_class_engagement', { p_class_id: classId });
+      return { data: data as ClassEngagement[] | null, error: error?.message ?? null };
+    } catch (error: any) {
+      console.error('Error fetching class engagement:', error);
+      return { data: null, error: error.message };
+    }
+  }
+
+  /** A class's shared goal + progress (teacher or enrolled student). */
+  async getClassGoal(
+    classId: string
+  ): Promise<{ data: ClassGoal | null; error: string | null }> {
+    try {
+      const { data, error } = await supabase.rpc('get_class_goal', { p_class_id: classId });
+      const row = Array.isArray(data) && data.length > 0 ? (data[0] as ClassGoal) : null;
+      return { data: row, error: error?.message ?? null };
+    } catch (error: any) {
+      console.error('Error fetching class goal:', error);
+      return { data: null, error: error.message };
+    }
+  }
+
+  /** Teacher sets/updates the class goal. */
+  async setClassGoal(
+    classId: string,
+    title: string,
+    target: number
+  ): Promise<{ error: string | null }> {
+    try {
+      const { error } = await supabase.rpc('set_class_goal', {
+        p_class_id: classId,
+        p_title: title,
+        p_target: target,
+      });
+      return { error: error?.message ?? null };
+    } catch (error: any) {
+      console.error('Error setting class goal:', error);
+      return { error: error.message };
     }
   }
 
