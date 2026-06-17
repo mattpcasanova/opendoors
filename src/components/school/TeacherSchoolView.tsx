@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../constants';
 import { useAuth } from '../../hooks/useAuth';
 import { DoorDistribution, organizationService } from '../../services/organizationService';
+import { pushNotificationService } from '../../services/pushNotificationService';
 import {
   ClassRow,
   GrantedRewardWithStudent,
@@ -128,13 +129,19 @@ const TeacherSchoolView: React.FC = () => {
     ]);
   };
 
-  const handleConfirm = async (id: string) => {
-    setPending((prev) => prev.filter((p) => p.id !== id));
-    const { error } = await schoolService.confirmRedemption(id);
+  const handleConfirm = async (item: GrantedRewardWithStudent) => {
+    setPending((prev) => prev.filter((p) => p.id !== item.id));
+    const { error } = await schoolService.confirmRedemption(item.id);
     if (error) {
       Alert.alert('Error', 'Could not confirm. Please try again.');
       loadPending();
+      return;
     }
+    pushNotificationService
+      .sendPushToUser(item.student_id, 'Reward confirmed! 🎉', `Your "${item.title}" is approved.`, {
+        type: 'reward_confirmed',
+      })
+      .catch(() => {});
   };
 
   const handleDeny = async (id: string) => {
@@ -300,7 +307,7 @@ const TeacherSchoolView: React.FC = () => {
                     </Text>
                     <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
                       <TouchableOpacity
-                        onPress={() => handleConfirm(p.id)}
+                        onPress={() => handleConfirm(p)}
                         activeOpacity={0.85}
                         style={{
                           flex: 1,

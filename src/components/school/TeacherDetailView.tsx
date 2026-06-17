@@ -4,6 +4,7 @@ import { ActivityIndicator, Alert, RefreshControl, ScrollView, Text, TouchableOp
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../constants';
 import { useAuth } from '../../hooks/useAuth';
+import { pushNotificationService } from '../../services/pushNotificationService';
 import GameScreen from '../../screens/game/GameScreen';
 import {
   DoorMessage,
@@ -101,6 +102,11 @@ const TeacherDetailView: React.FC<Props> = ({ teacher, onBack }) => {
             if (data.reward_type === 'game') {
               setPlayingReward(data);
             } else {
+              pushNotificationService
+                .sendPushToUser(teacher.teacher_id, 'New reward request', `A student claimed "${data.title}".`, {
+                  type: 'reward_claim',
+                })
+                .catch(() => {});
               Alert.alert('Claimed!', `${teacherName(teacher)} will confirm "${data.title}" in class.`);
               load();
             }
@@ -118,6 +124,13 @@ const TeacherDetailView: React.FC<Props> = ({ teacher, onBack }) => {
     if (error) {
       Alert.alert('Error', 'Could not save your result.');
     } else {
+      if (won) {
+        pushNotificationService
+          .sendPushToUser(teacher.teacher_id, 'A student won a reward 🎉', `Someone won "${reward.title}" — confirm it in class.`, {
+            type: 'reward_won',
+          })
+          .catch(() => {});
+      }
       Alert.alert(
         won ? 'You won! 🎉' : 'Not this time',
         won

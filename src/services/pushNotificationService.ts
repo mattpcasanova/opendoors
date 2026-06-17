@@ -57,10 +57,22 @@ class PushNotificationService {
 
       this.expoPushToken = tokenData.data;
 
-      // Store token in user_profiles for server-side push notifications
-      // Note: In production, you'll want to send this to your backend
-      // For now, we'll store it in a user_settings field if needed
-      console.log('[push-notifications] Token:', this.expoPushToken);
+      // Persist the token so the server (send-push edge function) can deliver
+      // remote notifications to this device.
+      const { error: tokenError } = await supabase
+        .from('device_tokens')
+        .upsert(
+          {
+            user_id: userId,
+            token: this.expoPushToken,
+            platform: Platform.OS,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'token' }
+        );
+      if (tokenError) {
+        console.error('[push-notifications] Failed to store token:', tokenError);
+      }
 
       return this.expoPushToken;
     } catch (error) {
@@ -147,6 +159,39 @@ class PushNotificationService {
       'You earned a bonus play! Play any game for free.',
       { type: 'bonus_available', userId }
     );
+  }
+
+  /**
+   * Send a REMOTE push to another user's devices via the send-push edge function.
+   * Works even when the recipient's app is closed (requires a dev/EAS build on a
+   * physical device — Expo push does not deliver to simulators).
+   */
+  async sendPushToUser(
+    toUserId: string,
+    title: string,
+    body: string,
+    data?: Record<string, unknown>
+  ): Promise<void> {
+    try {
+      await supabase.functions.invoke('send-push', {
+        body: { to_user_id: toUserId, title, body, data: data ?? {} },
+      });
+    } catch (error) {
+      console.error('[push-notifications] Error sending remote push:', error);
+    }
+  }
+
+  /**
+   * Remove this device's token (call on sign-out).
+   */
+  async removePushToken(): Promise<void> {
+    if (!this.expoPushToken) return;
+    try {
+      await supabase.from('device_tokens').delete().eq('token', this.expoPushToken);
+      this.expoPushToken = null;
+    } catch (error) {
+      console.error('[push-notifications] Error removing token:', error);
+    }
   }
 
   /**

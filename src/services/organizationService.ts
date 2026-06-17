@@ -287,6 +287,16 @@ class OrganizationService {
         }
       }
 
+      // Best-effort remote push to the recipient
+      pushNotificationService
+        .sendPushToUser(
+          recipientId,
+          `${distributorName} sent you ${doorsToSend} door${doorsToSend > 1 ? 's' : ''}! 🎉`,
+          reason || 'Open OpenDoors to play and win.',
+          { type: 'doors_received' }
+        )
+        .catch(() => {});
+
       return { success: true, data: distribution };
     } catch (error: any) {
       console.error('Error sending doors:', error);
