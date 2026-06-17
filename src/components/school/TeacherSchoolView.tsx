@@ -8,12 +8,17 @@ import { useAuth } from '../../hooks/useAuth';
 import { DoorDistribution, organizationService } from '../../services/organizationService';
 import { pushNotificationService } from '../../services/pushNotificationService';
 import {
+  ClassEngagement,
   ClassRow,
   GrantedRewardWithStudent,
   RewardTemplate,
   RosterMember,
   schoolService,
 } from '../../services/schoolService';
+
+const STALE_DAYS = 14;
+const daysAgo = (iso: string | null) =>
+  iso ? Math.floor((Date.now() - new Date(iso).getTime()) / 86400000) : null;
 import { supabase } from '../../services/supabase/client';
 import BottomNavBar from '../main/BottomNavBar';
 import Header from '../main/Header';
@@ -30,6 +35,7 @@ const TeacherSchoolView: React.FC = () => {
   const [classes, setClasses] = useState<ClassRow[]>([]);
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [roster, setRoster] = useState<RosterMember[]>([]);
+  const [engagement, setEngagement] = useState<Record<string, ClassEngagement>>({});
   const [templates, setTemplates] = useState<RewardTemplate[]>([]);
   const [pending, setPending] = useState<GrantedRewardWithStudent[]>([]);
   const [sentHistory, setSentHistory] = useState<DoorDistribution[]>([]);
@@ -55,8 +61,16 @@ const TeacherSchoolView: React.FC = () => {
   }, [user?.id]);
 
   const loadRoster = useCallback(async (classId: string) => {
-    const { data } = await schoolService.getClassRoster(classId);
-    setRoster(data || []);
+    const [rosterRes, engRes] = await Promise.all([
+      schoolService.getClassRoster(classId),
+      schoolService.getClassEngagement(classId),
+    ]);
+    setRoster(rosterRes.data || []);
+    const map: Record<string, ClassEngagement> = {};
+    (engRes.data || []).forEach((e) => {
+      map[e.student_id] = e;
+    });
+    setEngagement(map);
   }, []);
 
   const loadSentHistory = useCallback(async () => {
@@ -454,42 +468,86 @@ const TeacherSchoolView: React.FC = () => {
               </View>
             ) : (
               <View style={{ marginBottom: 24 }}>
-                {roster.map((m) => (
-                  <TouchableOpacity
-                    key={m.student_id}
-                    onPress={() => handleStudentTap(m)}
-                    activeOpacity={0.7}
-                    style={{
-                      backgroundColor: Colors.white,
-                      borderRadius: 14,
-                      padding: 14,
-                      marginBottom: 10,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 12,
-                      ...shadow,
-                    }}
-                  >
+                {(() => {
+                  const staleCount = roster.filter((m) => {
+                    const d = daysAgo(engagement[m.student_id]?.last_door_at ?? null);
+                    return d === null || d >= STALE_DAYS;
+                  }).length;
+                  return staleCount > 0 ? (
                     <View
                       style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 20,
-                        backgroundColor: Colors.primaryMuted,
+                        flexDirection: 'row',
                         alignItems: 'center',
-                        justifyContent: 'center',
+                        gap: 8,
+                        backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                        borderRadius: 12,
+                        padding: 12,
+                        marginBottom: 12,
                       }}
                     >
-                      <Text style={{ color: Colors.primary, fontWeight: '700' }}>
-                        {(m.first_name?.[0] || m.email[0] || '?').toUpperCase()}
+                      <Ionicons name="alert-circle" size={18} color={Colors.warningDark} />
+                      <Text style={{ flex: 1, fontSize: 13, color: Colors.warningDark, fontWeight: '600' }}>
+                        {staleCount} student{staleCount === 1 ? " hasn't" : "s haven't"} been rewarded recently.
                       </Text>
                     </View>
-                    <Text style={{ flex: 1, fontSize: 15, fontWeight: '600', color: Colors.gray900 }}>
-                      {rosterName(m)}
-                    </Text>
-                    <Ionicons name="gift-outline" size={20} color={Colors.primary} />
-                  </TouchableOpacity>
-                ))}
+                  ) : null;
+                })()}
+                {roster.map((m) => {
+                  const eng = engagement[m.student_id];
+                  const d = daysAgo(eng?.last_door_at ?? null);
+                  const stale = d === null || d >= STALE_DAYS;
+                  return (
+                    <TouchableOpacity
+                      key={m.student_id}
+                      onPress={() => handleStudentTap(m)}
+                      activeOpacity={0.7}
+                      style={{
+                        backgroundColor: Colors.white,
+                        borderRadius: 14,
+                        padding: 14,
+                        marginBottom: 10,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 12,
+                        borderLeftWidth: stale ? 3 : 0,
+                        borderLeftColor: Colors.warning,
+                        ...shadow,
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 20,
+                          backgroundColor: Colors.primaryMuted,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Text style={{ color: Colors.primary, fontWeight: '700' }}>
+                          {(m.first_name?.[0] || m.email[0] || '?').toUpperCase()}
+                        </Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 15, fontWeight: '600', color: Colors.gray900 }}>
+                          {rosterName(m)}
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            color: stale ? Colors.warningDark : Colors.gray500,
+                            marginTop: 2,
+                          }}
+                        >
+                          {eng?.last_door_at
+                            ? `Rewarded ${d}d ago · ${eng.doors_received} total`
+                            : 'Never rewarded'}
+                        </Text>
+                      </View>
+                      <Ionicons name="gift-outline" size={20} color={Colors.primary} />
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             )}
 

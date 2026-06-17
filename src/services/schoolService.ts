@@ -84,6 +84,12 @@ export interface DoorMessage {
   created_at: string;
 }
 
+export interface ClassEngagement {
+  student_id: string;
+  doors_received: number;
+  last_door_at: string | null;
+}
+
 const fullName = (
   first: string | null | undefined,
   last: string | null | undefined,
@@ -330,6 +336,19 @@ class SchoolService {
       return { data: data as RosterMember[] | null, error: error?.message ?? null };
     } catch (error: any) {
       console.error('Error fetching class roster:', error);
+      return { data: null, error: error.message };
+    }
+  }
+
+  /** Per-student reward engagement (doors received from this teacher + last date). */
+  async getClassEngagement(
+    classId: string
+  ): Promise<{ data: ClassEngagement[] | null; error: string | null }> {
+    try {
+      const { data, error } = await supabase.rpc('get_class_engagement', { p_class_id: classId });
+      return { data: data as ClassEngagement[] | null, error: error?.message ?? null };
+    } catch (error: any) {
+      console.error('Error fetching class engagement:', error);
       return { data: null, error: error.message };
     }
   }
