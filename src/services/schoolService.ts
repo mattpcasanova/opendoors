@@ -15,6 +15,7 @@ export interface ClassRow {
   organization_id: string | null;
   name: string;
   description: string | null;
+  join_code: string | null;
   is_active: boolean;
   created_at: string;
 }
@@ -240,6 +241,32 @@ class SchoolService {
       return { data: data as GrantedReward | null, error: error?.message ?? null };
     } catch (error: any) {
       console.error('Error spending door on item:', error);
+      return { data: null, error: error.message };
+    }
+  }
+
+  /** Student joins a class with its code. */
+  async joinClassByCode(
+    code: string
+  ): Promise<{ data: ClassRow | null; error: string | null }> {
+    try {
+      const { data, error } = await supabase.rpc('join_class_by_code', { p_code: code });
+      return { data: data as ClassRow | null, error: error?.message ?? null };
+    } catch (error: any) {
+      console.error('Error joining class:', error);
+      return { data: null, error: error.message };
+    }
+  }
+
+  /** Teacher regenerates a class join code. */
+  async regenerateClassCode(
+    classId: string
+  ): Promise<{ data: string | null; error: string | null }> {
+    try {
+      const { data, error } = await supabase.rpc('regenerate_class_code', { p_class_id: classId });
+      return { data: data as string | null, error: error?.message ?? null };
+    } catch (error: any) {
+      console.error('Error regenerating class code:', error);
       return { data: null, error: error.message };
     }
   }

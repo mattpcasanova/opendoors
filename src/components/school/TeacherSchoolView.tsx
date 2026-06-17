@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, RefreshControl, ScrollView, Share, Text, TouchableOpacity, View } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../constants';
 import { useAuth } from '../../hooks/useAuth';
@@ -145,6 +146,24 @@ const TeacherSchoolView: React.FC = () => {
     }
   };
 
+  const handleRegenerateCode = () => {
+    if (!selectedClassId) return;
+    Alert.alert('New class code?', 'The current code will stop working for new students.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Regenerate',
+        onPress: async () => {
+          const { data, error } = await schoolService.regenerateClassCode(selectedClassId);
+          if (error || !data) {
+            Alert.alert('Error', error || 'Could not regenerate the code.');
+            return;
+          }
+          setClasses((prev) => prev.map((c) => (c.id === selectedClassId ? { ...c, join_code: data } : c)));
+        },
+      },
+    ]);
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50, justifyContent: 'center', alignItems: 'center' }}>
@@ -156,6 +175,7 @@ const TeacherSchoolView: React.FC = () => {
   const templatesForSelected = templates.filter(
     (t) => t.class_id === null || t.class_id === selectedClassId
   );
+  const selectedClass = classes.find((c) => c.id === selectedClassId);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50 }} edges={['top']}>
@@ -211,6 +231,49 @@ const TeacherSchoolView: React.FC = () => {
                 );
               })}
             </ScrollView>
+
+            {/* Class join code */}
+            {selectedClass?.join_code ? (
+              <View style={{ backgroundColor: Colors.white, borderRadius: 16, padding: 16, marginBottom: 20, ...shadow }}>
+                <Text style={{ fontSize: 13, color: Colors.gray500, marginBottom: 6 }}>
+                  Join code for {selectedClass.name}
+                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Text style={{ fontSize: 30, fontWeight: '800', color: Colors.primary, letterSpacing: 6 }}>
+                    {selectedClass.join_code}
+                  </Text>
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    <TouchableOpacity
+                      onPress={() =>
+                        Share.share({
+                          message: `Join my class "${selectedClass.name}" on OpenDoors — open the app, go to School, and enter code ${selectedClass.join_code}.`,
+                        })
+                      }
+                      style={codeBtn}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="share-outline" size={20} color={Colors.primary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={async () => {
+                        await Clipboard.setStringAsync(selectedClass.join_code as string);
+                        Alert.alert('Copied', 'Class code copied to clipboard.');
+                      }}
+                      style={codeBtn}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="copy-outline" size={20} color={Colors.primary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={handleRegenerateCode} style={codeBtn} activeOpacity={0.7}>
+                      <Ionicons name="refresh" size={20} color={Colors.primary} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                <Text style={{ fontSize: 12, color: Colors.gray500, marginTop: 8 }}>
+                  Students join from their School tab with this code.
+                </Text>
+              </View>
+            ) : null}
 
             {/* Pending requests */}
             {pending.length > 0 && (
@@ -515,6 +578,15 @@ const shadow = {
   shadowRadius: 6,
   shadowOffset: { width: 0, height: 2 },
   elevation: 2,
+};
+
+const codeBtn = {
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  backgroundColor: Colors.primaryMuted,
+  alignItems: 'center' as const,
+  justifyContent: 'center' as const,
 };
 
 const cardEmpty = {

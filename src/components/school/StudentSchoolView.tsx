@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../constants';
 import { useAuth } from '../../hooks/useAuth';
@@ -13,6 +13,7 @@ import { supabase } from '../../services/supabase/client';
 import BottomNavBar from '../main/BottomNavBar';
 import Header from '../main/Header';
 import { LoadingSpinner } from '../ui';
+import JoinClassModal from './JoinClassModal';
 import TeacherDetailView from './TeacherDetailView';
 
 const teacherName = (t: TeacherSummary) =>
@@ -25,6 +26,7 @@ const StudentSchoolView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState<TeacherSummary | null>(null);
+  const [showJoin, setShowJoin] = useState(false);
 
   const load = useCallback(async () => {
     if (!user?.id) return;
@@ -96,7 +98,13 @@ const StudentSchoolView: React.FC = () => {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
       >
         {/* My Teachers */}
-        <Text style={titleStyle}>My Teachers</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <Text style={[titleStyle, { marginBottom: 0 }]}>My Teachers</Text>
+          <TouchableOpacity onPress={() => setShowJoin(true)} activeOpacity={0.8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Ionicons name="add-circle" size={20} color={Colors.primary} />
+            <Text style={{ color: Colors.primary, fontWeight: '700' }}>Join class</Text>
+          </TouchableOpacity>
+        </View>
         {teachers.length === 0 ? (
           <View style={emptyCard}>
             <Ionicons name="people-outline" size={32} color={Colors.gray400} />
@@ -177,6 +185,16 @@ const StudentSchoolView: React.FC = () => {
       </ScrollView>
 
       <BottomNavBar />
+
+      <JoinClassModal
+        visible={showJoin}
+        onClose={() => setShowJoin(false)}
+        onJoined={(name) => {
+          setShowJoin(false);
+          load();
+          Alert.alert('Joined!', `You joined "${name}".`);
+        }}
+      />
     </SafeAreaView>
   );
 };
