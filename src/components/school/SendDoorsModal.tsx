@@ -17,15 +17,18 @@ import { schoolService } from '../../services/schoolService';
 interface Props {
   visible: boolean;
   teacherId: string;
-  student: { id: string; name: string } | null;
+  student?: { id: string; name: string } | null;
+  bulk?: { studentIds: string[]; label: string } | null;
   onClose: () => void;
   onSent: () => void;
 }
 
-const SendDoorsModal: React.FC<Props> = ({ visible, teacherId, student, onClose, onSent }) => {
+const SendDoorsModal: React.FC<Props> = ({ visible, teacherId, student, bulk, onClose, onSent }) => {
   const [count, setCount] = useState(1);
   const [reason, setReason] = useState('');
   const [sending, setSending] = useState(false);
+
+  const targetName = bulk?.label ?? student?.name ?? '';
 
   const reset = () => {
     setCount(1);
@@ -38,14 +41,32 @@ const SendDoorsModal: React.FC<Props> = ({ visible, teacherId, student, onClose,
   };
 
   const handleSend = async () => {
-    if (!student) return;
+    const reasonText = reason.trim() || 'From your teacher';
     setSending(true);
-    const { success, error } = await schoolService.sendDoorsToStudent(
-      teacherId,
-      student.id,
-      count,
-      reason.trim() || 'From your teacher'
-    );
+
+    if (bulk) {
+      let sent = 0;
+      let firstError: string | null = null;
+      for (const sid of bulk.studentIds) {
+        const { success, error } = await schoolService.sendDoorsToStudent(teacherId, sid, count, reasonText);
+        if (success) sent += 1;
+        else if (!firstError) firstError = error ?? 'Failed';
+      }
+      setSending(false);
+      if (sent === 0) {
+        Alert.alert('Could not send doors', firstError || 'Please try again.');
+        return;
+      }
+      reset();
+      onSent();
+      return;
+    }
+
+    if (!student) {
+      setSending(false);
+      return;
+    }
+    const { success, error } = await schoolService.sendDoorsToStudent(teacherId, student.id, count, reasonText);
     setSending(false);
     if (!success) {
       Alert.alert('Could not send doors', error || 'Please try again.');
@@ -77,11 +98,11 @@ const SendDoorsModal: React.FC<Props> = ({ visible, teacherId, student, onClose,
               <Ionicons name="close" size={26} color={Colors.gray500} />
             </TouchableOpacity>
           </View>
-          {student ? (
-            <Text style={{ color: Colors.gray500, marginBottom: 16 }}>
-              Game plays for {student.name}
-            </Text>
-          ) : null}
+          <Text style={{ color: Colors.gray500, marginBottom: 16 }}>
+            {bulk
+              ? `${count} ${count === 1 ? 'door' : 'doors'} to each of ${bulk.studentIds.length} students`
+              : `Game plays for ${targetName}`}
+          </Text>
 
           {/* Stepper */}
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 24, marginBottom: 16 }}>
@@ -127,7 +148,7 @@ const SendDoorsModal: React.FC<Props> = ({ visible, teacherId, student, onClose,
               <ActivityIndicator color={Colors.white} />
             ) : (
               <Text style={{ color: Colors.white, fontWeight: '700', fontSize: 16 }}>
-                Send {count} {count === 1 ? 'Door' : 'Doors'}
+                {bulk ? `Send to ${bulk.studentIds.length} students` : `Send ${count} ${count === 1 ? 'Door' : 'Doors'}`}
               </Text>
             )}
           </TouchableOpacity>

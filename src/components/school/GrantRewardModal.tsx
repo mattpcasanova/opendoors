@@ -18,7 +18,8 @@ import { RewardTemplate, schoolService } from '../../services/schoolService';
 interface Props {
   visible: boolean;
   classId: string;
-  student: { id: string; name: string } | null;
+  student?: { id: string; name: string } | null;
+  bulk?: { studentIds: string[]; label: string } | null;
   templates: RewardTemplate[];
   onClose: () => void;
   onGranted: () => void;
@@ -26,7 +27,8 @@ interface Props {
 
 const CUSTOM = '__custom__';
 
-const GrantRewardModal: React.FC<Props> = ({ visible, classId, student, templates, onClose, onGranted }) => {
+const GrantRewardModal: React.FC<Props> = ({ visible, classId, student, bulk, templates, onClose, onGranted }) => {
+  const targetName = bulk?.label ?? student?.name ?? '';
   const [selected, setSelected] = useState<string | null>(null);
   const [customTitle, setCustomTitle] = useState('');
   const [customDesc, setCustomDesc] = useState('');
@@ -46,7 +48,6 @@ const GrantRewardModal: React.FC<Props> = ({ visible, classId, student, template
   };
 
   const handleGrant = async () => {
-    if (!student) return;
     if (!selected) {
       Alert.alert('Pick a reward', 'Choose a saved reward or create a one-time one.');
       return;
@@ -56,17 +57,34 @@ const GrantRewardModal: React.FC<Props> = ({ visible, classId, student, template
       return;
     }
 
-    setSaving(true);
-    const { error } = await schoolService.grantReward({
+    const common = {
       classId,
-      studentId: student.id,
       templateId: selected === CUSTOM ? undefined : selected,
       title: selected === CUSTOM ? customTitle.trim() : undefined,
       description: selected === CUSTOM ? customDesc.trim() || undefined : undefined,
       note: note.trim() || undefined,
-    });
-    setSaving(false);
+    };
 
+    setSaving(true);
+
+    if (bulk) {
+      const { granted, error } = await schoolService.grantRewardToMany({ ...common, studentIds: bulk.studentIds });
+      setSaving(false);
+      if (error && granted === 0) {
+        Alert.alert('Error', error);
+        return;
+      }
+      reset();
+      onGranted();
+      return;
+    }
+
+    if (!student) {
+      setSaving(false);
+      return;
+    }
+    const { error } = await schoolService.grantReward({ ...common, studentId: student.id });
+    setSaving(false);
     if (error) {
       Alert.alert('Error', error);
       return;
@@ -98,8 +116,8 @@ const GrantRewardModal: React.FC<Props> = ({ visible, classId, student, template
               <Ionicons name="close" size={26} color={Colors.gray500} />
             </TouchableOpacity>
           </View>
-          {student ? (
-            <Text style={{ color: Colors.gray500, marginBottom: 12 }}>To {student.name}</Text>
+          {targetName ? (
+            <Text style={{ color: Colors.gray500, marginBottom: 12 }}>To {targetName}</Text>
           ) : null}
 
           <ScrollView showsVerticalScrollIndicator={false}>
