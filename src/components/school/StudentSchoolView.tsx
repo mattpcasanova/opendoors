@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../constants';
 import { useAuth } from '../../hooks/useAuth';
 import {
+  ClassGoal,
   ClassWithTeacher,
   schoolService,
   TeacherSummary,
@@ -13,6 +14,7 @@ import { supabase } from '../../services/supabase/client';
 import BottomNavBar from '../main/BottomNavBar';
 import Header from '../main/Header';
 import { LoadingSpinner } from '../ui';
+import ClassGoalBar from './ClassGoalBar';
 import JoinClassModal from './JoinClassModal';
 import TeacherDetailView from './TeacherDetailView';
 
@@ -23,6 +25,7 @@ const StudentSchoolView: React.FC = () => {
   const { user } = useAuth();
   const [classes, setClasses] = useState<ClassWithTeacher[]>([]);
   const [teachers, setTeachers] = useState<TeacherSummary[]>([]);
+  const [goals, setGoals] = useState<Record<string, ClassGoal>>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState<TeacherSummary | null>(null);
@@ -34,8 +37,19 @@ const StudentSchoolView: React.FC = () => {
       schoolService.getMyClassesAsStudent(user.id),
       schoolService.getMyTeachers(),
     ]);
-    if (classesRes.data) setClasses(classesRes.data);
+    const cls = classesRes.data || [];
+    setClasses(cls);
     if (teachersRes.data) setTeachers(teachersRes.data);
+
+    const goalEntries = await Promise.all(
+      cls.map(async (c) => [c.id, (await schoolService.getClassGoal(c.id)).data] as const)
+    );
+    const goalMap: Record<string, ClassGoal> = {};
+    goalEntries.forEach(([id, g]) => {
+      if (g) goalMap[id] = g;
+    });
+    setGoals(goalMap);
+
     setLoading(false);
   }, [user?.id]);
 
@@ -166,19 +180,23 @@ const StudentSchoolView: React.FC = () => {
                 borderRadius: 16,
                 padding: 16,
                 marginBottom: 12,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 12,
                 ...shadow,
               }}
             >
-              <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: Colors.primaryMuted, alignItems: 'center', justifyContent: 'center' }}>
-                <Ionicons name="book" size={22} color={Colors.primary} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: Colors.primaryMuted, alignItems: 'center', justifyContent: 'center' }}>
+                  <Ionicons name="book" size={22} color={Colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.gray900 }}>{c.name}</Text>
+                  <Text style={{ fontSize: 13, color: Colors.gray500, marginTop: 2 }}>{c.teacher_name}</Text>
+                </View>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.gray900 }}>{c.name}</Text>
-                <Text style={{ fontSize: 13, color: Colors.gray500, marginTop: 2 }}>{c.teacher_name}</Text>
-              </View>
+              {goals[c.id] ? (
+                <View style={{ marginTop: 14 }}>
+                  <ClassGoalBar goal={goals[c.id]} />
+                </View>
+              ) : null}
             </View>
           ))
         )}

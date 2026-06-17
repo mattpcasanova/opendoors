@@ -9,6 +9,7 @@ import { DoorDistribution, organizationService } from '../../services/organizati
 import { pushNotificationService } from '../../services/pushNotificationService';
 import {
   ClassEngagement,
+  ClassGoal,
   ClassRow,
   GrantedRewardWithStudent,
   RewardTemplate,
@@ -23,6 +24,8 @@ import { supabase } from '../../services/supabase/client';
 import BottomNavBar from '../main/BottomNavBar';
 import Header from '../main/Header';
 import { LoadingSpinner } from '../ui';
+import ClassGoalBar from './ClassGoalBar';
+import ClassGoalModal from './ClassGoalModal';
 import CreateTemplateModal from './CreateTemplateModal';
 import GrantRewardModal from './GrantRewardModal';
 import SendDoorsModal from './SendDoorsModal';
@@ -36,6 +39,8 @@ const TeacherSchoolView: React.FC = () => {
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [roster, setRoster] = useState<RosterMember[]>([]);
   const [engagement, setEngagement] = useState<Record<string, ClassEngagement>>({});
+  const [classGoal, setClassGoal] = useState<ClassGoal | null>(null);
+  const [showGoalModal, setShowGoalModal] = useState(false);
   const [templates, setTemplates] = useState<RewardTemplate[]>([]);
   const [pending, setPending] = useState<GrantedRewardWithStudent[]>([]);
   const [sentHistory, setSentHistory] = useState<DoorDistribution[]>([]);
@@ -61,11 +66,13 @@ const TeacherSchoolView: React.FC = () => {
   }, [user?.id]);
 
   const loadRoster = useCallback(async (classId: string) => {
-    const [rosterRes, engRes] = await Promise.all([
+    const [rosterRes, engRes, goalRes] = await Promise.all([
       schoolService.getClassRoster(classId),
       schoolService.getClassEngagement(classId),
+      schoolService.getClassGoal(classId),
     ]);
     setRoster(rosterRes.data || []);
+    setClassGoal(goalRes.data);
     const map: Record<string, ClassEngagement> = {};
     (engRes.data || []).forEach((e) => {
       map[e.student_id] = e;
@@ -322,6 +329,24 @@ const TeacherSchoolView: React.FC = () => {
                 </TouchableOpacity>
               </View>
             )}
+
+            {/* Class goal */}
+            <View style={{ backgroundColor: Colors.white, borderRadius: 16, padding: 16, marginBottom: 20, ...shadow }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <Text style={{ fontSize: 13, color: Colors.gray500 }}>Class goal</Text>
+                <TouchableOpacity onPress={() => setShowGoalModal(true)} activeOpacity={0.8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Ionicons name={classGoal ? 'create-outline' : 'add-circle'} size={18} color={Colors.primary} />
+                  <Text style={{ color: Colors.primary, fontWeight: '700' }}>{classGoal ? 'Edit' : 'Set goal'}</Text>
+                </TouchableOpacity>
+              </View>
+              {classGoal ? (
+                <ClassGoalBar goal={classGoal} />
+              ) : (
+                <Text style={{ color: Colors.gray500, fontSize: 13 }}>
+                  Set a shared goal like "Movie day at 200 doors" to rally the whole class.
+                </Text>
+              )}
+            </View>
 
             {/* Pending requests */}
             {pending.length > 0 && (
@@ -642,6 +667,19 @@ const TeacherSchoolView: React.FC = () => {
             setGrantStudent(null);
             setGrantBulk(null);
             Alert.alert('Reward sent!', wasBulk ? 'Your whole class will see it.' : 'Your student will see it in the app.');
+          }}
+        />
+      )}
+
+      {selectedClassId && (
+        <ClassGoalModal
+          visible={showGoalModal}
+          classId={selectedClassId}
+          current={classGoal}
+          onClose={() => setShowGoalModal(false)}
+          onSaved={() => {
+            setShowGoalModal(false);
+            if (selectedClassId) loadRoster(selectedClassId);
           }}
         />
       )}
