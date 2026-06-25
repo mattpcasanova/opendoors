@@ -13,7 +13,7 @@ import {
   View,
 } from 'react-native';
 import { Colors } from '../../constants';
-import { RewardTemplate, schoolService } from '../../services/schoolService';
+import { RewardClass, RewardTemplate, schoolService } from '../../services/schoolService';
 
 interface Props {
   visible: boolean;
@@ -32,6 +32,7 @@ const GrantRewardModal: React.FC<Props> = ({ visible, classId, student, bulk, te
   const [selected, setSelected] = useState<string | null>(null);
   const [customTitle, setCustomTitle] = useState('');
   const [customDesc, setCustomDesc] = useState('');
+  const [customClass, setCustomClass] = useState<RewardClass>('food');
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -39,6 +40,7 @@ const GrantRewardModal: React.FC<Props> = ({ visible, classId, student, bulk, te
     setSelected(null);
     setCustomTitle('');
     setCustomDesc('');
+    setCustomClass('food');
     setNote('');
   };
 
@@ -62,6 +64,7 @@ const GrantRewardModal: React.FC<Props> = ({ visible, classId, student, bulk, te
       templateId: selected === CUSTOM ? undefined : selected,
       title: selected === CUSTOM ? customTitle.trim() : undefined,
       description: selected === CUSTOM ? customDesc.trim() || undefined : undefined,
+      rewardClass: selected === CUSTOM ? customClass : undefined,
       note: note.trim() || undefined,
     };
 
@@ -125,7 +128,11 @@ const GrantRewardModal: React.FC<Props> = ({ visible, classId, student, bulk, te
               <Option
                 key={t.id}
                 title={t.title}
-                subtitle={t.description || undefined}
+                subtitle={
+                  `${t.reward_class === 'school' ? 'School reward' : 'Food reward'}` +
+                  (t.description ? ` · ${t.description}` : '')
+                }
+                icon={t.reward_class === 'school' ? 'school-outline' : 'fast-food-outline'}
                 active={selected === t.id}
                 onPress={() => setSelected(t.id)}
               />
@@ -158,12 +165,26 @@ const GrantRewardModal: React.FC<Props> = ({ visible, classId, student, bulk, te
                   multiline
                   maxLength={140}
                 />
+                <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+                  <ClassToggle
+                    icon="fast-food"
+                    label="Food"
+                    active={customClass === 'food'}
+                    onPress={() => setCustomClass('food')}
+                  />
+                  <ClassToggle
+                    icon="school"
+                    label="School"
+                    active={customClass === 'school'}
+                    onPress={() => setCustomClass('school')}
+                  />
+                </View>
               </View>
             )}
 
             <TextInput
               style={[styles.input, { marginTop: 8 }]}
-              placeholder="Add a note (optional) — e.g. Great work today!"
+              placeholder="Add a note (optional), e.g. Great work today!"
               placeholderTextColor={Colors.gray400}
               value={note}
               onChangeText={setNote}
@@ -195,6 +216,33 @@ const GrantRewardModal: React.FC<Props> = ({ visible, classId, student, bulk, te
     </Modal>
   );
 };
+
+const ClassToggle: React.FC<{
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}> = ({ icon, label, active, onPress }) => (
+  <TouchableOpacity
+    onPress={onPress}
+    activeOpacity={0.8}
+    style={{
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      paddingVertical: 10,
+      borderRadius: 12,
+      borderWidth: 2,
+      borderColor: active ? Colors.primary : Colors.gray200,
+      backgroundColor: active ? Colors.primaryMuted : Colors.white,
+    }}
+  >
+    <Ionicons name={icon} size={18} color={active ? Colors.primary : Colors.gray400} />
+    <Text style={{ fontSize: 14, fontWeight: '600', color: active ? Colors.primary : Colors.gray600 }}>{label}</Text>
+  </TouchableOpacity>
+);
 
 const Option: React.FC<{
   title: string;

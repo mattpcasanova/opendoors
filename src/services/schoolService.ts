@@ -34,6 +34,12 @@ export interface RosterMember {
 
 export type RewardType = 'direct' | 'game';
 
+/** Whether a reward is a food perk (fries, cookie) or a school perk (bonus point, HW pass). */
+export type RewardClass = 'food' | 'school';
+
+/** What a teacher door may be spent on. 'either' lets the student choose. */
+export type DoorEligibility = 'food_only' | 'school_only' | 'either';
+
 export interface RewardTemplate {
   id: string;
   teacher_id: string;
@@ -42,6 +48,7 @@ export interface RewardTemplate {
   description: string | null;
   icon: string | null;
   reward_type: RewardType;
+  reward_class: RewardClass;
   doors: number;
   is_active: boolean;
   created_at: string;
@@ -57,6 +64,9 @@ export interface GrantedReward {
   description: string | null;
   icon: string | null;
   reward_type: RewardType;
+  reward_class: RewardClass;
+  /** Eligibility of the door spent to get this reward; null for direct teacher grants. */
+  door_eligibility: DoorEligibility | null;
   doors: number;
   status: GrantedRewardStatus;
   requested_at: string | null;
@@ -75,6 +85,31 @@ export interface TeacherSummary {
   last_name: string | null;
   email: string;
   door_count: number;
+  either_doors: number;
+  food_doors: number;
+  school_doors: number;
+}
+
+export interface RewardPreferenceStats {
+  choice_food: number;
+  choice_school: number;
+  all_food: number;
+  all_school: number;
+}
+
+export interface AssessmentName {
+  assessment_name: string;
+  recorded_count: number;
+}
+
+export interface DoorsVsAssessmentRow {
+  student_id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string;
+  doors_earned: number;
+  score: number | null;
+  max_score: number | null;
 }
 
 export interface DoorMessage {
@@ -94,6 +129,33 @@ export interface ClassGoal {
   title: string;
   target_doors: number;
   progress: number;
+}
+
+/** Group reward as the teacher sees it (one class). */
+export interface GroupRewardTeacher {
+  id: string;
+  title: string;
+  description: string | null;
+  reward_class: RewardClass;
+  target_doors: number;
+  progress: number;
+  contributors: number;
+  fulfilled_at: string | null;
+  created_at: string;
+}
+
+/** Group reward as a student sees it (with their own contribution). */
+export interface GroupRewardStudent {
+  id: string;
+  class_id: string;
+  class_name: string;
+  title: string;
+  description: string | null;
+  reward_class: RewardClass;
+  target_doors: number;
+  progress: number;
+  my_contribution: number;
+  fulfilled_at: string | null;
 }
 
 const fullName = (
@@ -419,6 +481,7 @@ class SchoolService {
     description?: string;
     icon?: string;
     reward_type?: RewardType;
+    reward_class?: RewardClass;
     doors?: number;
   }): Promise<{ data: RewardTemplate | null; error: string | null }> {
     try {
@@ -431,6 +494,7 @@ class SchoolService {
           description: t.description ?? null,
           icon: t.icon ?? null,
           reward_type: t.reward_type ?? 'direct',
+          reward_class: t.reward_class ?? 'food',
           doors: t.doors ?? 3,
         })
         .select()
@@ -467,6 +531,7 @@ class SchoolService {
     description?: string;
     icon?: string;
     note?: string;
+    rewardClass?: RewardClass;
   }): Promise<{ data: GrantedReward | null; error: string | null }> {
     try {
       const { data, error } = await supabase.rpc('grant_classroom_reward', {
@@ -477,6 +542,7 @@ class SchoolService {
         p_description: args.description ?? null,
         p_icon: args.icon ?? null,
         p_note: args.note ?? null,
+        p_reward_class: args.rewardClass ?? null,
       });
       return { data: data as GrantedReward | null, error: error?.message ?? null };
     } catch (error: any) {
@@ -494,6 +560,7 @@ class SchoolService {
     description?: string;
     icon?: string;
     note?: string;
+    rewardClass?: RewardClass;
   }): Promise<{ granted: number; error: string | null }> {
     let granted = 0;
     for (const studentId of args.studentIds) {
@@ -505,6 +572,7 @@ class SchoolService {
         description: args.description,
         icon: args.icon,
         note: args.note,
+        rewardClass: args.rewardClass,
       });
       if (error) {
         return { granted, error };
@@ -588,14 +656,171 @@ class SchoolService {
   // DOORS (reuse the existing distribution pipeline)
   // ==========================================================================
 
-  /** Send doors (game plays) from a teacher to a student. */
+  /** Send doors (game plays) from a teacher to a student, optionally locked to food/school. */
   async sendDoorsToStudent(
     teacherId: string,
     studentId: string,
     doors: number,
-    reason: string
+    reason: string,
+    eligibility: DoorEligibility = 'either'
   ) {
-    return organizationService.sendDoors(teacherId, studentId, doors, reason);
+    return organizationService.sendDoors(teacherId, studentId, doors, reason, eligibility);
+  }
+
+  // ==========================================================================
+  // ANALYTICS / RESEARCH
+  // ==========================================================================
+
+  /** Food-vs-school reward stats for the teacher (optionally one class). */
+  async getRewardPreferenceStats(
+    classId?: string | null
+  ): Promise<{ data: RewardPreferenceStats | null; error: string | null }> {
+    try {
+      const { data, error } = await supabase.rpc('get_reward_preference_stats', {
+        p_class_id: classId ?? null,
+      });
+      const row = Array.isArray(data) && data.length > 0 ? (data[0] as RewardPreferenceStats) : null;
+      return { data: row, error: error?.message ?? null };
+    } catch (error: any) {
+      console.error('Error fetching reward preference stats:', error);
+      return { data: null, error: error.message };
+    }
+  }
+
+  /** Record/update one student's assessment score (e.g. an EOC). */
+  async upsertAssessment(args: {
+    studentId: string;
+    assessmentName: string;
+    score: number;
+    maxScore?: number | null;
+    classId?: string | null;
+    term?: string | null;
+  }): Promise<{ error: string | null }> {
+    try {
+      const { error } = await supabase.rpc('upsert_student_assessment', {
+        p_student_id: args.studentId,
+        p_assessment_name: args.assessmentName,
+        p_score: args.score,
+        p_max_score: args.maxScore ?? null,
+        p_class_id: args.classId ?? null,
+        p_term: args.term ?? null,
+      });
+      return { error: error?.message ?? null };
+    } catch (error: any) {
+      console.error('Error saving assessment:', error);
+      return { error: error.message };
+    }
+  }
+
+  /** Distinct assessment names the teacher has recorded. */
+  async getAssessmentNames(): Promise<{ data: AssessmentName[] | null; error: string | null }> {
+    try {
+      const { data, error } = await supabase.rpc('get_my_assessment_names');
+      return { data: data as AssessmentName[] | null, error: error?.message ?? null };
+    } catch (error: any) {
+      console.error('Error fetching assessment names:', error);
+      return { data: null, error: error.message };
+    }
+  }
+
+  /** Per-student doors-earned vs assessment score for one class (correlation view). */
+  async getDoorsVsAssessment(
+    classId: string,
+    assessmentName: string
+  ): Promise<{ data: DoorsVsAssessmentRow[] | null; error: string | null }> {
+    try {
+      const { data, error } = await supabase.rpc('get_doors_vs_assessment', {
+        p_class_id: classId,
+        p_assessment_name: assessmentName,
+      });
+      return { data: data as DoorsVsAssessmentRow[] | null, error: error?.message ?? null };
+    } catch (error: any) {
+      console.error('Error fetching doors vs assessment:', error);
+      return { data: null, error: error.message };
+    }
+  }
+
+  // ==========================================================================
+  // GROUP REWARDS (class-wide, student-funded door pools)
+  // ==========================================================================
+
+  /** Teacher creates a group reward for a class. */
+  async createGroupReward(args: {
+    classId: string;
+    title: string;
+    target: number;
+    description?: string;
+    rewardClass?: RewardClass;
+  }): Promise<{ error: string | null }> {
+    try {
+      const { error } = await supabase.rpc('create_group_reward', {
+        p_class_id: args.classId,
+        p_title: args.title,
+        p_target: args.target,
+        p_description: args.description ?? null,
+        p_reward_class: args.rewardClass ?? 'school',
+      });
+      return { error: error?.message ?? null };
+    } catch (error: any) {
+      console.error('Error creating group reward:', error);
+      return { error: error.message };
+    }
+  }
+
+  /** Teacher removes a group reward. */
+  async deactivateGroupReward(id: string): Promise<{ error: string | null }> {
+    try {
+      const { error } = await supabase.rpc('deactivate_group_reward', { p_id: id });
+      return { error: error?.message ?? null };
+    } catch (error: any) {
+      console.error('Error deleting group reward:', error);
+      return { error: error.message };
+    }
+  }
+
+  /** Student contributes doors to a group reward (spends eligible teacher doors). */
+  async contributeToGroupReward(
+    groupId: string,
+    doors: number
+  ): Promise<{ error: string | null }> {
+    try {
+      const { error } = await supabase.rpc('contribute_to_group_reward', {
+        p_group_id: groupId,
+        p_doors: doors,
+      });
+      return { error: error?.message ?? null };
+    } catch (error: any) {
+      console.error('Error contributing to group reward:', error);
+      return { error: error.message };
+    }
+  }
+
+  /** Teacher: active group rewards for one class. */
+  async getClassGroupRewards(
+    classId: string
+  ): Promise<{ data: GroupRewardTeacher[] | null; error: string | null }> {
+    try {
+      const { data, error } = await supabase.rpc('get_class_group_rewards', { p_class_id: classId });
+      return { data: data as GroupRewardTeacher[] | null, error: error?.message ?? null };
+    } catch (error: any) {
+      console.error('Error fetching class group rewards:', error);
+      return { data: null, error: error.message };
+    }
+  }
+
+  /** Student: active group rewards across classes shared with one teacher. */
+  async getGroupRewardsForTeacher(
+    teacherId: string
+  ): Promise<{ data: GroupRewardStudent[] | null; error: string | null }> {
+    try {
+      const { data, error } = await supabase.rpc('get_group_rewards_for_teacher', {
+        p_teacher_id: teacherId,
+      });
+      return { data: data as GroupRewardStudent[] | null, error: error?.message ?? null };
+    } catch (error: any) {
+      console.error('Error fetching group rewards:', error);
+      return { data: null, error: error.message };
+    }
   }
 }
 

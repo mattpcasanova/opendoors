@@ -1,8 +1,22 @@
 import React, { useCallback, useEffect } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useMontyHallGame } from '../../hooks/useMontyHallGame';
 import Door from '../Door';
 import { soundService } from '../../services/soundService';
+
+// Fit the doors to the screen. 4 or fewer doors stay on one row at a comfy
+// size; 5+ wrap into two balanced rows with smaller, more spaced doors.
+const doorLayout = (numDoors: number) => {
+  const screenW = Dimensions.get('window').width;
+  const avail = screenW - 32; // outer padding
+  const wraps = numDoors > 4;
+  const perRow = wraps ? Math.ceil(numDoors / 2) : numDoors;
+  const cap = wraps ? 74 : 100;
+  const divisor = wraps ? 1.5 : 1.2;
+  const size = Math.max(50, Math.min(cap, Math.round(avail / perRow / divisor)));
+  const marginH = Math.max(6, Math.round(size * 0.13));
+  return { perRow, size, rowWidth: perRow * (size + 2 * marginH) };
+};
 
 interface Props {
   onGameComplete?: (won: boolean, switched: boolean) => void;
@@ -78,31 +92,28 @@ export default function MontyHallGame({ onGameComplete, numDoors = 3 }: Props) {
     return false;
   };
 
+  const layout = doorLayout(doors.length || numDoors);
+
   return (
     <View style={styles.container}>
       <Text style={styles.message}>{getMessage()}</Text>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        <View style={styles.doorsContainer}>
-          {doors.map((door, index) => (
-            <Door
-              key={index}
-              doorNumber={index + 1}
-              isOpen={door.isOpen}
-              content={door.content}
-              isSelected={door.isSelected}
-              onPress={() => handleDoorPress(index)}
-              disabled={isDoorDisabled(index)}
-              isWinningDoor={door.isWinningDoor}
-              isFinalReveal={gameState === 'final'}
-            />
-          ))}
-        </View>
-      </ScrollView>
+      <View style={[styles.doorsContainer, { width: layout.rowWidth }]}>
+        {doors.map((door, index) => (
+          <Door
+            key={index}
+            doorNumber={index + 1}
+            size={layout.size}
+            isOpen={door.isOpen}
+            content={door.content}
+            isSelected={door.isSelected}
+            onPress={() => handleDoorPress(index)}
+            disabled={isDoorDisabled(index)}
+            isWinningDoor={door.isWinningDoor}
+            isFinalReveal={gameState === 'final'}
+          />
+        ))}
+      </View>
 
       {gameState === 'final' && (
         <TouchableOpacity
@@ -129,13 +140,12 @@ const styles = StyleSheet.create({
     color: '#333',
     minHeight: 25, // Prevent layout jump during state changes
   },
-  scrollContent: {
-    paddingHorizontal: 20,
-  },
   doorsContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'center',
     alignItems: 'center',
+    alignSelf: 'center',
     marginBottom: 30,
   },
   resetButton: {
