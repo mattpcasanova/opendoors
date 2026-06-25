@@ -13,9 +13,15 @@ interface Props {
   disabled: boolean;
   isWinningDoor?: boolean;
   isFinalReveal?: boolean;
+  /** Door width in px; height is 1.5x. Defaults to 100. */
+  size?: number;
 }
 
-export default function Door({ doorNumber, isOpen, content, isSelected, onPress, disabled, isWinningDoor = false, isFinalReveal = false }: Props) {
+export default function Door({ doorNumber, isOpen, content, isSelected, onPress, disabled, isWinningDoor = false, isFinalReveal = false, size = 100 }: Props) {
+  const doorWidth = size;
+  const doorHeight = Math.round(size * 1.5);
+  const iconSize = Math.round(size * 0.56);
+  const marginH = Math.max(4, Math.round(size * 0.08));
   const openAnim = React.useRef(new Animated.Value(0)).current;
   const contentAnim = React.useRef(new Animated.Value(0)).current;
   const doorShakeAnim = React.useRef(new Animated.Value(0)).current;
@@ -262,11 +268,12 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
   return (
     <Animated.View style={{
       alignItems: 'center',
-      marginHorizontal: 8,
+      marginHorizontal: marginH,
+      marginVertical: 8,
       overflow: 'visible',
       transform: [{ scale: selectionBounceAnim }]
     }}>
-      <View style={{ width: 100, height: 150, position: 'relative', overflow: 'visible', zIndex: 1 }}>
+      <View style={{ width: doorWidth, height: doorHeight, position: 'relative', overflow: 'visible', zIndex: 1 }}>
         {/* Confetti particles */}
         {showConfetti && confettiParticles.map((particle, i) => (
           <Animated.View
@@ -326,7 +333,7 @@ export default function Door({ doorNumber, isOpen, content, isSelected, onPress,
             }}>
               <Ionicons
                 name={content.name as any}
-                size={56}
+                size={iconSize}
                 color={content.color}
               />
             </Animated.View>

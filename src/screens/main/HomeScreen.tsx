@@ -150,7 +150,7 @@ const EarnedRewardsSection: React.FC<EarnedRewardsSectionProps> = ({
             Earned Doors
           </Text>
           <Text style={{ fontSize: 14, color: Colors.gray500 }}>
-            No doors yet — check back after class
+            No doors yet. Check back after class
           </Text>
         </View>
         <View style={{

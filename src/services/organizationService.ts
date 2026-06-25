@@ -155,7 +155,8 @@ class OrganizationService {
     distributorId: string,
     recipientId: string,
     doorsToSend: number,
-    reason: string
+    reason: string,
+    eligibility: 'food_only' | 'school_only' | 'either' = 'either'
   ) {
     try {
       // Check if distributor has enough doors
@@ -273,7 +274,8 @@ class OrganizationService {
               distributorName,
               reason,
               1,
-              distributorId
+              distributorId,
+              eligibility
             )
           : await earnedRewardsService.addDistributorReward(
               recipientId,

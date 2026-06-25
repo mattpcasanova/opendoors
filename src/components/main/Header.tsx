@@ -242,7 +242,7 @@ export default function Header({
                     fontWeight: "600",
                   }}
                 >
-                  Win rewards from your teacher
+                  Win rewards from your teachers
                 </Text>
               </View>
             </View>

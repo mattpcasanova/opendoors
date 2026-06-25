@@ -9,26 +9,28 @@ import { DoorDistribution, organizationService } from '../../services/organizati
 import { pushNotificationService } from '../../services/pushNotificationService';
 import {
   ClassEngagement,
-  ClassGoal,
   ClassRow,
   GrantedRewardWithStudent,
+  GroupRewardTeacher,
   RewardTemplate,
   RosterMember,
   schoolService,
 } from '../../services/schoolService';
 
 const STALE_DAYS = 14;
+const ALL_PERIODS = '__all__';
 const daysAgo = (iso: string | null) =>
   iso ? Math.floor((Date.now() - new Date(iso).getTime()) / 86400000) : null;
 import { supabase } from '../../services/supabase/client';
 import BottomNavBar from '../main/BottomNavBar';
 import Header from '../main/Header';
 import { LoadingSpinner } from '../ui';
-import ClassGoalBar from './ClassGoalBar';
-import ClassGoalModal from './ClassGoalModal';
 import CreateTemplateModal from './CreateTemplateModal';
 import GrantRewardModal from './GrantRewardModal';
+import GroupRewardModal from './GroupRewardModal';
+import InsightsModal from './InsightsModal';
 import SendDoorsModal from './SendDoorsModal';
+import StudentPickerModal from './StudentPickerModal';
 
 const rosterName = (m: RosterMember) =>
   `${m.first_name || ''} ${m.last_name || ''}`.trim() || m.email;
@@ -38,9 +40,12 @@ const TeacherSchoolView: React.FC = () => {
   const [classes, setClasses] = useState<ClassRow[]>([]);
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [roster, setRoster] = useState<RosterMember[]>([]);
+  // All students across every class (deduped) + which periods each is in, for the "All periods" tab.
+  const [allStudents, setAllStudents] = useState<RosterMember[]>([]);
+  const [studentClasses, setStudentClasses] = useState<Record<string, string[]>>({});
   const [engagement, setEngagement] = useState<Record<string, ClassEngagement>>({});
-  const [classGoal, setClassGoal] = useState<ClassGoal | null>(null);
-  const [showGoalModal, setShowGoalModal] = useState(false);
+  const [groupRewards, setGroupRewards] = useState<GroupRewardTeacher[]>([]);
+  const [showGroupModal, setShowGroupModal] = useState(false);
   const [templates, setTemplates] = useState<RewardTemplate[]>([]);
   const [pending, setPending] = useState<GrantedRewardWithStudent[]>([]);
   const [sentHistory, setSentHistory] = useState<DoorDistribution[]>([]);
@@ -48,6 +53,8 @@ const TeacherSchoolView: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
 
   const [showCreate, setShowCreate] = useState(false);
+  const [showInsights, setShowInsights] = useState(false);
+  const [showStudentPicker, setShowStudentPicker] = useState(false);
   const [grantStudent, setGrantStudent] = useState<{ id: string; name: string } | null>(null);
   const [doorsStudent, setDoorsStudent] = useState<{ id: string; name: string } | null>(null);
   const [doorsBulk, setDoorsBulk] = useState<{ studentIds: string[]; label: string } | null>(null);
@@ -66,13 +73,13 @@ const TeacherSchoolView: React.FC = () => {
   }, [user?.id]);
 
   const loadRoster = useCallback(async (classId: string) => {
-    const [rosterRes, engRes, goalRes] = await Promise.all([
+    const [rosterRes, engRes, groupRes] = await Promise.all([
       schoolService.getClassRoster(classId),
       schoolService.getClassEngagement(classId),
-      schoolService.getClassGoal(classId),
+      schoolService.getClassGroupRewards(classId),
     ]);
     setRoster(rosterRes.data || []);
-    setClassGoal(goalRes.data);
+    setGroupRewards(groupRes.data || []);
     const map: Record<string, ClassEngagement> = {};
     (engRes.data || []).forEach((e) => {
       map[e.student_id] = e;
@@ -86,6 +93,26 @@ const TeacherSchoolView: React.FC = () => {
     if (data) setSentHistory(data);
   }, [user?.id]);
 
+  // Union of every class roster (deduped), with the period names each student belongs to.
+  const loadAllStudents = useCallback(async (cls: ClassRow[]) => {
+    const results = await Promise.all(
+      cls.map((c) => schoolService.getClassRoster(c.id).then((r) => ({ c, data: r.data || [] })))
+    );
+    const byId = new Map<string, RosterMember>();
+    const periods: Record<string, string[]> = {};
+    for (const { c, data } of results) {
+      for (const m of data) {
+        if (!byId.has(m.student_id)) byId.set(m.student_id, m);
+        (periods[m.student_id] = periods[m.student_id] || []).push(c.name);
+      }
+    }
+    const sorted = Array.from(byId.values()).sort((a, b) =>
+      `${a.last_name || ''}${a.first_name || ''}`.localeCompare(`${b.last_name || ''}${b.first_name || ''}`)
+    );
+    setAllStudents(sorted);
+    setStudentClasses(periods);
+  }, []);
+
   const init = useCallback(async () => {
     if (!user?.id) return;
     const { data: classData } = await schoolService.getMyClassesAsTeacher(user.id);
@@ -97,18 +124,19 @@ const TeacherSchoolView: React.FC = () => {
       loadTemplates(),
       loadPending(),
       loadSentHistory(),
+      loadAllStudents(cls),
       firstId ? loadRoster(firstId) : Promise.resolve(),
     ]);
     setLoading(false);
-  }, [user?.id, loadTemplates, loadPending, loadSentHistory, loadRoster]);
+  }, [user?.id, loadTemplates, loadPending, loadSentHistory, loadRoster, loadAllStudents]);
 
   useEffect(() => {
     init();
   }, [init]);
 
-  // Reload roster when the selected class changes
+  // Reload roster when the selected class changes (skip the "All periods" tab)
   useEffect(() => {
-    if (selectedClassId) loadRoster(selectedClassId);
+    if (selectedClassId && selectedClassId !== ALL_PERIODS) loadRoster(selectedClassId);
   }, [selectedClassId, loadRoster]);
 
   // Live-update pending requests
@@ -138,7 +166,8 @@ const TeacherSchoolView: React.FC = () => {
       loadTemplates(),
       loadPending(),
       loadSentHistory(),
-      selectedClassId ? loadRoster(selectedClassId) : Promise.resolve(),
+      loadAllStudents(classes),
+      selectedClassId && selectedClassId !== ALL_PERIODS ? loadRoster(selectedClassId) : Promise.resolve(),
     ]);
     setRefreshing(false);
   };
@@ -174,6 +203,43 @@ const TeacherSchoolView: React.FC = () => {
       Alert.alert('Error', 'Could not update. Please try again.');
       loadPending();
     }
+  };
+
+  const handleDeleteGroupReward = (g: GroupRewardTeacher) => {
+    Alert.alert('Delete group reward?', `"${g.title}" will be removed. Doors students already pooled are not returned.`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          setGroupRewards((prev) => prev.filter((x) => x.id !== g.id));
+          const { error } = await schoolService.deactivateGroupReward(g.id);
+          if (error && selectedClassId) loadRoster(selectedClassId);
+        },
+      },
+    ]);
+  };
+
+  const handleDeleteTemplate = (t: RewardTemplate) => {
+    Alert.alert(
+      'Delete reward?',
+      `"${t.title}" will be removed from your list and students won't be able to get it anymore. Rewards students already earned are not affected.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            setTemplates((prev) => prev.filter((x) => x.id !== t.id));
+            const { error } = await schoolService.deactivateTemplate(t.id);
+            if (error) {
+              Alert.alert('Error', 'Could not delete the reward. Please try again.');
+              loadTemplates();
+            }
+          },
+        },
+      ]
+    );
   };
 
   const openClassBulk = (kind: 'doors' | 'reward') => {
@@ -213,9 +279,18 @@ const TeacherSchoolView: React.FC = () => {
     );
   }
 
+  const isAll = selectedClassId === ALL_PERIODS;
+  // On "All periods" the student list/search spans every class; otherwise just the selected class.
+  const activeRoster = isAll ? allStudents : roster;
+  // Pending requests are loaded teacher-wide; scope them to the selected class.
+  const visiblePending = isAll ? pending : pending.filter((p) => p.class_id === selectedClassId);
+  // Rewards usable for granting in the selected class (class-specific + all-classes).
   const templatesForSelected = templates.filter(
     (t) => t.class_id === null || t.class_id === selectedClassId
   );
+  // What the Reward Items list shows: the whole catalog on "All periods",
+  // otherwise only this class's rewards plus any that apply to all classes.
+  const displayedTemplates = isAll ? templates : templatesForSelected;
   const selectedClass = classes.find((c) => c.id === selectedClassId);
 
   return (
@@ -237,7 +312,7 @@ const TeacherSchoolView: React.FC = () => {
           <View style={cardEmpty}>
             <Ionicons name="school-outline" size={32} color={Colors.gray400} />
             <Text style={{ color: Colors.gray600, marginTop: 8, textAlign: 'center' }}>
-              No classes yet. Classes are set up for you — check back soon.
+              No classes yet. Classes are set up for you. Check back soon.
             </Text>
           </View>
         ) : (
@@ -249,6 +324,22 @@ const TeacherSchoolView: React.FC = () => {
               style={{ marginBottom: 20 }}
               contentContainerStyle={{ gap: 8 }}
             >
+              <TouchableOpacity
+                onPress={() => setSelectedClassId(ALL_PERIODS)}
+                activeOpacity={0.8}
+                style={{
+                  paddingHorizontal: 16,
+                  paddingVertical: 10,
+                  borderRadius: 999,
+                  backgroundColor: isAll ? Colors.primary : Colors.white,
+                  borderWidth: 1,
+                  borderColor: isAll ? Colors.primary : Colors.gray200,
+                }}
+              >
+                <Text style={{ color: isAll ? Colors.white : Colors.gray700, fontWeight: '600' }}>
+                  All periods
+                </Text>
+              </TouchableOpacity>
               {classes.map((c) => {
                 const active = c.id === selectedClassId;
                 return (
@@ -287,7 +378,7 @@ const TeacherSchoolView: React.FC = () => {
                     <TouchableOpacity
                       onPress={() =>
                         Share.share({
-                          message: `Join my class "${selectedClass.name}" on OpenDoors — open the app, go to School, and enter code ${selectedClass.join_code}.`,
+                          message: `Join my class "${selectedClass.name}" on OpenDoors. Open the app, go to School, and enter code ${selectedClass.join_code}.`,
                         })
                       }
                       style={codeBtn}
@@ -316,45 +407,127 @@ const TeacherSchoolView: React.FC = () => {
               </View>
             ) : null}
 
-            {/* Whole-class actions */}
-            {roster.length > 0 && (
-              <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
-                <TouchableOpacity onPress={() => openClassBulk('doors')} activeOpacity={0.85} style={classActionBtn}>
-                  <Ionicons name="ticket" size={18} color={Colors.primary} />
-                  <Text style={classActionLabel}>Doors to class</Text>
+            {/* Quick actions */}
+            {activeRoster.length > 0 && (
+              <View style={{ marginBottom: 20, gap: 10 }}>
+                {/* Send to a single student (search), works on any tab */}
+                <TouchableOpacity
+                  onPress={() => setShowStudentPicker(true)}
+                  activeOpacity={0.85}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 10,
+                    backgroundColor: Colors.primary,
+                    borderRadius: 12,
+                    paddingVertical: 14,
+                    paddingHorizontal: 16,
+                  }}
+                >
+                  <Ionicons name="person-add" size={20} color={Colors.white} />
+                  <Text style={{ flex: 1, color: Colors.white, fontWeight: '700', fontSize: 15 }}>
+                    {isAll ? 'Send doors to any student' : 'Send doors to a student'}
+                  </Text>
+                  <Ionicons name="search" size={18} color={Colors.white} />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => openClassBulk('reward')} activeOpacity={0.85} style={classActionBtn}>
-                  <Ionicons name="gift" size={18} color={Colors.primary} />
-                  <Text style={classActionLabel}>Reward to class</Text>
-                </TouchableOpacity>
+
+                {/* Whole-class actions (specific class only) */}
+                {!isAll && (
+                  <View style={{ flexDirection: 'row', gap: 10 }}>
+                    <TouchableOpacity onPress={() => openClassBulk('doors')} activeOpacity={0.85} style={classActionBtn}>
+                      <Ionicons name="ticket" size={18} color={Colors.primary} />
+                      <Text style={classActionLabel}>Doors to class</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => openClassBulk('reward')} activeOpacity={0.85} style={classActionBtn}>
+                      <Ionicons name="gift" size={18} color={Colors.primary} />
+                      <Text style={classActionLabel}>Reward to class</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             )}
 
-            {/* Class goal */}
+            {/* Insights */}
+            {!isAll && (
+            <TouchableOpacity
+              onPress={() => setShowInsights(true)}
+              activeOpacity={0.85}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 12,
+                backgroundColor: Colors.white,
+                borderRadius: 16,
+                padding: 16,
+                marginBottom: 20,
+                ...shadow,
+              }}
+            >
+              <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: Colors.primaryMuted, alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name="stats-chart" size={20} color={Colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 15, fontWeight: '700', color: Colors.gray900 }}>Insights</Text>
+                <Text style={{ fontSize: 13, color: Colors.gray500, marginTop: 2 }}>
+                  Food vs. school choices · doors vs. scores
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={Colors.gray400} />
+            </TouchableOpacity>
+            )}
+
+            {/* Group rewards (student-funded) */}
+            {!isAll && (
             <View style={{ backgroundColor: Colors.white, borderRadius: 16, padding: 16, marginBottom: 20, ...shadow }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <Text style={{ fontSize: 13, color: Colors.gray500 }}>Class goal</Text>
-                <TouchableOpacity onPress={() => setShowGoalModal(true)} activeOpacity={0.8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <Ionicons name={classGoal ? 'create-outline' : 'add-circle'} size={18} color={Colors.primary} />
-                  <Text style={{ color: Colors.primary, fontWeight: '700' }}>{classGoal ? 'Edit' : 'Set goal'}</Text>
+                <Text style={{ fontSize: 13, color: Colors.gray500 }}>Group rewards</Text>
+                <TouchableOpacity onPress={() => setShowGroupModal(true)} activeOpacity={0.8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Ionicons name="add-circle" size={18} color={Colors.primary} />
+                  <Text style={{ color: Colors.primary, fontWeight: '700' }}>New</Text>
                 </TouchableOpacity>
               </View>
-              {classGoal ? (
-                <ClassGoalBar goal={classGoal} />
-              ) : (
+              {groupRewards.length === 0 ? (
                 <Text style={{ color: Colors.gray500, fontSize: 13 }}>
-                  Set a shared goal like "Movie day at 200 doors" to rally the whole class.
+                  Let the class pool their own doors toward a shared prize, like a pizza party.
                 </Text>
+              ) : (
+                groupRewards.map((g, idx) => {
+                  const pct = Math.min(100, Math.round((g.progress / Math.max(1, g.target_doors)) * 100));
+                  const done = g.progress >= g.target_doors;
+                  return (
+                    <View key={g.id} style={{ marginTop: idx === 0 ? 0 : 14 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                        <Ionicons name={done ? 'trophy' : g.reward_class === 'food' ? 'fast-food' : 'school'} size={14} color={done ? Colors.successDark : Colors.primary} />
+                        <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: Colors.gray800 }} numberOfLines={1}>
+                          {g.title}
+                        </Text>
+                        <Text style={{ fontSize: 12, color: Colors.gray500 }}>
+                          {g.progress}/{g.target_doors}
+                        </Text>
+                        <TouchableOpacity onPress={() => handleDeleteGroupReward(g)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                          <Ionicons name="trash-outline" size={16} color={Colors.gray400} />
+                        </TouchableOpacity>
+                      </View>
+                      <View style={{ height: 8, borderRadius: 4, backgroundColor: Colors.gray200, overflow: 'hidden' }}>
+                        <View style={{ width: `${pct}%`, height: '100%', backgroundColor: done ? Colors.success : Colors.primary }} />
+                      </View>
+                      <Text style={{ fontSize: 12, color: done ? Colors.successDark : Colors.gray500, marginTop: 4 }}>
+                        {done ? 'Goal reached! 🎉' : `${g.contributors} contributor${g.contributors === 1 ? '' : 's'}`}
+                      </Text>
+                    </View>
+                  );
+                })
               )}
             </View>
+            )}
 
-            {/* Pending requests */}
-            {pending.length > 0 && (
+            {/* Pending requests (scoped to the selected class) */}
+            {visiblePending.length > 0 && (
               <View style={{ marginBottom: 24 }}>
                 <Text style={sectionTitle}>
-                  Pending Requests ({pending.length})
+                  Pending Requests ({visiblePending.length})
                 </Text>
-                {pending.map((p) => (
+                {visiblePending.map((p) => (
                   <View
                     key={p.id}
                     style={{
@@ -411,9 +584,11 @@ const TeacherSchoolView: React.FC = () => {
               </View>
             )}
 
-            {/* Reward items (templates) — the perks you can hand out */}
+            {/* Reward items (templates): the perks you can hand out */}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <Text style={[sectionTitle, { marginBottom: 0 }]}>Reward Items</Text>
+              <Text style={[sectionTitle, { marginBottom: 0 }]}>
+                {isAll ? 'All Reward Items' : 'Reward Items'}
+              </Text>
               <TouchableOpacity
                 onPress={() => setShowCreate(true)}
                 activeOpacity={0.8}
@@ -423,16 +598,18 @@ const TeacherSchoolView: React.FC = () => {
                 <Text style={{ color: Colors.primary, fontWeight: '700' }}>New</Text>
               </TouchableOpacity>
             </View>
-            {templates.length === 0 ? (
+            {displayedTemplates.length === 0 ? (
               <View style={cardEmpty}>
                 <Ionicons name="ribbon-outline" size={28} color={Colors.gray400} />
                 <Text style={{ color: Colors.gray600, marginTop: 8, textAlign: 'center' }}>
-                  Create rewards like "Homework Pass" to give to your students.
+                  {isAll
+                    ? 'Create rewards like "Homework Pass" to give to your students.'
+                    : `No rewards for ${selectedClass?.name ?? 'this class'} yet. Tap "New" to add one.`}
                 </Text>
               </View>
             ) : (
               <View style={{ marginBottom: 24 }}>
-                {templates.map((t) => (
+                {displayedTemplates.map((t) => (
                   <View
                     key={t.id}
                     style={{
@@ -456,33 +633,60 @@ const TeacherSchoolView: React.FC = () => {
                         justifyContent: 'center',
                       }}
                     >
-                      <Ionicons name="ribbon" size={20} color={Colors.primary} />
+                      <Ionicons
+                        name={t.reward_class === 'school' ? 'school' : 'fast-food'}
+                        size={20}
+                        color={Colors.primary}
+                      />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontSize: 15, fontWeight: '600', color: Colors.gray900 }}>{t.title}</Text>
                       {t.description ? (
                         <Text style={{ fontSize: 13, color: Colors.gray500, marginTop: 2 }}>{t.description}</Text>
                       ) : null}
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
-                        <Ionicons
-                          name={t.reward_type === 'game' ? 'game-controller' : 'gift'}
-                          size={13}
-                          color={Colors.primary}
-                        />
-                        <Text style={{ fontSize: 12, fontWeight: '600', color: Colors.primary }}>
-                          {t.reward_type === 'game' ? `Play to win · ${t.doors} doors` : 'Direct gift'}
-                        </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                          <Ionicons
+                            name={t.reward_class === 'school' ? 'school' : 'fast-food'}
+                            size={13}
+                            color={Colors.gray500}
+                          />
+                          <Text style={{ fontSize: 12, fontWeight: '600', color: Colors.gray500 }}>
+                            {t.reward_class === 'school' ? 'School' : 'Food'}
+                          </Text>
+                        </View>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                          <Ionicons
+                            name={t.reward_type === 'game' ? 'game-controller' : 'gift'}
+                            size={13}
+                            color={Colors.primary}
+                          />
+                          <Text style={{ fontSize: 12, fontWeight: '600', color: Colors.primary }}>
+                            {t.reward_type === 'game' ? `Play to win · ${t.doors} doors` : 'Direct gift'}
+                          </Text>
+                        </View>
                       </View>
                     </View>
-                    <Text style={{ fontSize: 12, color: Colors.gray400 }}>
-                      {t.class_id ? classes.find((c) => c.id === t.class_id)?.name ?? 'Class' : 'All classes'}
-                    </Text>
+                    <View style={{ alignItems: 'flex-end', gap: 8 }}>
+                      <Text style={{ fontSize: 12, color: Colors.gray400 }}>
+                        {t.class_id ? classes.find((c) => c.id === t.class_id)?.name ?? 'Class' : 'All classes'}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => handleDeleteTemplate(t)}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="trash-outline" size={18} color={Colors.gray400} />
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 ))}
               </View>
             )}
 
             {/* Roster */}
+            {!isAll && (
+            <>
             <Text style={sectionTitle}>Students</Text>
             {roster.length === 0 ? (
               <View style={cardEmpty}>
@@ -574,6 +778,67 @@ const TeacherSchoolView: React.FC = () => {
                   );
                 })}
               </View>
+            )}
+            </>
+            )}
+
+            {/* All-periods student list (every class, deduped) */}
+            {isAll && (
+              <>
+                <Text style={sectionTitle}>Students ({allStudents.length})</Text>
+                {allStudents.length === 0 ? (
+                  <View style={cardEmpty}>
+                    <Ionicons name="people-outline" size={28} color={Colors.gray400} />
+                    <Text style={{ color: Colors.gray600, marginTop: 8, textAlign: 'center' }}>
+                      No students enrolled in any class yet.
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={{ marginBottom: 24 }}>
+                    {allStudents.map((m) => (
+                      <TouchableOpacity
+                        key={m.student_id}
+                        onPress={() => setDoorsStudent({ id: m.student_id, name: rosterName(m) })}
+                        activeOpacity={0.7}
+                        style={{
+                          backgroundColor: Colors.white,
+                          borderRadius: 14,
+                          padding: 14,
+                          marginBottom: 10,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 12,
+                          ...shadow,
+                        }}
+                      >
+                        <View
+                          style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 20,
+                            backgroundColor: Colors.primaryMuted,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Text style={{ color: Colors.primary, fontWeight: '700' }}>
+                            {(m.first_name?.[0] || m.email[0] || '?').toUpperCase()}
+                          </Text>
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 15, fontWeight: '600', color: Colors.gray900 }}>
+                            {rosterName(m)}
+                          </Text>
+                          <Text style={{ fontSize: 12, color: Colors.gray500, marginTop: 2 }} numberOfLines={1}>
+                            {(studentClasses[m.student_id] || []).join(' · ') || m.email}
+                          </Text>
+                        </View>
+                        <Ionicons name="ticket-outline" size={20} color={Colors.primary} />
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </>
             )}
 
             {/* Doors Sent history */}
@@ -672,15 +937,42 @@ const TeacherSchoolView: React.FC = () => {
       )}
 
       {selectedClassId && (
-        <ClassGoalModal
-          visible={showGoalModal}
+        <GroupRewardModal
+          visible={showGroupModal}
           classId={selectedClassId}
-          current={classGoal}
-          onClose={() => setShowGoalModal(false)}
-          onSaved={() => {
-            setShowGoalModal(false);
+          onClose={() => setShowGroupModal(false)}
+          onCreated={() => {
+            setShowGroupModal(false);
             if (selectedClassId) loadRoster(selectedClassId);
           }}
+        />
+      )}
+
+      <StudentPickerModal
+        visible={showStudentPicker}
+        roster={activeRoster}
+        title={isAll ? 'Send doors to any student' : 'Send doors to a student'}
+        getSubtitle={(studentId) => {
+          if (isAll) return (studentClasses[studentId] || []).join(' · ') || null;
+          const d = daysAgo(engagement[studentId]?.last_door_at ?? null);
+          if (d === null) return 'Never rewarded';
+          const total = engagement[studentId]?.doors_received ?? 0;
+          return `Rewarded ${d}d ago · ${total} total`;
+        }}
+        onClose={() => setShowStudentPicker(false)}
+        onSelect={(student) => {
+          setShowStudentPicker(false);
+          setDoorsStudent(student);
+        }}
+      />
+
+      {selectedClassId && (
+        <InsightsModal
+          visible={showInsights}
+          classId={selectedClassId}
+          className={selectedClass?.name ?? 'Class'}
+          roster={roster}
+          onClose={() => setShowInsights(false)}
         />
       )}
 

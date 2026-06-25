@@ -14,12 +14,15 @@ export interface EarnedReward {
   updated_at: string;
 }
 
+export type DoorEligibility = 'food_only' | 'school_only' | 'either';
+
 export interface CreateEarnedRewardData {
   doors_earned?: number;
   source_type: EarnedReward['source_type'];
   source_name: string;
   description?: string;
   source_teacher_id?: string;
+  eligibility?: DoorEligibility;
 }
 
 class EarnedRewardsService {
@@ -70,6 +73,7 @@ class EarnedRewardsService {
         p_description: rewardData.description || null,
         p_doors_earned: rewardData.doors_earned || 1,
         p_source_teacher_id: rewardData.source_teacher_id || null,
+        p_eligibility: rewardData.eligibility || 'either',
       });
 
       if (error) {
@@ -254,7 +258,8 @@ class EarnedRewardsService {
     teacherName: string,
     description: string,
     doorsEarned: number = 1,
-    teacherId?: string
+    teacherId?: string,
+    eligibility: DoorEligibility = 'either'
   ): Promise<{ data: EarnedReward | null; error: string | null }> {
     return this.addEarnedReward(userId, {
       doors_earned: doorsEarned,
@@ -262,6 +267,7 @@ class EarnedRewardsService {
       source_name: teacherName,
       description: description,
       source_teacher_id: teacherId,
+      eligibility,
     });
   }
 

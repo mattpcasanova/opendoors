@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { Colors } from '../../constants';
-import { schoolService } from '../../services/schoolService';
+import { DoorEligibility, schoolService } from '../../services/schoolService';
 
 interface Props {
   visible: boolean;
@@ -26,6 +26,7 @@ interface Props {
 const SendDoorsModal: React.FC<Props> = ({ visible, teacherId, student, bulk, onClose, onSent }) => {
   const [count, setCount] = useState(1);
   const [reason, setReason] = useState('');
+  const [eligibility, setEligibility] = useState<DoorEligibility>('either');
   const [sending, setSending] = useState(false);
 
   const targetName = bulk?.label ?? student?.name ?? '';
@@ -33,6 +34,7 @@ const SendDoorsModal: React.FC<Props> = ({ visible, teacherId, student, bulk, on
   const reset = () => {
     setCount(1);
     setReason('');
+    setEligibility('either');
   };
 
   const handleClose = () => {
@@ -48,7 +50,7 @@ const SendDoorsModal: React.FC<Props> = ({ visible, teacherId, student, bulk, on
       let sent = 0;
       let firstError: string | null = null;
       for (const sid of bulk.studentIds) {
-        const { success, error } = await schoolService.sendDoorsToStudent(teacherId, sid, count, reasonText);
+        const { success, error } = await schoolService.sendDoorsToStudent(teacherId, sid, count, reasonText, eligibility);
         if (success) sent += 1;
         else if (!firstError) firstError = error ?? 'Failed';
       }
@@ -66,7 +68,7 @@ const SendDoorsModal: React.FC<Props> = ({ visible, teacherId, student, bulk, on
       setSending(false);
       return;
     }
-    const { success, error } = await schoolService.sendDoorsToStudent(teacherId, student.id, count, reasonText);
+    const { success, error } = await schoolService.sendDoorsToStudent(teacherId, student.id, count, reasonText, eligibility);
     setSending(false);
     if (!success) {
       Alert.alert('Could not send doors', error || 'Please try again.');
@@ -132,6 +134,30 @@ const SendDoorsModal: React.FC<Props> = ({ visible, teacherId, student, bulk, on
             maxLength={100}
           />
 
+          <Text style={{ fontSize: 14, fontWeight: '600', color: Colors.gray700, marginBottom: 8 }}>
+            Can be spent on
+          </Text>
+          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+            <EligibilityOption
+              icon="fast-food"
+              label="Food only"
+              active={eligibility === 'food_only'}
+              onPress={() => setEligibility('food_only')}
+            />
+            <EligibilityOption
+              icon="school"
+              label="School only"
+              active={eligibility === 'school_only'}
+              onPress={() => setEligibility('school_only')}
+            />
+            <EligibilityOption
+              icon="swap-horizontal"
+              label="Their choice"
+              active={eligibility === 'either'}
+              onPress={() => setEligibility('either')}
+            />
+          </View>
+
           <TouchableOpacity
             onPress={handleSend}
             disabled={sending}
@@ -157,6 +183,33 @@ const SendDoorsModal: React.FC<Props> = ({ visible, teacherId, student, bulk, on
     </Modal>
   );
 };
+
+const EligibilityOption: React.FC<{
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}> = ({ icon, label, active, onPress }) => (
+  <TouchableOpacity
+    onPress={onPress}
+    activeOpacity={0.8}
+    style={{
+      flex: 1,
+      alignItems: 'center',
+      paddingVertical: 12,
+      paddingHorizontal: 4,
+      borderRadius: 12,
+      borderWidth: 2,
+      borderColor: active ? Colors.primary : Colors.gray200,
+      backgroundColor: active ? Colors.primaryMuted : Colors.white,
+    }}
+  >
+    <Ionicons name={icon} size={22} color={active ? Colors.primary : Colors.gray400} />
+    <Text style={{ fontSize: 12, fontWeight: '600', color: active ? Colors.primary : Colors.gray600, marginTop: 4, textAlign: 'center' }}>
+      {label}
+    </Text>
+  </TouchableOpacity>
+);
 
 const Stepper: React.FC<{ icon: keyof typeof Ionicons.glyphMap; onPress: () => void }> = ({ icon, onPress }) => (
   <TouchableOpacity

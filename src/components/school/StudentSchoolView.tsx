@@ -5,7 +5,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../constants';
 import { useAuth } from '../../hooks/useAuth';
 import {
-  ClassGoal,
   ClassWithTeacher,
   schoolService,
   TeacherSummary,
@@ -14,7 +13,6 @@ import { supabase } from '../../services/supabase/client';
 import BottomNavBar from '../main/BottomNavBar';
 import Header from '../main/Header';
 import { LoadingSpinner } from '../ui';
-import ClassGoalBar from './ClassGoalBar';
 import JoinClassModal from './JoinClassModal';
 import TeacherDetailView from './TeacherDetailView';
 
@@ -25,7 +23,6 @@ const StudentSchoolView: React.FC = () => {
   const { user } = useAuth();
   const [classes, setClasses] = useState<ClassWithTeacher[]>([]);
   const [teachers, setTeachers] = useState<TeacherSummary[]>([]);
-  const [goals, setGoals] = useState<Record<string, ClassGoal>>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState<TeacherSummary | null>(null);
@@ -40,15 +37,6 @@ const StudentSchoolView: React.FC = () => {
     const cls = classesRes.data || [];
     setClasses(cls);
     if (teachersRes.data) setTeachers(teachersRes.data);
-
-    const goalEntries = await Promise.all(
-      cls.map(async (c) => [c.id, (await schoolService.getClassGoal(c.id)).data] as const)
-    );
-    const goalMap: Record<string, ClassGoal> = {};
-    goalEntries.forEach(([id, g]) => {
-      if (g) goalMap[id] = g;
-    });
-    setGoals(goalMap);
 
     setLoading(false);
   }, [user?.id]);
@@ -95,6 +83,12 @@ const StudentSchoolView: React.FC = () => {
       </SafeAreaView>
     );
   }
+
+  // Class/period names the student shares with each teacher.
+  const classesByTeacher: Record<string, string[]> = {};
+  classes.forEach((c) => {
+    (classesByTeacher[c.teacher_id] = classesByTeacher[c.teacher_id] || []).push(c.name);
+  });
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors.gray50 }} edges={['top']}>
@@ -151,7 +145,15 @@ const StudentSchoolView: React.FC = () => {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.gray900 }}>{teacherName(t)}</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                  {(classesByTeacher[t.teacher_id] || []).length > 0 && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                      <Ionicons name="book-outline" size={13} color={Colors.gray500} />
+                      <Text style={{ fontSize: 13, color: Colors.gray500 }} numberOfLines={1}>
+                        {classesByTeacher[t.teacher_id].join(' · ')}
+                      </Text>
+                    </View>
+                  )}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 }}>
                     <Ionicons name="ticket-outline" size={14} color={t.door_count > 0 ? Colors.primary : Colors.gray400} />
                     <Text style={{ fontSize: 13, color: t.door_count > 0 ? Colors.primary : Colors.gray500, fontWeight: t.door_count > 0 ? '600' : '400' }}>
                       {t.door_count} {t.door_count === 1 ? 'door' : 'doors'} to spend
@@ -162,43 +164,6 @@ const StudentSchoolView: React.FC = () => {
               </TouchableOpacity>
             ))}
           </View>
-        )}
-
-        {/* My Classes */}
-        <Text style={titleStyle}>My Classes</Text>
-        {classes.length === 0 ? (
-          <View style={emptyCard}>
-            <Ionicons name="school-outline" size={28} color={Colors.gray400} />
-            <Text style={{ color: Colors.gray600, marginTop: 8, textAlign: 'center' }}>No classes yet.</Text>
-          </View>
-        ) : (
-          classes.map((c) => (
-            <View
-              key={c.id}
-              style={{
-                backgroundColor: Colors.white,
-                borderRadius: 16,
-                padding: 16,
-                marginBottom: 12,
-                ...shadow,
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: Colors.primaryMuted, alignItems: 'center', justifyContent: 'center' }}>
-                  <Ionicons name="book" size={22} color={Colors.primary} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.gray900 }}>{c.name}</Text>
-                  <Text style={{ fontSize: 13, color: Colors.gray500, marginTop: 2 }}>{c.teacher_name}</Text>
-                </View>
-              </View>
-              {goals[c.id] ? (
-                <View style={{ marginTop: 14 }}>
-                  <ClassGoalBar goal={goals[c.id]} />
-                </View>
-              ) : null}
-            </View>
-          ))
         )}
       </ScrollView>
 

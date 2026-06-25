@@ -13,7 +13,7 @@ import {
   View,
 } from 'react-native';
 import { Colors } from '../../constants';
-import { ClassRow, RewardType, schoolService } from '../../services/schoolService';
+import { ClassRow, RewardClass, RewardType, schoolService } from '../../services/schoolService';
 
 interface Props {
   visible: boolean;
@@ -32,17 +32,33 @@ const DOOR_OPTIONS = [
 const CreateTemplateModal: React.FC<Props> = ({ visible, teacherId, classes, onClose, onCreated }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [classId, setClassId] = useState<string | null>(null); // null = all classes
-  const [rewardType, setRewardType] = useState<RewardType>('direct');
+  const [applyToAll, setApplyToAll] = useState(true);
+  const [selectedClassIds, setSelectedClassIds] = useState<string[]>([]);
+  const [rewardType, setRewardType] = useState<RewardType>('game');
+  const [rewardClass, setRewardClass] = useState<RewardClass>('school');
   const [doors, setDoors] = useState(3);
   const [saving, setSaving] = useState(false);
 
   const reset = () => {
     setTitle('');
     setDescription('');
-    setClassId(null);
-    setRewardType('direct');
+    setApplyToAll(true);
+    setSelectedClassIds([]);
+    setRewardType('game');
+    setRewardClass('school');
     setDoors(3);
+  };
+
+  const toggleClass = (id: string) => {
+    setApplyToAll(false);
+    setSelectedClassIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const selectAllClasses = () => {
+    setApplyToAll(true);
+    setSelectedClassIds([]);
   };
 
   const handleClose = () => {
@@ -55,17 +71,28 @@ const CreateTemplateModal: React.FC<Props> = ({ visible, teacherId, classes, onC
       Alert.alert('Title required', 'Give the reward a name, e.g. "Homework Pass".');
       return;
     }
+    if (!applyToAll && selectedClassIds.length === 0) {
+      Alert.alert('Pick classes', 'Choose at least one class, or "All my classes".');
+      return;
+    }
     setSaving(true);
-    const { error } = await schoolService.createTemplate({
-      teacher_id: teacherId,
-      class_id: classId,
-      title: title.trim(),
-      description: description.trim() || undefined,
-      reward_type: rewardType,
-      doors: rewardType === 'game' ? doors : 3,
-    });
+    // "All classes" is one template (class_id null); otherwise one per chosen class.
+    const targets = applyToAll ? [null] : selectedClassIds;
+    let firstError: string | null = null;
+    for (const class_id of targets) {
+      const { error } = await schoolService.createTemplate({
+        teacher_id: teacherId,
+        class_id,
+        title: title.trim(),
+        description: description.trim() || undefined,
+        reward_type: rewardType,
+        reward_class: rewardClass,
+        doors: rewardType === 'game' ? doors : 3,
+      });
+      if (error && !firstError) firstError = error;
+    }
     setSaving(false);
-    if (error) {
+    if (firstError) {
       Alert.alert('Error', 'Could not create the reward. Please try again.');
       return;
     }
@@ -119,6 +146,24 @@ const CreateTemplateModal: React.FC<Props> = ({ visible, teacherId, classes, onC
               maxLength={140}
             />
 
+            <Text style={styles.label}>Reward kind</Text>
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+              <ClassOption
+                icon="fast-food"
+                label="Food"
+                sublabel="Fries, cookie, coffee…"
+                active={rewardClass === 'food'}
+                onPress={() => setRewardClass('food')}
+              />
+              <ClassOption
+                icon="school"
+                label="School"
+                sublabel="Bonus point, HW pass…"
+                active={rewardClass === 'school'}
+                onPress={() => setRewardClass('school')}
+              />
+            </View>
+
             <Text style={styles.label}>How students get it</Text>
             <View style={{ gap: 8, marginBottom: 8 }}>
               <TypeOption
@@ -170,14 +215,17 @@ const CreateTemplateModal: React.FC<Props> = ({ visible, teacherId, classes, onC
             )}
 
             <Text style={styles.label}>Applies to</Text>
+            <Text style={{ fontSize: 12, color: Colors.gray500, marginBottom: 8, marginTop: -2 }}>
+              Pick "All my classes", or tap one or more periods.
+            </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-              <Chip label="All my classes" active={classId === null} onPress={() => setClassId(null)} />
+              <Chip label="All my classes" active={applyToAll} onPress={selectAllClasses} />
               {classes.map((c) => (
                 <Chip
                   key={c.id}
                   label={c.name}
-                  active={classId === c.id}
-                  onPress={() => setClassId(c.id)}
+                  active={!applyToAll && selectedClassIds.includes(c.id)}
+                  onPress={() => toggleClass(c.id)}
                 />
               ))}
             </View>
@@ -207,6 +255,34 @@ const CreateTemplateModal: React.FC<Props> = ({ visible, teacherId, classes, onC
     </Modal>
   );
 };
+
+const ClassOption: React.FC<{
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  sublabel: string;
+  active: boolean;
+  onPress: () => void;
+}> = ({ icon, label, sublabel, active, onPress }) => (
+  <TouchableOpacity
+    onPress={onPress}
+    activeOpacity={0.8}
+    style={{
+      flex: 1,
+      alignItems: 'center',
+      padding: 12,
+      borderRadius: 14,
+      borderWidth: 2,
+      borderColor: active ? Colors.primary : Colors.gray200,
+      backgroundColor: active ? Colors.primaryMuted : Colors.white,
+    }}
+  >
+    <Ionicons name={icon} size={24} color={active ? Colors.primary : Colors.gray400} />
+    <Text style={{ fontSize: 15, fontWeight: '700', color: active ? Colors.primary : Colors.gray800, marginTop: 6 }}>
+      {label}
+    </Text>
+    <Text style={{ fontSize: 11, color: Colors.gray500, marginTop: 2, textAlign: 'center' }}>{sublabel}</Text>
+  </TouchableOpacity>
+);
 
 const TypeOption: React.FC<{ title: string; subtitle: string; active: boolean; onPress: () => void }> = ({ title, subtitle, active, onPress }) => (
   <TouchableOpacity

@@ -164,7 +164,7 @@ class PushNotificationService {
   /**
    * Send a REMOTE push to another user's devices via the send-push edge function.
    * Works even when the recipient's app is closed (requires a dev/EAS build on a
-   * physical device — Expo push does not deliver to simulators).
+   * physical device; Expo push does not deliver to simulators).
    */
   async sendPushToUser(
     toUserId: string,
